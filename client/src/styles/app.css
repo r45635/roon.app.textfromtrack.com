@@ -1340,3 +1340,34 @@ body {
 .search-play-btn { flex-shrink: 0; margin-left: 6px; }
 .search-play-feedback { margin-top: 2px; }
 .text-success { color: var(--tft-signal-ink); }
+
+/* Breadcrumb navigation */
+.search-breadcrumb {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 2px;
+  margin-bottom: 8px; font-size: 12px;
+}
+.search-breadcrumb-sep { color: var(--tft-mute); margin: 0 2px; }
+.search-breadcrumb-item {
+  background: none; border: none; cursor: pointer; padding: 2px 4px;
+  color: var(--tft-signal-ink); font-size: 12px; font-family: var(--tft-display);
+  border-radius: 3px; transition: background 0.1s;
+}
+.search-breadcrumb-item:hover:not(:disabled) { background: var(--tft-signal-soft); }
+.search-breadcrumb-item.active { color: var(--tft-ink-1); cursor: default; font-weight: 500; }
+.search-breadcrumb-item:disabled { cursor: default; }
+
+/* Header items (section labels) */
+.search-item-header { padding: 8px 6px 3px; pointer-events: none; }
+.search-item-header .search-item-title {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--tft-mute);
+}
+.search-item-header:hover { background: transparent !important; }
+
+/* Drillable list items */
+.search-item-drillable { cursor: pointer; }
+.search-item-drillable:hover { background: var(--tft-paper-2); }
+.search-drill-btn {
+  flex-shrink: 0; font-size: 18px; line-height: 1;
+  padding: 2px 8px; color: var(--tft-ink-3); margin-left: auto;
+}

@@ -204,7 +204,8 @@
     "play_now": "Play",
     "play_now_tip": "Play this on the selected Roon zone",
     "play_pick_zone": "Pick a zone first",
-    "play_started": "Started"
+    "play_started": "Started",
+    "drill_in": "Open"
   },
   "settings": {
     "library_title": "Library Settings",
