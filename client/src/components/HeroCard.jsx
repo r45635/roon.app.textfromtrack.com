@@ -318,6 +318,7 @@ export default function HeroCard({
                 <span className="tft-pill tft-mono">{match.score} pts</span>
               )}
             </div>
+            <div className="tft-match-filename">{matchedPath.split('/').pop()}</div>
             <div className="tft-match-path">{matchedPath}</div>
             {match.score_detail && (
               <div className="tft-match-chips">

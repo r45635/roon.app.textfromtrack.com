@@ -408,9 +408,13 @@ body {
 }
 .tft-match-strip.no-match { color: var(--tft-mute); font-family: var(--tft-mono); font-size: 12px; }
 .tft-match-meta { flex: 1; min-width: 0; }
+.tft-match-filename {
+  font-size: 13px; font-weight: 500; color: var(--tft-ink-1);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;
+}
 .tft-match-path {
   font-family: var(--tft-mono); font-size: 11px; color: var(--tft-ink-3);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
 }
 .tft-match-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 
