@@ -116,7 +116,7 @@ router.post('/generate-current', async (req, res) => {
     );
   }
 
-  // 5. Resolve embed + backup flags: explicit body value wins, else user setting default
+  // 5. Resolve embed + backup + saveBeside flags: explicit body value wins, else user setting default
   const settings = userSettings.get();
   const bodyEmbed = req.body && Object.prototype.hasOwnProperty.call(req.body, 'embed')
     ? !!req.body.embed
@@ -126,6 +126,10 @@ router.post('/generate-current', async (req, res) => {
     ? !!req.body.backup
     : null;
   const backup = bodyBackup !== null ? bodyBackup : !!settings.backup_before_embed_default;
+  const bodySaveBeside = req.body && Object.prototype.hasOwnProperty.call(req.body, 'save_beside')
+    ? !!req.body.save_beside
+    : null;
+  const saveBeside = bodySaveBeside !== null ? bodySaveBeside : !!settings.save_lrc_beside_source_default;
   // For the auto-flow we don't have a way to surface a 409 modal mid-job, so
   // when a backup conflict happens we KEEP the existing .org by default.
   const onConflict = (req.body && req.body.backup_conflict) || 'keep';
@@ -141,6 +145,7 @@ router.post('/generate-current', async (req, res) => {
         embed,
         backup: { enabled: backup, onConflict },
         force,
+        saveBeside,
       }
     );
     res.status(202).json(result);

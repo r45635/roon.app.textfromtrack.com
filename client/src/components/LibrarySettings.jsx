@@ -9,6 +9,7 @@ export default function LibrarySettings({ onRescanStarted }) {
   const [newPath, setNewPath] = useState('');
   const [embedDefault, setEmbedDefault] = useState(false);
   const [backupDefault, setBackupDefault] = useState(true);
+  const [saveLrcBesideDefault, setSaveLrcBesideDefault] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -20,6 +21,7 @@ export default function LibrarySettings({ onRescanStarted }) {
           setRoots(data.music_roots || []);
           setEmbedDefault(!!data.embed_lyrics_default);
           setBackupDefault(data.backup_before_embed_default !== false);
+          setSaveLrcBesideDefault(!!data.save_lrc_beside_source_default);
         }
       })
       .catch(() => setError('Failed to load library config'));
@@ -47,6 +49,7 @@ export default function LibrarySettings({ onRescanStarted }) {
           music_roots: roots,
           embed_lyrics_default: embedDefault,
           backup_before_embed_default: backupDefault,
+          save_lrc_beside_source_default: saveLrcBesideDefault,
         }),
       });
       const saveData = await saveRes.json();
@@ -131,6 +134,16 @@ export default function LibrarySettings({ onRescanStarted }) {
           <span>{t('settings.backup_before_embed_default')}</span>
         </label>
         <p className="muted small">{t('settings.backup_before_embed_default_hint')}</p>
+
+        <label className="embed-toggle settings-embed-toggle">
+          <input
+            type="checkbox"
+            checked={saveLrcBesideDefault}
+            onChange={e => setSaveLrcBesideDefault(e.target.checked)}
+          />
+          <span>{t('settings.save_lrc_beside_source_default')}</span>
+        </label>
+        <p className="muted small">{t('settings.save_lrc_beside_source_default_hint')}</p>
 
         {error && <p className="settings-error">{error}</p>}
 

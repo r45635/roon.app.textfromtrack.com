@@ -61,6 +61,7 @@ router.get('/config', (req, res) => {
     path_mappings: mappings,
     embed_lyrics_default: !!settings.embed_lyrics_default,
     backup_before_embed_default: settings.backup_before_embed_default !== false,
+    save_lrc_beside_source_default: !!settings.save_lrc_beside_source_default,
   });
 });
 
@@ -75,6 +76,7 @@ router.post('/config', (req, res) => {
     path_mappings,
     embed_lyrics_default,
     backup_before_embed_default,
+    save_lrc_beside_source_default,
   } = req.body || {};
   if (!Array.isArray(music_roots)) {
     return res.status(400).json(buildError(E.INVALID_REQUEST, 'music_roots must be an array'));
@@ -89,12 +91,17 @@ router.post('/config', (req, res) => {
     ? undefined
     : !!backup_before_embed_default;
 
+  const saveLrcBeside = save_lrc_beside_source_default === undefined
+    ? undefined
+    : !!save_lrc_beside_source_default;
+
   const update = {
     music_roots: cleanRoots,
     path_mappings: cleanMappings,
     embed_lyrics_default: embedDefault,
   };
   if (backupDefault !== undefined) update.backup_before_embed_default = backupDefault;
+  if (saveLrcBeside !== undefined) update.save_lrc_beside_source_default = saveLrcBeside;
   userSettings.set(update);
   logger.info(
     { music_roots: cleanRoots, embed_lyrics_default: embedDefault, backup_before_embed_default: backupDefault },
@@ -106,6 +113,7 @@ router.post('/config', (req, res) => {
     path_mappings: cleanMappings,
     embed_lyrics_default: embedDefault,
     backup_before_embed_default: backupDefault === undefined ? true : backupDefault,
+    save_lrc_beside_source_default: saveLrcBeside === undefined ? false : saveLrcBeside,
   });
 });
 

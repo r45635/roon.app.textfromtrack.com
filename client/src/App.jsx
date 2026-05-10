@@ -21,6 +21,8 @@ export default function App() {
   const [tftAccount, setTftAccount] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [confirmedPath, setConfirmedPath] = useState(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [roonModalOpen, setRoonModalOpen] = useState(false);
 
   // ── API helpers ──────────────────────────────────────────────────────────────
 
@@ -250,13 +252,13 @@ export default function App() {
 
         <div className="tft-topbar-right">
           {roonStatus && (
-            <div className="tft-roon-strip">
+            <button className="tft-roon-strip tft-roon-strip-btn" onClick={() => setRoonModalOpen(true)} title={t('section.roon_connection')}>
               <span className={`roon-dot${roonStatus.connected ? '' : ' offline'}`} />
               <span className="tft-mono" style={{ fontSize: 12, color: 'var(--tft-ink-3)' }}>
                 {roonStatus.core_name || 'Roon'}
                 {zones.length > 0 ? ` · ${zones.length} zone${zones.length !== 1 ? 's' : ''}` : ''}
               </span>
-            </div>
+            </button>
           )}
 
           {tftAccount?.credit_balance != null && (
@@ -280,21 +282,60 @@ export default function App() {
             ))}
           </div>
 
+          <button
+            className="tft-settings-btn"
+            onClick={() => setSettingsOpen(true)}
+            title={t('settings.title', 'Configuration')}
+            aria-label={t('settings.title', 'Configuration')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
+
           {tftAccount?.email && (
             <div className="tft-avatar">{tftAccount.email[0].toUpperCase()}</div>
           )}
         </div>
       </header>
 
-      {/* ── 3-column main ───────────────────────────────────────────────────── */}
+      {/* ── Roon status modal ────────────────────────────────────────────────── */}
+      {roonModalOpen && (
+        <div className="modal-backdrop" onClick={() => setRoonModalOpen(false)}>
+          <div className="tft-roon-modal" onClick={e => e.stopPropagation()}>
+            <div className="tft-roon-modal-head">
+              <span className="tft-eyebrow">{t('section.roon_connection')}</span>
+              <button className="tft-settings-close" onClick={() => setRoonModalOpen(false)} aria-label="Fermer">✕</button>
+            </div>
+            <RoonStatus data={roonStatus} />
+          </div>
+        </div>
+      )}
+
+      {/* ── Settings drawer ─────────────────────────────────────────────────── */}
+      {settingsOpen && (
+        <div className="tft-settings-backdrop" onClick={() => setSettingsOpen(false)}>
+          <aside className="tft-settings-drawer" onClick={e => e.stopPropagation()}>
+            <div className="tft-settings-drawer-head">
+              <span className="tft-eyebrow">{t('settings.title', 'Configuration')}</span>
+              <button className="tft-settings-close" onClick={() => setSettingsOpen(false)} aria-label="Fermer">✕</button>
+            </div>
+            <div className="tft-settings-drawer-body">
+              <LibrarySettings onRescanStarted={handleRescanStarted} />
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* ── 2-column main ───────────────────────────────────────────────────── */}
       <main className="tft-main">
 
-        {/* Left rail: Zones + Library */}
-        <aside className="tft-rail-left">
-          <div className="tft-card">
-            <div className="tft-card-head">
-              <span className="tft-eyebrow">{t('section.zones', 'Zones')}</span>
-            </div>
+        {/* Hero column: Zone bar + HeroCard + JobHistory */}
+        <div className="tft-hero-col">
+          {/* Zone bar */}
+          <div className="tft-zone-bar">
+            <span className="tft-eyebrow" style={{ whiteSpace: 'nowrap' }}>{t('section.zones', 'Zones')}</span>
             <ZoneSelector
               zones={zones}
               activeZoneId={nowPlaying?.zone_id}
@@ -304,16 +345,7 @@ export default function App() {
               onUngroup={handleUngroup}
             />
           </div>
-          <div className="tft-card" style={{ marginTop: 16 }}>
-            <div className="tft-card-head">
-              <span className="tft-eyebrow">{t('section.library', 'Library')}</span>
-            </div>
-            <LibrarySettings onRescanStarted={handleRescanStarted} />
-          </div>
-        </aside>
 
-        {/* Hero column: merged NowPlaying + LocalMatch + Generate + JobHistory */}
-        <div className="tft-hero-col">
           <HeroCard
             nowPlaying={nowPlaying}
             matchData={matchData}
@@ -330,12 +362,9 @@ export default function App() {
           </div>
         </div>
 
-        {/* Right rail: Search + Roon Status */}
+        {/* Right rail: Search */}
         <aside className="tft-rail-right">
           <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} />
-          <div style={{ marginTop: 16 }}>
-            <RoonStatus data={roonStatus} />
-          </div>
         </aside>
       </main>
     </div>

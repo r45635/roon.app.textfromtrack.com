@@ -62,6 +62,7 @@ export default function HeroCard({
   // ── Generate state (from TftPanel) ──────────────────────────────────────────
   const [embed, setEmbed] = useState(false);
   const [backup, setBackup] = useState(true);
+  const [saveBeside, setSaveBeside] = useState(false);
   const [force, setForce] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeJob, setActiveJob] = useState(null);
@@ -77,6 +78,7 @@ export default function HeroCard({
         if (d?.success) {
           setEmbed(!!d.embed_lyrics_default);
           setBackup(d.backup_before_embed_default !== false);
+          setSaveBeside(!!d.save_lrc_beside_source_default);
         }
       })
       .catch(() => {});
@@ -106,7 +108,7 @@ export default function HeroCard({
       const res = await fetch('/api/tft/generate-current', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ embed, backup, force }),
+        body: JSON.stringify({ embed, backup, save_beside: saveBeside, force }),
       });
       const data = await res.json();
       if (!data.success) { setGenError(data.error); setIsGenerating(false); return; }
@@ -331,6 +333,7 @@ export default function HeroCard({
       </div>
 
       {/* ═══ GENERATE STRIP ═════════════════════════════════════════════════════ */}
+      {!(activeJob?.status === 'done') && (
       <div className="tft-generate-strip">
         <div className="tft-generate-toggles">
           {lyricsExist && (
@@ -339,6 +342,10 @@ export default function HeroCard({
               {t('tft.force_retranscribe')}
             </label>
           )}
+          <label className="tft-toggle-label">
+            <input type="checkbox" checked={saveBeside} disabled={isGenerating} onChange={e => setSaveBeside(e.target.checked)} />
+            {t('tft.save_lrc_beside_source')}
+          </label>
           <label className="tft-toggle-label">
             <input type="checkbox" checked={embed && embedSupported} disabled={isGenerating || !embedSupported} onChange={e => setEmbed(e.target.checked)} />
             {t('tft.embed_lyrics')}
@@ -360,9 +367,10 @@ export default function HeroCard({
           {isGenerating ? t('tft.generating') : t('tft.generate_button')}
         </button>
       </div>
+      )}
 
-      {/* Disabled reason */}
-      {disabledReason && !isGenerating && (
+      {/* Disabled reason — hidden when a job just completed */}
+      {disabledReason && !isGenerating && !(activeJob?.status === 'done') && (
         <div style={{ padding: '0 28px 12px' }}>
           <span className="tft-mono" style={{ fontSize: 11, color: 'var(--tft-mute)' }}>{disabledReason}</span>
         </div>
@@ -383,6 +391,14 @@ export default function HeroCard({
             )}
             {activeJob.status === 'done' && activeJob.lyrics_embedded && (
               <div className="progress-detail embed-success">🏷️ {t('tft.lyrics_embedded_ok')}</div>
+            )}
+            {activeJob.status === 'done' && (
+              <button
+                className="tft-regen-link"
+                onClick={() => { setActiveJob(null); setForce(true); }}
+              >
+                {t('tft.regenerate_anyway', 'Regénérer quand même…')}
+              </button>
             )}
             {activeJob.status === 'error' && activeJob.error && (
               <div className="progress-detail text-error small">[{activeJob.error.code}] {activeJob.error.message}</div>

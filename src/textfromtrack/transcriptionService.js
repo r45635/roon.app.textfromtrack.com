@@ -52,7 +52,7 @@ async function validateFile(filePath) {
  * Poll TFT until the job is done or error, then download and save the LRC.
  * Runs asynchronously (fire-and-forget from startTranscription).
  */
-async function _pollAndComplete(jobId, sourcePath, lrcPath, embed = false, embedOptions = {}, force = false) {
+async function _pollAndComplete(jobId, sourcePath, lrcPath, embed = false, embedOptions = {}, force = false, saveBeside = true) {
   const start = Date.now();
   const timeout = config.tftPollTimeoutMs;
   const interval = config.tftPollIntervalMs;
@@ -78,7 +78,7 @@ async function _pollAndComplete(jobId, sourcePath, lrcPath, embed = false, embed
     if (remote.status === 'done') {
       jobStore.update(jobId, { status: 'downloading' });
       try {
-        await _downloadAndSave(jobId, sourcePath, lrcPath, remote, embed, embedOptions, force);
+        await _downloadAndSave(jobId, sourcePath, lrcPath, remote, embed, embedOptions, force, saveBeside);
       } catch (err) {
         logger.error({ jobId, err: err.message }, 'Download/save failed');
         jobStore.update(jobId, {
@@ -109,32 +109,36 @@ async function _pollAndComplete(jobId, sourcePath, lrcPath, embed = false, embed
   });
 }
 
-async function _downloadAndSave(jobId, sourcePath, lrcPath, remoteJob, embed = false, embedOptions = {}, force = false) {
-  // Safety: never overwrite an existing LRC unless the user explicitly forced
-  // a re-transcription.
-  if (fs.existsSync(lrcPath)) {
-    if (force) {
-      try {
-        fs.unlinkSync(lrcPath);
-        logger.info({ jobId, lrcPath }, 'force=true — deleted existing .lrc before download');
-      } catch (err) {
-        throw new AppError(E.LRC_WRITE_FAILED, `Cannot delete existing LRC: ${err.message}`);
+async function _downloadAndSave(jobId, sourcePath, lrcPath, remoteJob, embed = false, embedOptions = {}, force = false, saveBeside = true) {
+  // Safety: only check / overwrite the LRC file on disk when we actually intend to save it.
+  if (saveBeside) {
+    if (fs.existsSync(lrcPath)) {
+      if (force) {
+        try {
+          fs.unlinkSync(lrcPath);
+          logger.info({ jobId, lrcPath }, 'force=true — deleted existing .lrc before download');
+        } catch (err) {
+          throw new AppError(E.LRC_WRITE_FAILED, `Cannot delete existing LRC: ${err.message}`);
+        }
+      } else {
+        throw new AppError(E.LRC_ALREADY_EXISTS, `LRC file already exists: ${lrcPath}`);
       }
-    } else {
-      throw new AppError(E.LRC_ALREADY_EXISTS, `LRC file already exists: ${lrcPath}`);
     }
   }
 
-  logger.info({ jobId, lrcPath }, 'Downloading LRC export from TextFromTrack');
+  logger.info({ jobId, lrcPath, saveBeside }, 'Downloading LRC export from TextFromTrack');
   const lrcContent = await tftClient.downloadExport(jobId, 'lrc');
 
-  try {
-    fs.writeFileSync(lrcPath, lrcContent, 'utf8');
-  } catch (err) {
-    throw new AppError(E.LRC_WRITE_FAILED, `Cannot write LRC file: ${err.message}`);
+  if (saveBeside) {
+    try {
+      fs.writeFileSync(lrcPath, lrcContent, 'utf8');
+    } catch (err) {
+      throw new AppError(E.LRC_WRITE_FAILED, `Cannot write LRC file: ${err.message}`);
+    }
+    logger.info({ jobId, lrcPath }, 'LRC saved successfully');
+  } else {
+    logger.info({ jobId }, 'saveBeside=false — LRC not written to disk');
   }
-
-  logger.info({ jobId, lrcPath }, 'LRC saved successfully');
 
   // Count segments from content
   const segmentCount = (lrcContent.match(/^\[[\d:\.]+\]/gm) || []).length;
@@ -191,17 +195,22 @@ async function _downloadAndSave(jobId, sourcePath, lrcPath, remoteJob, embed = f
 
   // Update music index lyrics status
   try {
-    const newStatus = lyricsEmbedded
-      ? lyricsDetector.STATUS.HAS_EMBEDDED_LYRICS
-      : lyricsDetector.STATUS.HAS_LRC_FILE;
-    scanner.updateTrackLyricsStatus(sourcePath, newStatus);
+    let newStatus = null;
+    if (lyricsEmbedded) {
+      newStatus = lyricsDetector.STATUS.HAS_EMBEDDED_LYRICS;
+    } else if (saveBeside) {
+      newStatus = lyricsDetector.STATUS.HAS_LRC_FILE;
+    }
+    if (newStatus) {
+      scanner.updateTrackLyricsStatus(sourcePath, newStatus);
+    }
   } catch (err) {
     logger.warn({ err: err.message }, 'Could not update music index lyrics status');
   }
 
   jobStore.update(jobId, {
     status: 'done',
-    lrc_file: lrcPath,
+    lrc_file: saveBeside ? lrcPath : null,
     has_timestamps: hasTimestamps,
     has_timestamps_source: segmentsHasTimestamps !== null ? 'segments_api' : 'lrc_sentinel',
     lyrics_embedded: lyricsEmbedded,
@@ -231,6 +240,7 @@ async function _downloadAndSave(jobId, sourcePath, lrcPath, remoteJob, embed = f
 async function startTranscription(sourcePath, trackMeta = {}, options = {}) {
   const embed = !!options.embed;
   const force = !!options.force;
+  const saveBeside = options.saveBeside !== undefined ? !!options.saveBeside : true;
   const backup = options.backup && options.backup.enabled
     ? { enabled: true, onConflict: options.backup.onConflict || 'keep' }
     : { enabled: false };
@@ -292,7 +302,7 @@ async function startTranscription(sourcePath, trackMeta = {}, options = {}) {
   const job = {
     job_id: jobId,
     source_file: sourcePath,
-    lrc_file: lrcPath,
+    lrc_file: saveBeside ? lrcPath : null,
     title: trackMeta.title || null,
     artist: trackMeta.artist || null,
     album: trackMeta.album || null,
@@ -315,7 +325,7 @@ async function startTranscription(sourcePath, trackMeta = {}, options = {}) {
   jobStore.create(job);
 
   // 7. Start background polling (fire-and-forget)
-  _pollAndComplete(jobId, sourcePath, lrcPath, embed, { backup }, force).catch(err => {
+  _pollAndComplete(jobId, sourcePath, lrcPath, embed, { backup }, force, saveBeside).catch(err => {
     logger.error({ jobId, err: err.message }, 'Unhandled error in polling loop');
   });
 
@@ -366,6 +376,7 @@ async function retryTranscription(jobId) {
       pinyin: config.tftDefaultPinyin,
       vintage: config.tftDefaultVintage,
       embed: !!job.embed_requested,
+      saveBeside: !!job.lrc_file, // preserve the original save-beside intent
     }
   );
 }

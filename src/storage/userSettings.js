@@ -15,6 +15,7 @@ const DEFAULTS = {
   path_mappings: [],
   embed_lyrics_default: false,
   backup_before_embed_default: true,
+  save_lrc_beside_source_default: false,
 };
 
 /**

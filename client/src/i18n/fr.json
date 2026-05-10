@@ -112,12 +112,13 @@
     "progress_processing": "Traitement en cours…",
     "progress_downloading": "Téléchargement du fichier LRC…",
     "progress_embedding": "Intégration des paroles dans le fichier…",
-    "progress_done": "✓ Fichier LRC sauvegardé à côté de la source",
+    "progress_done": "✓ Terminé",
     "progress_error": "Erreur",
     "lrc_saved": "Sauvegardé à",
     "credits_charged": "Crédits utilisés",
     "force_retranscribe": "Re-transcrire même si des paroles existent déjà",
     "force_warning": "Le .lrc existant sera supprimé ; le tag LYRICS existant sera renommé en LYRICS.ORG.",
+    "save_lrc_beside_source": "Sauvegarder le fichier LRC à côté du fichier audio",
     "embed_lyrics": "Intégrer aussi le tag [LYRICS] dans le fichier audio",
     "embed_unsupported": "Intégration impossible pour les fichiers {{ext}} (MP3 / FLAC uniquement)",
     "backup_before_embed": "Sauvegarder le fichier original en .org avant",
@@ -213,6 +214,8 @@
     "embed_lyrics_default": "Intégrer le tag [LYRICS] dans les fichiers audio par défaut",
     "embed_lyrics_default_hint": "Si activé, le contenu LRC est aussi écrit dans le tag LYRICS du fichier (USLT pour MP3, Vorbis comment pour FLAC). Le fichier .lrc sidecar est toujours conservé.",
     "backup_before_embed_default": "Sauvegarder en .org avant l'intégration",
-    "backup_before_embed_default_hint": "Crée Track.flac.org / Track.mp3.org à côté de l'original avant toute écriture de tag, pour pouvoir restaurer en cas de problème."
+    "backup_before_embed_default_hint": "Crée Track.flac.org / Track.mp3.org à côté de l'original avant toute écriture de tag, pour pouvoir restaurer en cas de problème.",
+    "save_lrc_beside_source_default": "Sauvegarder le fichier LRC à côté du fichier audio",
+    "save_lrc_beside_source_default_hint": "Si activé, le fichier .lrc sidecar est enregistré à côté du fichier audio. Roon ne lit pas les fichiers LRC nativement — laissez désactivé si vous utilisez uniquement les paroles intégrées."
   }
 }

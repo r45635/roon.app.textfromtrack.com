@@ -141,33 +141,147 @@ body {
   margin: 0 auto;
   width: 100%;
   align-items: start;
-  grid-template-columns: 260px minmax(0, 1fr) 320px;
-  grid-template-areas: "left hero right";
+  grid-template-columns: minmax(0, 1fr) 380px;
+  grid-template-areas: "hero right";
 }
 
 @media (min-width: 768px) and (max-width: 1279px) {
   .tft-main {
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "hero hero"
-      "left right"
-      "history history";
+    grid-template-columns: 1fr;
+    grid-template-areas: "hero";
     padding: 20px 24px 60px;
   }
   .tft-topbar { padding: 0 24px; }
   .tft-roon-strip { display: none; }
+  .tft-rail-right { display: none; }
 }
 
 @media (max-width: 767px) {
   .tft-main { padding: 16px 16px 100px; grid-template-columns: 1fr; grid-template-areas: "hero"; }
   .tft-topbar { padding: 0 16px; height: 48px; }
   .tft-roon-strip, .tft-credit-pill, .tft-avatar { display: none; }
-  .tft-rail-left, .tft-rail-right { display: none; }
+  .tft-rail-right { display: none; }
 }
 
-.tft-rail-left  { grid-area: left;    display: flex; flex-direction: column; gap: 16px; }
 .tft-hero-col   { grid-area: hero;    display: flex; flex-direction: column; gap: 20px; }
 .tft-rail-right { grid-area: right;   display: flex; flex-direction: column; gap: 16px; }
+
+/* ── Zone bar (above hero card) ──────────────────────────────────────────────── */
+.tft-zone-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--tft-card);
+  border: 1px solid var(--tft-line);
+  border-radius: var(--tft-r-md);
+  padding: 8px 14px;
+  box-shadow: var(--tft-shadow-sm);
+}
+.tft-zone-bar .zone-selector { flex: 1; position: relative; }
+.tft-zone-bar .zone-selector-trigger { padding: 4px 8px; font-size: 13px; }
+
+/* ── Settings button (topbar) ─────────────────────────────────────────────── */
+/* ── Roon strip as clickable button ──────────────────────────────────────────── */
+.tft-roon-strip-btn {
+  all: unset;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--tft-r-sm);
+  transition: background 0.12s;
+}
+.tft-roon-strip-btn:hover { background: var(--tft-line-2); }
+
+/* ── Roon status modal ───────────────────────────────────────────────────────── */
+.tft-roon-modal {
+  background: var(--tft-card);
+  border: 1px solid var(--tft-line);
+  border-radius: var(--tft-r-lg);
+  box-shadow: var(--tft-shadow-md);
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  overflow: hidden;
+}
+.tft-roon-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--tft-line);
+}
+.tft-roon-modal .card {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* ── Settings button (topbar) ────────────────────────────────────────────────── */
+.tft-settings-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--tft-r-sm);
+  border: 1px solid var(--tft-line);
+  background: transparent;
+  color: var(--tft-ink-3);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.tft-settings-btn:hover { background: var(--tft-line-2); color: var(--tft-ink); }
+
+/* ── Settings drawer ───────────────────────────────────────────────────────── */
+.tft-settings-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(21, 22, 26, 0.30);
+  z-index: 500;
+  display: flex;
+  justify-content: flex-end;
+}
+.tft-settings-drawer {
+  width: 420px;
+  max-width: 100%;
+  height: 100%;
+  background: var(--tft-card);
+  border-left: 1px solid var(--tft-line);
+  box-shadow: -4px 0 24px rgba(21,22,26,0.10);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.tft-settings-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--tft-line);
+  flex-shrink: 0;
+}
+.tft-settings-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--tft-mute);
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: var(--tft-r-xs);
+}
+.tft-settings-close:hover { color: var(--tft-ink); background: var(--tft-line-2); }
+.tft-settings-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0;
+}
+.tft-settings-drawer-body .card {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
 
 /* ── Legacy .app-main kept for fallback (hidden when .tft-main present) ─────── */
 .app-main {
@@ -182,7 +296,7 @@ body {
 /* ── TFT Cards ───────────────────────────────────────────────────────────────── */
 .tft-card {
   background: var(--tft-card); border: 1px solid var(--tft-line);
-  border-radius: var(--tft-r-lg); box-shadow: var(--tft-shadow-sm); overflow: hidden;
+  border-radius: var(--tft-r-lg); box-shadow: var(--tft-shadow-sm); overflow: visible;
 }
 .tft-card-head {
   display: flex; align-items: center; justify-content: space-between;
@@ -894,8 +1008,6 @@ body {
 .search-results-scroll::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 3px; }
 
 .jobs-scroll {
-  max-height: 300px;
-  overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--card-border) transparent;
 }
@@ -929,7 +1041,22 @@ body {
 }
 .jobs-table tr:last-child td { border-bottom: none; }
 .jobs-table tr.row-error { background: var(--tft-error-soft); }
-.td-date { white-space: nowrap; font-size: 11px; color: var(--text-sub); }
+.td-date {
+  white-space: nowrap;
+  min-width: 6.5rem;
+  width: 7rem;
+  padding-right: 8px;
+}
+.td-date-day {
+  display: block;
+  font-size: 11px;
+  color: var(--tft-ink-2);
+}
+.td-date-time {
+  display: block;
+  font-size: 11px;
+  color: var(--text-sub);
+}
 .td-truncate {
   max-width: 220px;
   overflow: hidden;
@@ -943,15 +1070,63 @@ body {
 .lrc-reveal-wrap {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   min-width: 0;
   max-width: 100%;
 }
+.lrc-folder-btn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid var(--tft-line);
+  border-radius: var(--tft-r-xs);
+  color: var(--tft-ink-3);
+  cursor: pointer;
+  padding: 2px 4px;
+  line-height: 1;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+.lrc-folder-btn:hover {
+  background: var(--tft-amber-soft);
+  color: var(--tft-amber-ink);
+  border-color: var(--tft-amber-ink);
+}
+.td-status {
+  width: 6rem;
+  min-width: 6rem;
+  text-align: center;
+  padding-left: 4px;
+  padding-right: 4px;
+}
 .status-badges {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  flex-wrap: nowrap;
+  gap: 3px;
   align-items: center;
+  justify-content: center;
+}
+/* Jobs table column widths */
+.jobs-table { min-width: 750px; }
+.th-date,  .td-date    { width: 7rem;   min-width: 7rem; }
+.th-track              { min-width: 180px; }
+.th-artist             { min-width: 140px; }
+.th-status             { width: 6rem;   min-width: 6rem;  text-align: center; }
+.th-lrc                { min-width: 200px; }
+.th-credits, .td-credits { width: 4.5rem; min-width: 4.5rem; text-align: right; white-space: nowrap; }
+
+.badge-icon {
+  padding: 2px 4px;
+  min-width: 22px;
+  text-align: center;
+  cursor: default;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  border-radius: var(--tft-r-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .reveal-btn { background: none; border: none; cursor: pointer; font-size: 1rem; padding: 0 2px; line-height: 1; opacity: 0.7; transition: opacity 0.15s; }
 .reveal-btn:hover { opacity: 1; }
@@ -959,6 +1134,53 @@ body {
 .retry-btn:hover:not(:disabled) { opacity: 1; }
 .retry-btn:disabled { opacity: 0.3; cursor: default; }
 .badge-warning { background: var(--tft-amber-soft); color: var(--tft-amber-ink); font-size: 0.65rem; margin-left: 4px; }
+
+/* ── Job history pagination ─────────────────────────────────────────────────── */
+.jobs-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--tft-line);
+  margin-top: 2px;
+}
+.jobs-page-btn {
+  background: none;
+  border: 1px solid var(--tft-line);
+  border-radius: var(--tft-r-sm);
+  color: var(--tft-ink-2);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px 12px;
+  transition: background 0.12s, color 0.12s;
+}
+.jobs-page-btn:hover:not(:disabled) {
+  background: var(--tft-line-2);
+  color: var(--tft-ink);
+}
+.jobs-page-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.jobs-page-info {
+  font-size: 12px;
+  color: var(--text-sub);
+  font-variant-numeric: tabular-nums;
+}
+
+.tft-regen-link {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--tft-mute);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.tft-regen-link:hover { color: var(--tft-ink-2); }
 
 /* ── Language switcher (legacy) ─────────────────────────────────────────────── */
 /* Note: .lang-btn is also defined in the topbar section above. These are kept for compatibility. */
