@@ -26,3 +26,5 @@ config.json
 
 # ─── Storage data (runtime, potentially large) ─────────────────────────────────
 # Stub files are committed; runtime data is not tracked
+src/storage/jobs.json
+src/storage/music-index.json
