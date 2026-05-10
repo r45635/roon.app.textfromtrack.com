@@ -1,0 +1,37 @@
+{
+  "name": "roon-companion-textfromtrack",
+  "version": "0.1.0",
+  "description": "Local companion app connecting Roon to TextFromTrack for automated LRC generation",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "build": "cd client && npm run build",
+    "dev:client": "cd client && npm run dev",
+    "scan": "node scripts/scan-library.js",
+    "test:tft": "node scripts/test-tft-api.js",
+    "test": "node --test --test-reporter spec tests/utils/normalize.test.js tests/utils/fileUtils.test.js tests/music/matcher.test.js tests/music/lyricsDetector.test.js tests/music/lyricsEmbedder.test.js tests/music/flacTagger.test.js tests/music/pathMapper.test.js tests/textfromtrack/jobStore.test.js",
+    "lint": "eslint src scripts"
+  },
+  "dependencies": {
+    "chokidar": "^3.6.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "form-data": "^4.0.0",
+    "music-metadata": "^10.2.0",
+    "node-id3": "^0.2.9",
+    "node-roon-api": "github:roonlabs/node-roon-api",
+    "node-roon-api-browse": "github:roonlabs/node-roon-api-browse",
+    "node-roon-api-status": "github:roonlabs/node-roon-api-status",
+    "node-roon-api-transport": "github:roonlabs/node-roon-api-transport",
+    "pino": "^9.2.0",
+    "pino-pretty": "^11.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.3.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT"
+}
