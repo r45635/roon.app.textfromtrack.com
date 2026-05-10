@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import FileTagsCard from './FileTagsCard.jsx';
 
 const EMBED_SUPPORTED_EXTS = ['.mp3', '.flac'];
 
@@ -390,6 +391,13 @@ export default function HeroCard({
           </div>
         )}
       </div>
+
+      {/* ═══ FILE TAGS ═══════════════════════════════════════════════════════════ */}
+      {match?.matched && effectivePath && (
+        <div style={{ padding: '0 28px 4px' }}>
+          <FileTagsCard filePath={effectivePath} />
+        </div>
+      )}
 
       {/* ═══ GENERATE STRIP ═════════════════════════════════════════════════════ */}
       {!(activeJob?.status === 'done') && (

@@ -183,30 +183,103 @@ router.get('/match-current', async (req, res) => {
 });
 
 /**
+ * Shared path validation helper — returns resolved path or sends 400/403/404.
+ */
+function resolveAndValidatePath(req, res) {
+  const rawPath = req.query.path;
+  if (!rawPath) {
+    res.status(400).json(buildError(E.INVALID_REQUEST, 'path query parameter is required'));
+    return null;
+  }
+  const resolved = path.resolve(rawPath);
+  const settings = userSettings.get();
+  const roots = settings.music_roots.length ? settings.music_roots : config.musicRoots;
+  const allowed = roots.some(r => resolved.startsWith(path.resolve(r) + path.sep) || resolved === path.resolve(r));
+  if (!allowed) {
+    res.status(403).json(buildError('FORBIDDEN', 'Path is not under a configured music root'));
+    return null;
+  }
+  if (!fs.existsSync(resolved)) {
+    res.status(404).json(buildError('FILE_NOT_FOUND', 'File not found'));
+    return null;
+  }
+  return resolved;
+}
+
+/**
+ * GET /api/music/file-cover?path=<encoded>
+ * Returns embedded cover images from an audio file as base64 data URLs.
+ */
+router.get('/file-cover', async (req, res) => {
+  const resolved = resolveAndValidatePath(req, res);
+  if (!resolved) return;
+
+  try {
+    const { parseFile } = await import('music-metadata');
+    // Use AbortSignal.timeout so slow/large files on external drives don't hang forever
+    const metadata = await parseFile(resolved, {
+      skipCovers: false,
+      duration: false,
+      signal: AbortSignal.timeout(8000),
+    });
+    const pictures = metadata.common.picture || [];
+    const covers = pictures.map(p => ({
+      mime: p.format,
+      type: p.type || 'Cover (front)',
+      description: p.description || null,
+      data: `data:${p.format};base64,${p.data.toString('base64')}`,
+    }));
+    res.json({ success: true, covers });
+  } catch (err) {
+    if (err.name === 'AbortError' || err.code === 'ERR_OPERATION_ABORTED') {
+      logger.warn({ path: resolved }, 'file-cover: parse timed out');
+      return res.json({ success: true, covers: [] });
+    }
+    logger.warn({ path: resolved, err: err.message }, 'file-cover: parse failed');
+    res.status(500).json(buildError('PARSE_ERROR', `Cannot read covers: ${err.message}`));
+  }
+});
+
+/**
+ * GET /api/music/file-lyrics?path=<encoded>
+ * Returns lyrics from .lrc sidecar or embedded tags, or null if none.
+ */
+router.get('/file-lyrics', async (req, res) => {
+  const resolved = resolveAndValidatePath(req, res);
+  if (!resolved) return;
+
+  try {
+    // 1. .lrc sidecar
+    const lrcPath = lyricsDetector.getLrcPath(resolved);
+    if (fs.existsSync(lrcPath)) {
+      const text = fs.readFileSync(lrcPath, 'utf8');
+      return res.json({ success: true, source: 'lrc', text });
+    }
+    // 2. Embedded lyrics
+    const { parseFile } = await import('music-metadata');
+    const metadata = await parseFile(resolved, { skipCovers: true, duration: false });
+    const lyricsArr = metadata.common.lyrics || [];
+    const text = lyricsArr
+      .map(l => (typeof l === 'string' ? l : l?.text || ''))
+      .filter(Boolean)
+      .join('\n');
+    if (text) return res.json({ success: true, source: 'embedded', text });
+
+    return res.json({ success: true, source: null, text: null });
+  } catch (err) {
+    logger.warn({ path: resolved, err: err.message }, 'file-lyrics: parse failed');
+    res.status(500).json(buildError('PARSE_ERROR', `Cannot read lyrics: ${err.message}`));
+  }
+});
+
+/**
  * GET /api/music/file-tags?path=<encoded>
  * Reads the full audio tags and format info from a local file on demand.
  * The path is validated against configured music_roots to prevent traversal.
  */
 router.get('/file-tags', async (req, res) => {
-  const rawPath = req.query.path;
-  if (!rawPath) {
-    return res.status(400).json(buildError(E.INVALID_REQUEST, 'path query parameter is required'));
-  }
-
-  // Resolve and validate against known music roots (path traversal guard)
-  const resolved = path.resolve(rawPath);
-  const userSettingsMod = require('../storage/userSettings');
-  const settings = userSettingsMod.get();
-  const roots = settings.music_roots.length ? settings.music_roots : config.musicRoots;
-  const underAllowedRoot = roots.some(root => resolved.startsWith(path.resolve(root) + path.sep) ||
-    resolved.startsWith(path.resolve(root)));
-  if (!underAllowedRoot) {
-    return res.status(403).json(buildError('FORBIDDEN', 'Path is not under a configured music root'));
-  }
-
-  if (!fs.existsSync(resolved)) {
-    return res.status(404).json(buildError('FILE_NOT_FOUND', 'File not found'));
-  }
+  const resolved = resolveAndValidatePath(req, res);
+  if (!resolved) return;
 
   let metadata;
   try {
