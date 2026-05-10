@@ -1339,6 +1339,11 @@ body {
 }
 .search-play-btn { flex-shrink: 0; margin-left: 6px; }
 .search-play-feedback { margin-top: 2px; }
+.search-hide-empty-toggle {
+  display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+  font-size: 11px; color: var(--tft-ink-3); user-select: none;
+}
+.search-hide-empty-toggle input[type=checkbox] { width: 12px; height: 12px; cursor: pointer; accent-color: var(--tft-signal); }
 
 /* Action menu dropdown (appears below the ▶ button) */
 .search-play-wrap { position: relative; flex-shrink: 0; margin-left: 6px; }

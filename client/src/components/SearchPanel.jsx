@@ -16,6 +16,8 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
   const [playFeedback, setPlayFeedback] = useState({});
   // actionMenu: { itemKey, actions: [{title, item_key}] } | null
   const [actionMenu, setActionMenu] = useState(null);
+  // hideEmpty: filter out items with subtitle starting with "0 " (no albums/tracks)
+  const [hideEmpty, setHideEmpty] = useState(true);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -231,11 +233,19 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
               </div>
             )}
 
-            {/* Zone picker + count */}
+            {/* Zone picker + count + hide-empty toggle */}
             <div className="search-results-header">
               {listMeta?.count != null && (
                 <p className="search-count">{t('search.result_count', { count: listMeta.count })}</p>
               )}
+              <label className="search-hide-empty-toggle">
+                <input
+                  type="checkbox"
+                  checked={hideEmpty}
+                  onChange={e => setHideEmpty(e.target.checked)}
+                />
+                <span>{t('search.hide_empty')}</span>
+              </label>
               <label className="search-zone-picker">
                 <span className="muted small">{t('search.play_on_zone')}</span>
                 <select value={playZoneId || ''} onChange={e => setPlayZoneId(e.target.value)}>
@@ -254,7 +264,7 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
             {/* Item list */}
             <div className="search-results-scroll">
               <ul className="search-list">
-                {items.map((item, idx) => {
+                {(hideEmpty ? items.filter(item => !item.subtitle?.match(/^0\s/)) : items).map((item, idx) => {
                   const key = item.item_key || `item-${idx}`;
                   const fb = playFeedback[item.item_key];
                   const isHeader = item.hint === 'header';

@@ -206,7 +206,8 @@
     "play_pick_zone": "Pick a zone first",
     "play_started": "Started",
     "drill_in": "Open",
-    "no_actions": "No actions available"
+    "no_actions": "No actions available",
+    "hide_empty": "Hide empty results"
   },
   "settings": {
     "library_title": "Library Settings",

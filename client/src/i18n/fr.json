@@ -206,7 +206,8 @@
     "play_pick_zone": "Sélectionnez une zone d'abord",
     "play_started": "Lancé",
     "drill_in": "Ouvrir",
-    "no_actions": "Aucune action disponible"
+    "no_actions": "Aucune action disponible",
+    "hide_empty": "Masquer les résultats vides"
   },
   "settings": {
     "library_title": "Paramètres bibliothèque",
