@@ -254,16 +254,13 @@ router.post('/embed', async (req, res) => {
 
 /**
  * POST /api/tft/reveal
- * Open the enclosing folder of an LRC file in Finder (macOS only).
+ * Open the enclosing folder of a file in Finder (macOS only).
  * Body: { path: string }
  */
 router.post('/reveal', (req, res) => {
   const filePath = req.body && req.body.path;
   if (!filePath || typeof filePath !== 'string') {
     return res.status(400).json(buildError(E.UNKNOWN_ERROR, 'path is required'));
-  }
-  if (!filePath.endsWith('.lrc')) {
-    return res.status(400).json(buildError(E.UNKNOWN_ERROR, 'Only .lrc files can be revealed'));
   }
   if (!fs.existsSync(filePath)) {
     return res.status(404).json(buildError(E.TFT_NOT_FOUND, 'File not found'));
