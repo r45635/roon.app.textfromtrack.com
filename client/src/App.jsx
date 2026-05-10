@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+import HeroCard from './components/HeroCard.jsx';
 import RoonStatus from './components/RoonStatus.jsx';
-import NowPlaying from './components/NowPlaying.jsx';
 import ZoneSelector from './components/ZoneSelector.jsx';
 import SearchPanel from './components/SearchPanel.jsx';
-import LocalMatch from './components/LocalMatch.jsx';
-import TftPanel from './components/TftPanel.jsx';
 import JobHistory from './components/JobHistory.jsx';
 import LibrarySettings from './components/LibrarySettings.jsx';
 
@@ -238,72 +236,107 @@ export default function App() {
 
   return (
     <div className="app">
-      <header className="app-header">
-        <div className="app-header-inner">
-          <div className="header-brand">
-            <span className="header-icon">🎵</span>
-            <div>
-              <h1>{t('app.title')}</h1>
-              <p className="header-subtitle">{t('app.subtitle')}</p>
+      {/* ── Topbar ──────────────────────────────────────────────────────────── */}
+      <header className="tft-topbar">
+        <div className="tft-topbar-brand">
+          <span className="tft-mark">
+            <span className="b">[</span><span className="t">T</span><span className="b">]</span>
+          </span>
+          <div className="tft-topbar-wordmark">
+            <span className="tft-topbar-name">extFromTrack</span>
+            <span className="tft-topbar-sub">roon companion</span>
+          </div>
+        </div>
+
+        <div className="tft-topbar-right">
+          {roonStatus && (
+            <div className="tft-roon-strip">
+              <span className={`roon-dot${roonStatus.connected ? '' : ' offline'}`} />
+              <span className="tft-mono" style={{ fontSize: 12, color: 'var(--tft-ink-3)' }}>
+                {roonStatus.core_name || 'Roon'}
+                {zones.length > 0 ? ` · ${zones.length} zone${zones.length !== 1 ? 's' : ''}` : ''}
+              </span>
             </div>
-          </div>
+          )}
+
+          {tftAccount?.credit_balance != null && (
+            <div className="tft-credit-pill">
+              <span className="credit-dot" />
+              <span className="tft-mono" style={{ fontSize: 12 }}>
+                {tftAccount.credit_available ?? tftAccount.credit_balance} credits
+              </span>
+            </div>
+          )}
+
           <div className="lang-switcher">
-            <button
-              className={`lang-btn ${currentLang === 'en' ? 'lang-btn-active' : ''}`}
-              onClick={() => i18n.changeLanguage('en')}
-            >
-              {t('nav.lang_en')}
-            </button>
-            <button
-              className={`lang-btn ${currentLang === 'fr' ? 'lang-btn-active' : ''}`}
-              onClick={() => i18n.changeLanguage('fr')}
-            >
-              {t('nav.lang_fr')}
-            </button>
+            {['en', 'fr'].map(lang => (
+              <button
+                key={lang}
+                className={`lang-btn${currentLang === lang ? ' lang-btn-active' : ''}`}
+                onClick={() => i18n.changeLanguage(lang)}
+              >
+                {lang.toUpperCase()}
+              </button>
+            ))}
           </div>
+
+          {tftAccount?.email && (
+            <div className="tft-avatar">{tftAccount.email[0].toUpperCase()}</div>
+          )}
         </div>
       </header>
 
-      <main className="app-main">
-        <div className="col-left">
-          <RoonStatus data={roonStatus} />
-          <ZoneSelector
-            zones={zones}
-            activeZoneId={nowPlaying?.zone_id}
-            onSelect={handleSelectZone}
-            onTransfer={handleTransfer}
-            onGroup={handleGroup}
-            onUngroup={handleUngroup}
-          />
-          <NowPlaying
-            data={nowPlaying}
-            onRefresh={fetchNowPlaying}
+      {/* ── 3-column main ───────────────────────────────────────────────────── */}
+      <main className="tft-main">
+
+        {/* Left rail: Zones + Library */}
+        <aside className="tft-rail-left">
+          <div className="tft-card">
+            <div className="tft-card-head">
+              <span className="tft-eyebrow">{t('section.zones', 'Zones')}</span>
+            </div>
+            <ZoneSelector
+              zones={zones}
+              activeZoneId={nowPlaying?.zone_id}
+              onSelect={handleSelectZone}
+              onTransfer={handleTransfer}
+              onGroup={handleGroup}
+              onUngroup={handleUngroup}
+            />
+          </div>
+          <div className="tft-card" style={{ marginTop: 16 }}>
+            <div className="tft-card-head">
+              <span className="tft-eyebrow">{t('section.library', 'Library')}</span>
+            </div>
+            <LibrarySettings onRescanStarted={handleRescanStarted} />
+          </div>
+        </aside>
+
+        {/* Hero column: merged NowPlaying + LocalMatch + Generate + JobHistory */}
+        <div className="tft-hero-col">
+          <HeroCard
+            nowPlaying={nowPlaying}
+            matchData={matchData}
+            tftAccount={tftAccount}
             onControl={handleControl}
             onVolume={handleVolumeChange}
             onMute={handleMute}
             onSeek={handleSeek}
             onSettings={handleSettings}
-          />
-          <LocalMatch
-            data={matchData}
-            indexStatus={indexStatus}
-            onScan={handleScan}
-            onConfirm={setConfirmedPath}
-            confirmedPath={confirmedPath}
-          />
-          <LibrarySettings onRescanStarted={handleRescanStarted} />
-        </div>
-
-        <div className="col-right">
-          <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} />
-          <TftPanel
-            tftAccount={tftAccount}
-            matchData={matchData}
-            nowPlaying={nowPlaying}
             onGenerated={handleGenerated}
           />
-          <JobHistory jobs={jobs} onJobRetried={handleJobRetried} />
+          <div style={{ marginTop: 24 }}>
+            <JobHistory jobs={jobs} onJobRetried={handleJobRetried} />
+          </div>
         </div>
+
+        {/* Right rail: Search + Roon Status */}
+        <aside className="tft-rail-right">
+          <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} />
+          <div style={{ marginTop: 16 }}>
+            <RoonStatus data={roonStatus} />
+          </div>
+        </aside>
       </main>
     </div>
   );
