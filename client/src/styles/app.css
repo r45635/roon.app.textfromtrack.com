@@ -131,40 +131,32 @@ body {
 .lang-btn:hover { background: var(--tft-paper-2); color: var(--tft-ink-2); }
 .lang-btn-active { background: var(--tft-ink); color: var(--tft-paper); border-color: var(--tft-ink); }
 
-/* ── Main 3-col grid ─────────────────────────────────────────────────────────── */
+/* ── Main single-column layout ───────────────────────────────────────────────── */
 .tft-main {
   flex: 1;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
   padding: 24px 32px 60px;
-  max-width: 1440px;
+  max-width: 960px;
   margin: 0 auto;
   width: 100%;
-  align-items: start;
-  grid-template-columns: minmax(0, 1fr) 380px;
-  grid-template-areas: "hero right";
 }
 
 @media (min-width: 768px) and (max-width: 1279px) {
-  .tft-main {
-    grid-template-columns: 1fr;
-    grid-template-areas: "hero";
-    padding: 20px 24px 60px;
-  }
+  .tft-main { padding: 20px 24px 60px; }
   .tft-topbar { padding: 0 24px; }
   .tft-roon-strip { display: none; }
-  .tft-rail-right { display: none; }
 }
 
 @media (max-width: 767px) {
-  .tft-main { padding: 16px 16px 100px; grid-template-columns: 1fr; grid-template-areas: "hero"; }
+  .tft-main { padding: 16px 16px 100px; }
   .tft-topbar { padding: 0 16px; height: 48px; }
   .tft-roon-strip, .tft-credit-pill, .tft-avatar { display: none; }
-  .tft-rail-right { display: none; }
 }
 
-.tft-hero-col   { grid-area: hero;    display: flex; flex-direction: column; gap: 20px; }
-.tft-rail-right { grid-area: right;   display: flex; flex-direction: column; gap: 16px; }
+.tft-hero-col   { display: flex; flex-direction: column; gap: 20px; }
+.tft-rail-right { display: flex; flex-direction: column; gap: 16px; }
 
 /* ── Zone bar (above hero card) ──────────────────────────────────────────────── */
 .tft-zone-bar {
@@ -417,6 +409,35 @@ body {
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
 }
 .tft-match-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+
+/* Alternatives collapsible */
+.tft-match-alts { margin-top: 10px; }
+.tft-alts-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: none; border: none; cursor: pointer; padding: 0;
+  font-size: 12px; color: var(--tft-ink-3); font-family: var(--tft-display);
+  transition: color 0.1s;
+}
+.tft-alts-toggle:hover { color: var(--tft-ink-1); }
+.tft-alts-chevron { font-size: 9px; }
+.tft-alts-override-badge {
+  margin-left: 4px; font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+  color: var(--tft-amber-ink); background: var(--tft-amber-soft);
+  padding: 1px 6px; border-radius: 4px;
+}
+.tft-alts-list {
+  list-style: none; margin: 6px 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.tft-alt-item {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 6px 8px; border-radius: 6px; cursor: pointer;
+  border: 1px solid transparent; transition: background 0.1s;
+}
+.tft-alt-item:hover { background: var(--tft-paper-3, #e8e5df); }
+.tft-alt-item.selected { background: var(--tft-signal-soft); border-color: var(--tft-signal); }
+.tft-alt-name { font-size: 12px; color: var(--tft-ink-1); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tft-alt-path { font-family: var(--tft-mono); font-size: 10px; color: var(--tft-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
 
 /* Generate strip */
 .tft-generate-strip {

@@ -85,25 +85,39 @@ router.post('/generate-current', async (req, res) => {
     return res.status(400).json(buildError(E.TFT_TOKEN_MISSING, 'TFT_TOKEN is not configured'));
   }
 
-  // 3. Match current track to local file
+  // 3. Match current track to local file (or use manually confirmed path)
   const index = scanner.loadIndex();
-  const matchResult = matcher.match(nowPlaying, index.tracks);
+  const confirmedPath = req.body && typeof req.body.confirmed_path === 'string'
+    ? req.body.confirmed_path.trim()
+    : null;
 
-  if (!matchResult.matched) {
-    return res.status(404).json(buildError(E.NO_LOCAL_MATCH, 'No local file found matching the current track'));
+  let track;
+  if (confirmedPath) {
+    // User manually selected an alternative candidate — find it in the index
+    const confirmedTrack = index.tracks.find(t => t.path === confirmedPath);
+    if (!confirmedTrack) {
+      return res.status(404).json(buildError(E.NO_LOCAL_MATCH, 'Confirmed path not found in library index'));
+    }
+    track = confirmedTrack;
+  } else {
+    const matchResult = matcher.match(nowPlaying, index.tracks);
+
+    if (!matchResult.matched) {
+      return res.status(404).json(buildError(E.NO_LOCAL_MATCH, 'No local file found matching the current track'));
+    }
+
+    if (matchResult.confidence === 'low') {
+      return res.status(422).json(
+        buildError(
+          E.LOW_CONFIDENCE_MATCH,
+          'Match confidence is too low — please confirm the correct file manually',
+          { match: matchResult }
+        )
+      );
+    }
+
+    track = matchResult.track;
   }
-
-  if (matchResult.confidence === 'low') {
-    return res.status(422).json(
-      buildError(
-        E.LOW_CONFIDENCE_MATCH,
-        'Match confidence is too low — please confirm the correct file manually',
-        { match: matchResult }
-      )
-    );
-  }
-
-  const track = matchResult.track;
 
   // 4. Check lyrics status — bypassed when the caller forces a re-transcription
   const force = !!(req.body && req.body.force);

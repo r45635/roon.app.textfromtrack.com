@@ -357,15 +357,9 @@ export default function App() {
             onSettings={handleSettings}
             onGenerated={handleGenerated}
           />
-          <div style={{ marginTop: 24 }}>
-            <JobHistory jobs={jobs} onJobRetried={handleJobRetried} />
-          </div>
-        </div>
-
-        {/* Right rail: Search */}
-        <aside className="tft-rail-right">
           <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} />
-        </aside>
+          <JobHistory jobs={jobs} onJobRetried={handleJobRetried} />
+        </div>
       </main>
     </div>
   );

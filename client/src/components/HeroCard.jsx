@@ -67,9 +67,18 @@ export default function HeroCard({
   const [isGenerating, setIsGenerating] = useState(false);
   const [activeJob, setActiveJob] = useState(null);
   const [genError, setGenError] = useState(null);
+  const [altOpen, setAltOpen] = useState(false);
+  const [confirmedPath, setConfirmedPath] = useState(null);
   const pollingRef = useRef(null);
 
   useEffect(() => () => clearInterval(pollingRef.current), []);
+
+  // Reset alternative selection when track changes
+  const trackKey = nowPlaying?.now_playing?.one_line?.line1 ?? nowPlaying?.zone_id;
+  useEffect(() => {
+    setAltOpen(false);
+    setConfirmedPath(null);
+  }, [trackKey]);
 
   useEffect(() => {
     fetch('/api/music/config')
@@ -108,7 +117,7 @@ export default function HeroCard({
       const res = await fetch('/api/tft/generate-current', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ embed, backup, save_beside: saveBeside, force }),
+        body: JSON.stringify({ embed, backup, save_beside: saveBeside, force, ...(confirmedPath ? { confirmed_path: confirmedPath } : {}) }),
       });
       const data = await res.json();
       if (!data.success) { setGenError(data.error); setIsGenerating(false); return; }
@@ -138,6 +147,8 @@ export default function HeroCard({
   const lyricsStatus = match?.track?.lyrics_status;
   const lyricsExist = lyricsStatus === 'HAS_LRC_FILE' || lyricsStatus === 'HAS_EMBEDDED_LYRICS';
   const matchedPath = match?.track?.path || '';
+  const effectivePath = confirmedPath || matchedPath;
+  const effectiveFilename = effectivePath ? effectivePath.split('/').pop() : '';
   const matchedExt = matchedPath ? matchedPath.slice(matchedPath.lastIndexOf('.')).toLowerCase() : '';
   const embedSupported = !matchedPath || EMBED_SUPPORTED_EXTS.includes(matchedExt);
 
@@ -318,15 +329,55 @@ export default function HeroCard({
                 <span className="tft-pill tft-mono">{match.score} pts</span>
               )}
             </div>
-            <div className="tft-match-filename">{matchedPath.split('/').pop()}</div>
-            <div className="tft-match-path">{matchedPath}</div>
-            {match.score_detail && (
+            <div className="tft-match-filename">{effectiveFilename}</div>
+            <div className="tft-match-path">{effectivePath}</div>
+            {!confirmedPath && match.score_detail && (
               <div className="tft-match-chips">
                 {scoreFields.map(({ key, label }) => {
                   const d = match.score_detail[key];
                   if (!d) return null;
                   return <ScoreChip key={key} label={label} points={d.points} max={d.max} />;
                 })}
+              </div>
+            )}
+            {match.alternatives?.length > 0 && (
+              <div className="tft-match-alts">
+                <button
+                  className="tft-alts-toggle"
+                  onClick={() => setAltOpen(o => !o)}
+                  aria-expanded={altOpen}
+                >
+                  <span className="tft-alts-chevron">{altOpen ? '▼' : '▶'}</span>
+                  {match.alternatives.length} {t('match.other_candidates', 'autre(s) candidat(s)')}
+                  {confirmedPath && confirmedPath !== matchedPath && (
+                    <span className="tft-alts-override-badge">{t('match.override_active', 'sélection manuelle')}</span>
+                  )}
+                </button>
+                {altOpen && (
+                  <ul className="tft-alts-list">
+                    <li
+                      className={`tft-alt-item${!confirmedPath || confirmedPath === matchedPath ? ' selected' : ''}`}
+                      onClick={() => setConfirmedPath(null)}
+                    >
+                      <ConfidencePill confidence={match.confidence} />
+                      <span className="tft-mono" style={{ fontSize: 11 }}>{match.score} pts</span>
+                      <span className="tft-alt-name">{match.track?.title} — {match.track?.artist}</span>
+                      <span className="tft-alt-path">{matchedPath.split('/').pop()}</span>
+                    </li>
+                    {match.alternatives.map(alt => (
+                      <li
+                        key={alt.path}
+                        className={`tft-alt-item${confirmedPath === alt.path ? ' selected' : ''}`}
+                        onClick={() => setConfirmedPath(alt.path)}
+                      >
+                        <ConfidencePill confidence={alt.confidence} />
+                        <span className="tft-mono" style={{ fontSize: 11 }}>{alt.score} pts</span>
+                        <span className="tft-alt-name">{alt.title} — {alt.artist}</span>
+                        <span className="tft-alt-path">{alt.path.split('/').pop()}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
           </div>

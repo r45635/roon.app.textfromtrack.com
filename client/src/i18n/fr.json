@@ -84,7 +84,9 @@
     "detail_artist": "Artiste",
     "detail_album": "Album",
     "detail_duration": "Durée",
-    "detail_filename": "Fichier"
+    "detail_filename": "Fichier",
+    "other_candidates": "autre(s) candidat(s)",
+    "override_active": "sélection manuelle"
   },
   "lyrics_status": {
     "HAS_LRC_FILE": "Fichier LRC présent",
