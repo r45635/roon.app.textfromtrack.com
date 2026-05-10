@@ -56,6 +56,7 @@ export default function HeroCard({
   onSeek,
   onSettings,
   onGenerated,
+  onSearch,
 }) {
   const { t } = useTranslation();
 
@@ -221,8 +222,14 @@ export default function HeroCard({
 
           <h1 className="tft-np-title">{np?.title || t('now_playing.no_track')}</h1>
           {np && <>
-            <div className="tft-np-artist">{np.artist}</div>
-            <div className="tft-np-album tft-mono">{np.album}{np.year ? ` · ${np.year}` : ''}</div>
+            {onSearch && np.artist
+              ? <button type="button" className="tft-np-artist tft-search-link" onClick={() => onSearch(np.artist)}>{np.artist}</button>
+              : <div className="tft-np-artist">{np?.artist}</div>
+            }
+            {onSearch && np.album
+              ? <button type="button" className="tft-np-album tft-mono tft-search-link" onClick={() => onSearch(np.album)}>{np.album}{np.year ? ` · ${np.year}` : ''}</button>
+              : <div className="tft-np-album tft-mono">{np?.album}{np?.year ? ` · ${np.year}` : ''}</div>
+            }
           </>}
 
           {/* Progress */}

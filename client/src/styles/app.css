@@ -360,6 +360,9 @@ body {
 }
 .tft-np-artist { font-size: 15px; color: var(--tft-ink-2); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tft-np-album { font-family: var(--tft-mono); font-size: 11px; color: var(--tft-ink-3); margin-top: 2px; }
+/* Clickable artist/album links */
+button.tft-search-link { background: none; border: none; cursor: pointer; padding: 0; text-align: left; font: inherit; color: inherit; display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-underline-offset: 2px; }
 
 /* Progress */
 .tft-progress-wrap { margin-top: 16px; }

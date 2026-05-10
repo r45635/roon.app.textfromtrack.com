@@ -23,6 +23,7 @@ export default function App() {
   const [confirmedPath, setConfirmedPath] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [roonModalOpen, setRoonModalOpen] = useState(false);
+  const [searchTrigger, setSearchTrigger] = useState(null);
 
   // ── API helpers ──────────────────────────────────────────────────────────────
 
@@ -356,8 +357,9 @@ export default function App() {
             onSeek={handleSeek}
             onSettings={handleSettings}
             onGenerated={handleGenerated}
+            onSearch={(q) => setSearchTrigger({ q, ts: Date.now() })}
           />
-          <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} />
+          <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} externalQuery={searchTrigger} />
           <JobHistory jobs={jobs} onJobRetried={handleJobRetried} />
         </div>
       </main>

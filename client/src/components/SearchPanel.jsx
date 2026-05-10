@@ -2,7 +2,7 @@ import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 
-export default function SearchPanel({ zones = [], activeZoneId = null }) {
+export default function SearchPanel({ zones = [], activeZoneId = null, externalQuery = null }) {
   const { t } = useTranslation();
   const [collapsed, toggleCollapsed] = useCollapsed('search');
   const [query, setQuery] = useState('');
@@ -59,10 +59,7 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
   }
 
   // ── initial search ────────────────────────────────────────────────────────
-  async function handleSearch(e) {
-    e.preventDefault();
-    const q = query.trim();
-    if (!q) return;
+  async function runSearch(q) {
     setLoading(true); setError(null); setPlayFeedback({}); setActionMenu(null);
     try {
       const result = await browseLoad({ hierarchy: 'search', pop_all: true, input: q });
@@ -74,6 +71,25 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
       setLoading(false);
     }
   }
+
+  async function handleSearch(e) {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    runSearch(q);
+  }
+
+  // ── external search trigger (from HeroCard artist/album click) ────────────
+  useEffect(() => {
+    if (!externalQuery) return;
+    const q = (externalQuery.q || '').trim();
+    if (!q) return;
+    if (collapsed) toggleCollapsed();
+    setQuery(q);
+    setNavStack([]); setError(null); setPlayFeedback({}); setActionMenu(null);
+    runSearch(q);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalQuery]);
 
   // ── drill into a list item ────────────────────────────────────────────────
   async function handleDrillIn(item) {
