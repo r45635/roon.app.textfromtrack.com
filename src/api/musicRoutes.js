@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('path');
+const fs = require('fs');
 const { Router } = require('express');
 const config = require('../config');
 const logger = require('../utils/logger');
@@ -177,6 +179,78 @@ router.get('/match-current', async (req, res) => {
     success: true,
     now_playing: nowPlaying,
     match: result,
+  });
+});
+
+/**
+ * GET /api/music/file-tags?path=<encoded>
+ * Reads the full audio tags and format info from a local file on demand.
+ * The path is validated against configured music_roots to prevent traversal.
+ */
+router.get('/file-tags', async (req, res) => {
+  const rawPath = req.query.path;
+  if (!rawPath) {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'path query parameter is required'));
+  }
+
+  // Resolve and validate against known music roots (path traversal guard)
+  const resolved = path.resolve(rawPath);
+  const userSettingsMod = require('../storage/userSettings');
+  const settings = userSettingsMod.get();
+  const roots = settings.music_roots.length ? settings.music_roots : config.musicRoots;
+  const underAllowedRoot = roots.some(root => resolved.startsWith(path.resolve(root) + path.sep) ||
+    resolved.startsWith(path.resolve(root)));
+  if (!underAllowedRoot) {
+    return res.status(403).json(buildError('FORBIDDEN', 'Path is not under a configured music root'));
+  }
+
+  if (!fs.existsSync(resolved)) {
+    return res.status(404).json(buildError('FILE_NOT_FOUND', 'File not found'));
+  }
+
+  let metadata;
+  try {
+    const { parseFile } = await import('music-metadata');
+    metadata = await parseFile(resolved, { skipCovers: true, duration: true });
+  } catch (err) {
+    logger.warn({ path: resolved, err: err.message }, 'file-tags: metadata parse failed');
+    return res.status(500).json(buildError('PARSE_ERROR', `Cannot read metadata: ${err.message}`));
+  }
+
+  const { common, format } = metadata;
+
+  res.json({
+    success: true,
+    tags: {
+      title:               common.title        || null,
+      artist:              common.artist        || null,
+      artists:             common.artists       || [],
+      albumartist:         common.albumartist   || null,
+      album:               common.album         || null,
+      year:                common.year          || null,
+      genre:               (common.genre && common.genre.join(', ')) || null,
+      comment:             (common.comment && common.comment[0]?.text) || null,
+      track_no:            (common.track && common.track.no)    || null,
+      track_total:         (common.track && common.track.of)    || null,
+      disc_no:             (common.disk  && common.disk.no)     || null,
+      disc_total:          (common.disk  && common.disk.of)     || null,
+      isrc:                common.isrc          || null,
+      musicbrainz_trackid: (common.musicbrainz && common.musicbrainz.trackId) || null,
+      musicbrainz_albumid: (common.musicbrainz && common.musicbrainz.albumId) || null,
+      label:               (common.label && common.label[0]) || null,
+      composer:            (common.composer && common.composer[0]) || null,
+    },
+    format: {
+      codec:           format.codec           || null,
+      container:       format.container       || null,
+      bitrate_kbps:    format.bitrate         ? Math.round(format.bitrate / 1000) : null,
+      sample_rate_hz:  format.sampleRate      || null,
+      channels:        format.numberOfChannels || null,
+      bits_per_sample: format.bitsPerSample   || null,
+      lossless:        format.lossless        ?? null,
+      duration_seconds: format.duration       ? Math.round(format.duration * 10) / 10 : null,
+      tag_types:       format.tagTypes        || [],
+    },
   });
 });
 
