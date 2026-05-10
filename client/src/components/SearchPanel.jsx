@@ -14,6 +14,8 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
   const [playZoneId, setPlayZoneId] = useState(activeZoneId || '');
   const [playing, setPlaying] = useState(null);
   const [playFeedback, setPlayFeedback] = useState({});
+  // actionMenu: { itemKey, actions: [{title, item_key}] } | null
+  const [actionMenu, setActionMenu] = useState(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -59,7 +61,7 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
     e.preventDefault();
     const q = query.trim();
     if (!q) return;
-    setLoading(true); setError(null); setPlayFeedback({});
+    setLoading(true); setError(null); setPlayFeedback({}); setActionMenu(null);
     try {
       const result = await browseLoad({ hierarchy: 'search', pop_all: true, input: q });
       if (!result) { setNavStack([]); return; }
@@ -73,7 +75,7 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
 
   // ── drill into a list item ────────────────────────────────────────────────
   async function handleDrillIn(item) {
-    setLoading(true); setError(null); setPlayFeedback({});
+    setLoading(true); setError(null); setPlayFeedback({}); setActionMenu(null);
     try {
       const result = await browseLoad({
         hierarchy: 'search',
@@ -95,37 +97,81 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
   // ── breadcrumb click — uses snapshot, no API call ─────────────────────────
   function handleBreadcrumb(idx) {
     setNavStack(prev => prev.slice(0, idx + 1));
-    setError(null); setPlayFeedback({});
+    setError(null); setPlayFeedback({}); setActionMenu(null);
   }
 
   function handleClear() {
-    setQuery(''); setNavStack([]); setError(null); setPlayFeedback({});
+    setQuery(''); setNavStack([]); setError(null); setPlayFeedback({}); setActionMenu(null);
     inputRef.current?.focus();
   }
 
-  // ── play item on zone ─────────────────────────────────────────────────────
-  async function handlePlay(item) {
-    const itemKey = item.item_key;
+  // ── load Roon actions for an action_list item and show menu ──────────────
+  async function handleActionsLoad(item) {
+    // Toggle off if already open for this item
+    if (actionMenu?.itemKey === item.item_key) { setActionMenu(null); return; }
     if (!playZoneId) {
-      setPlayFeedback(prev => ({ ...prev, [itemKey]: { ok: false, message: t('search.play_pick_zone') } }));
+      setPlayFeedback(prev => ({ ...prev, [item.item_key]: { ok: false, message: t('search.play_pick_zone') } }));
       return;
     }
-    setPlaying(itemKey);
-    setPlayFeedback(prev => ({ ...prev, [itemKey]: null }));
+    setPlaying(item.item_key);
+    setPlayFeedback(prev => ({ ...prev, [item.item_key]: null }));
+    setActionMenu(null);
     try {
-      const res = await fetch('/api/roon/play-item', {
+      // First drill: into the action_list item
+      const result = await browseLoad({
+        hierarchy: 'search',
+        item_key: item.item_key,
+        zone_or_output_id: playZoneId,
+      });
+      if (!result) { setPlaying(null); return; }
+
+      let actions = result.items.filter(a => a.hint === 'action' && a.item_key);
+
+      // Second drill: some items (e.g. tracks from a flat search) wrap actions
+      // in a nested action_list — drill one more level to reach the real actions.
+      if (actions.length === 0) {
+        const nested = result.items.find(a => a.hint === 'action_list' && a.item_key);
+        if (nested) {
+          const r2 = await browseLoad({
+            hierarchy: 'search',
+            item_key: nested.item_key,
+            zone_or_output_id: playZoneId,
+          });
+          if (r2) actions = r2.items.filter(a => a.hint === 'action' && a.item_key);
+        }
+      }
+
+      if (actions.length === 0) {
+        setPlayFeedback(prev => ({ ...prev, [item.item_key]: { ok: false, message: t('search.no_actions', 'Aucune action disponible') } }));
+      } else {
+        setActionMenu({ itemKey: item.item_key, actions });
+      }
+    } catch (err) {
+      setPlayFeedback(prev => ({ ...prev, [item.item_key]: { ok: false, message: err.message } }));
+    } finally {
+      setPlaying(null);
+    }
+  }
+
+  // ── execute a specific Roon action ────────────────────────────────────────
+  async function executeAction(parentKey, actionItem) {
+    setActionMenu(null);
+    setPlaying(parentKey);
+    try {
+      const res = await fetch('/api/roon/browse', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ item_key: itemKey, hierarchy: 'search', zone_or_output_id: playZoneId }),
+        body: JSON.stringify({
+          hierarchy: 'search',
+          item_key: actionItem.item_key,
+          zone_or_output_id: playZoneId,
+        }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data?.error?.message || `HTTP ${res.status}`);
-      setPlayFeedback(prev => ({
-        ...prev,
-        [itemKey]: { ok: true, message: data.action_used || t('search.play_started') },
-      }));
+      setPlayFeedback(prev => ({ ...prev, [parentKey]: { ok: true, message: actionItem.title } }));
     } catch (err) {
-      setPlayFeedback(prev => ({ ...prev, [itemKey]: { ok: false, message: err.message } }));
+      setPlayFeedback(prev => ({ ...prev, [parentKey]: { ok: false, message: err.message } }));
     } finally {
       setPlaying(null);
     }
@@ -256,17 +302,33 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
                         >›</button>
                       )}
 
-                      {/* Play button for action_list / action items */}
+                      {/* Action menu button for action_list / action items */}
                       {isPlayable && (
-                        <button
-                          type="button"
-                          className="btn btn-xs btn-primary search-play-btn"
-                          onClick={() => handlePlay(item)}
-                          disabled={playing === item.item_key || !playZoneId}
-                          title={!playZoneId ? t('search.play_pick_zone') : t('search.play_now_tip')}
-                        >
-                          {playing === item.item_key ? '…' : '▶'}
-                        </button>
+                        <div className="search-play-wrap">
+                          <button
+                            type="button"
+                            className={`btn btn-xs search-play-btn${actionMenu?.itemKey === item.item_key ? ' btn-ghost' : ' btn-primary'}`}
+                            onClick={() => handleActionsLoad(item)}
+                            disabled={playing === item.item_key || !playZoneId}
+                            title={!playZoneId ? t('search.play_pick_zone') : t('search.play_now_tip')}
+                          >
+                            {playing === item.item_key ? '…' : '▶'}
+                          </button>
+                          {actionMenu?.itemKey === item.item_key && (
+                            <div className="search-action-menu">
+                              {actionMenu.actions.map(action => (
+                                <button
+                                  key={action.item_key}
+                                  type="button"
+                                  className="search-action-item"
+                                  onClick={() => executeAction(item.item_key, action)}
+                                >
+                                  {action.title}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </li>
                   );

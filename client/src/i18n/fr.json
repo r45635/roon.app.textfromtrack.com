@@ -205,7 +205,8 @@
     "play_now_tip": "Lancer ce morceau sur la zone Roon sélectionnée",
     "play_pick_zone": "Sélectionnez une zone d'abord",
     "play_started": "Lancé",
-    "drill_in": "Ouvrir"
+    "drill_in": "Ouvrir",
+    "no_actions": "Aucune action disponible"
   },
   "settings": {
     "library_title": "Paramètres bibliothèque",
