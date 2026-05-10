@@ -199,7 +199,7 @@ export default function JobHistory({ jobs, onJobRetried }) {
               <th className="th-track">{t('jobs.track')}</th>
               <th className="th-artist">{t('jobs.artist')}</th>
               <th className="th-status">{t('jobs.status')}</th>
-              <th className="th-lrc">{t('jobs.lrc_path')}</th>
+              <th className="th-lrc">{t('jobs.track_path')}</th>
               <th className="th-credits">{t('jobs.credits')}</th>
             </tr>
           </thead>
@@ -265,52 +265,20 @@ export default function JobHistory({ jobs, onJobRetried }) {
                   </div>
                 </td>
                 <td className="td-path">
-                  {/* LRC column */}
-                  {job.lrc_file ? (
-                    <span className="lrc-reveal-wrap" title={job.lrc_file}>
+                  {/* Track path column */}
+                  {job.source_file ? (
+                    <span className="lrc-reveal-wrap" title={job.source_file}>
                       <button
                         className="lrc-folder-btn"
                         title={t('jobs.reveal')}
-                        onClick={() => revealInFinder(job.lrc_file)}
+                        onClick={() => revealInFinder(job.source_file)}
                         aria-label={t('jobs.reveal')}
                       >
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                         </svg>
                       </button>
-                      <span className="path small">{job.lrc_file.split('/').pop()}</span>
-                      {job.has_timestamps === false && (
-                        <button
-                          className="retry-btn"
-                          title={t('jobs.retry_tip')}
-                          disabled={retrying === job.job_id}
-                          onClick={() => handleRetry(job.job_id)}
-                        >
-                          {retrying === job.job_id ? '…' : '🔄'}
-                        </button>
-                      )}
-                      {job.status === 'done'
-                        && !job.lyrics_embedded
-                        && !locallyEmbedded.has(job.job_id)
-                        && EMBED_SUPPORTED_EXTS.includes(getExt(job.source_file)) && (
-                          <button
-                            className="retry-btn"
-                            title={t('jobs.embed_tip')}
-                            disabled={embedding === job.job_id}
-                            onClick={() => handleEmbed(job.job_id)}
-                          >
-                            {embedding === job.job_id ? '…' : '🏷️'}
-                          </button>
-                        )}
-                      {embedError[job.job_id] && (
-                        <span className="text-error small embed-error-msg" title={embedError[job.job_id]}>
-                          ⚠ {embedError[job.job_id]}
-                        </span>
-                      )}
-                    </span>
-                  ) : job.error ? (
-                    <span className="text-error small" title={job.error.message}>
-                      [{job.error.code}]
+                      <span className="path small">{job.source_file.split('/').pop()}</span>
                     </span>
                   ) : (
                     t('common.na')

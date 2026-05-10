@@ -342,20 +342,6 @@ export default function HeroCard({
               {t('tft.force_retranscribe')}
             </label>
           )}
-          <label className="tft-toggle-label">
-            <input type="checkbox" checked={saveBeside} disabled={isGenerating} onChange={e => setSaveBeside(e.target.checked)} />
-            {t('tft.save_lrc_beside_source')}
-          </label>
-          <label className="tft-toggle-label">
-            <input type="checkbox" checked={embed && embedSupported} disabled={isGenerating || !embedSupported} onChange={e => setEmbed(e.target.checked)} />
-            {t('tft.embed_lyrics')}
-          </label>
-          {embed && embedSupported && (
-            <label className="tft-toggle-label">
-              <input type="checkbox" checked={backup} disabled={isGenerating} onChange={e => setBackup(e.target.checked)} />
-              {t('tft.backup_before_embed')}
-            </label>
-          )}
         </div>
 
         <button
