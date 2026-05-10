@@ -122,7 +122,11 @@
     "duration": "Durée",
     "tag_types": "Types de tags",
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "tab_art": "Vignette",
+    "tab_lyrics": "Paroles",
+    "no_cover": "Aucune vignette",
+    "no_lyrics": "Inexistant"
   },
   "lyrics_status": {
     "HAS_LRC_FILE": "Fichier LRC présent",

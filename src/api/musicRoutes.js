@@ -227,7 +227,7 @@ router.get('/file-cover', async (req, res) => {
       mime: p.format,
       type: p.type || 'Cover (front)',
       description: p.description || null,
-      data: `data:${p.format};base64,${p.data.toString('base64')}`,
+      data: `data:${p.format};base64,${Buffer.from(p.data).toString('base64')}`,
     }));
     res.json({ success: true, covers });
   } catch (err) {

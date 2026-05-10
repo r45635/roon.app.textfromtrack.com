@@ -122,7 +122,11 @@
     "duration": "Duration",
     "tag_types": "Tag Types",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "tab_art": "Artwork",
+    "tab_lyrics": "Lyrics",
+    "no_cover": "No artwork",
+    "no_lyrics": "None"
   },
   "lyrics_status": {
     "HAS_LRC_FILE": "Has LRC file",
