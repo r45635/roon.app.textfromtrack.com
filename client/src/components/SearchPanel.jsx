@@ -225,10 +225,10 @@ export default function SearchPanel({ zones = [], activeZoneId = null }) {
                       ].filter(Boolean).join(' ')}
                       onClick={isDrillable ? () => handleDrillIn(item) : undefined}
                     >
-                      {item.image_key && !isHeader && (
+                      {(item.image_key || listMeta?.image_key) && !isHeader && (
                         <img
                           className="search-item-thumb"
-                          src={`/api/roon/image/${item.image_key}?w=40&h=40`}
+                          src={`/api/roon/image/${item.image_key || listMeta.image_key}?w=40&h=40`}
                           alt=""
                           loading="lazy"
                         />
