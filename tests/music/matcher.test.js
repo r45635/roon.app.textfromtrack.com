@@ -34,7 +34,7 @@ function track(overrides = {}) {
 describe('scoreTrack', () => {
   test('perfect match scores 50+30+20+20 = 120', () => {
     // filename 'track.flac' does not contain the title 'money'
-    assert.equal(scoreTrack(roon(), track()), 120);
+    assert.equal(scoreTrack(roon(), track()).total, 120);
   });
 
   test('title match alone gives 50', () => {
@@ -42,7 +42,7 @@ describe('scoreTrack', () => {
       roon({ artist: '', album: '', duration_seconds: null }),
       track({ artist: '', album: '', duration_seconds: null })
     );
-    assert.equal(score, 50);
+    assert.equal(score.total, 50);
   });
 
   test('artist match alone gives 30', () => {
@@ -50,7 +50,7 @@ describe('scoreTrack', () => {
       roon({ title: '', album: '', duration_seconds: null }),
       track({ title: '', album: '', duration_seconds: null })
     );
-    assert.equal(score, 30);
+    assert.equal(score.total, 30);
   });
 
   test('album match alone gives 20', () => {
@@ -58,7 +58,7 @@ describe('scoreTrack', () => {
       roon({ title: '', artist: '', duration_seconds: null }),
       track({ title: '', artist: '', duration_seconds: null })
     );
-    assert.equal(score, 20);
+    assert.equal(score.total, 20);
   });
 
   test('duration delta < 2 s adds 20', () => {
@@ -66,7 +66,7 @@ describe('scoreTrack', () => {
       roon({ title: '', artist: '', album: '', duration_seconds: 100 }),
       track({ title: '', artist: '', album: '', duration_seconds: 101 })
     );
-    assert.equal(score, 20);
+    assert.equal(score.total, 20);
   });
 
   test('duration delta 2-5 s adds 10', () => {
@@ -74,7 +74,7 @@ describe('scoreTrack', () => {
       roon({ title: '', artist: '', album: '', duration_seconds: 100 }),
       track({ title: '', artist: '', album: '', duration_seconds: 104 })
     );
-    assert.equal(score, 10);
+    assert.equal(score.total, 10);
   });
 
   test('duration delta >= 5 s adds nothing', () => {
@@ -82,7 +82,7 @@ describe('scoreTrack', () => {
       roon({ title: '', artist: '', album: '', duration_seconds: 100 }),
       track({ title: '', artist: '', album: '', duration_seconds: 110 })
     );
-    assert.equal(score, 0);
+    assert.equal(score.total, 0);
   });
 
   test('filename containing title adds 10', () => {
@@ -91,7 +91,7 @@ describe('scoreTrack', () => {
       track({ title: '', artist: '', album: '', duration_seconds: null, filename: '06 Money.flac' })
     );
     // normalizeStr('06 Money.flac') = '06 money flac' which includes 'money'
-    assert.equal(score, 10);
+    assert.equal(score.total, 10);
   });
 
   test('no match gives 0', () => {
@@ -99,7 +99,7 @@ describe('scoreTrack', () => {
       roon({ title: 'Comfortably Numb', artist: 'Pink Floyd', album: 'The Wall', duration_seconds: 382 }),
       track({ title: 'Bohemian Rhapsody', artist: 'Queen', album: 'A Night at the Opera', duration_seconds: 354 })
     );
-    assert.equal(score, 0);
+    assert.equal(score.total, 0);
   });
 
   test('accent-insensitive match: Björk vs Bjork scores full artist match', () => {
@@ -108,7 +108,7 @@ describe('scoreTrack', () => {
       track({ title: 'Joga', artist: 'Bjork', album: '', duration_seconds: null })
     );
     // title match 50 + artist match 30 = 80
-    assert.equal(score, 80);
+    assert.equal(score.total, 80);
   });
 });
 
