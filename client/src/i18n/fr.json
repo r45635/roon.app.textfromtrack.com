@@ -264,7 +264,25 @@
     "no_actions": "Aucune action disponible",
     "hide_empty": "Masquer les résultats vides"
   },
+  "tft_key": {
+    "title": "Clé API TextFromTrack",
+    "status": "Clé API",
+    "configured": "✓ Configurée",
+    "not_configured": "✗ Non renseignée",
+    "env_lock": "(définie via .env — non modifiable ici)",
+    "hint": "Obtenez votre clé sur",
+    "placeholder_enter": "Collez votre clé API ici…",
+    "placeholder_replace": "Entrez une nouvelle clé pour remplacer…",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saved_ok": "Clé enregistrée — le panneau TFT va se rafraîchir",
+    "clear": "Supprimer la clé",
+    "clear_title": "Effacer la clé API enregistrée"
+  },
   "settings": {
+    "files_mgmt_title": "Gestion des fichiers",
     "app_prefs_title": "Préférences de l'application",
     "volume_step": "Pas de volume (± par clic)",
     "volume_step_hint": "De combien d'unités le volume change à chaque clic + / − dans le lecteur.",

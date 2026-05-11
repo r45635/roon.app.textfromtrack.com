@@ -1,0 +1,265 @@
+'use strict';
+
+/**
+ * Electron main process — TextFromTrack Roon Companion
+ *
+ * Tray-only design: Electron acts as the daemon that:
+ *  1. Spawns the Express server (src/server.js) as a child process.
+ *  2. Puts an icon in the menu bar (macOS) or system tray (Windows / Linux).
+ *  3. Opens the web UI in the user's default browser on request.
+ *
+ * No BrowserWindow is created — the UI lives at http://localhost:3888.
+ */
+
+const { app, Tray, Menu, shell, nativeImage, dialog } = require('electron');
+const path = require('path');
+const { spawn } = require('child_process');
+const http = require('http');
+
+// ── Keep the app alive in the tray when all windows are closed ──────────────
+app.on('window-all-closed', (e) => {
+  // Prevent default quit — we live in the tray.
+});
+
+// ── Single-instance lock ─────────────────────────────────────────────────────
+const gotLock = app.requestSingleInstanceLock();
+if (!gotLock) {
+  app.quit();
+  process.exit(0);
+}
+
+// ── Constants ────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3888;
+const UI_URL = `http://localhost:${PORT}`;
+const POLL_ROON_MS = 5_000;
+const POLL_CREDITS_MS = 60_000;
+
+// ── State ────────────────────────────────────────────────────────────────────
+let tray = null;
+let serverProcess = null;
+let serverReady = false;
+
+let roonLabel = 'Roon: connecting…';
+let creditsLabel = null; // null = TFT token not configured yet
+
+// ── Resolve server entry point ───────────────────────────────────────────────
+// In a packaged asar build, __dirname is inside the asar. The server is
+// extracted to app.getAppPath() via electron-builder's extraResources/asar.
+// In dev mode, __dirname is <project root>/electron/.
+const serverEntry = app.isPackaged
+  ? path.join(process.resourcesPath, 'app', 'src', 'server.js')
+  : path.join(__dirname, '..', 'src', 'server.js');
+
+// ── Start the Express server as a child process ──────────────────────────────
+function startServer() {
+  const nodeExec = process.execPath.includes('electron')
+    ? process.execPath.replace(/electron(\.exe)?$/, 'node$1')
+    : process.execPath;
+
+  // In packaged builds Electron bundles Node; we use its own execPath.
+  const exec = app.isPackaged ? process.execPath : process.execPath;
+  const args = app.isPackaged ? ['--runAsNode', serverEntry] : [serverEntry];
+
+  serverProcess = spawn(exec, args, {
+    env: {
+      ...process.env,
+      // Point writable storage at the OS user-data folder so it survives updates.
+      TFT_USER_DATA_DIR: app.getPath('userData'),
+      PORT: String(PORT),
+      ELECTRON_RUN_AS_NODE: '1',
+    },
+    stdio: 'inherit',
+  });
+
+  serverProcess.on('error', (err) => {
+    dialog.showErrorBox('TextFromTrack — Server error', err.message);
+  });
+
+  serverProcess.on('exit', (code) => {
+    if (code !== 0 && code !== null) {
+      dialog.showErrorBox(
+        'TextFromTrack — Server crashed',
+        `The background server exited with code ${code}. Please restart the app.`
+      );
+    }
+    serverProcess = null;
+    serverReady = false;
+    rebuildMenu();
+  });
+
+  // Poll until the HTTP server is actually accepting connections.
+  waitForServer();
+}
+
+function waitForServer(attempt = 0) {
+  http.get(`${UI_URL}/api/roon/status`, (res) => {
+    res.resume();
+    serverReady = true;
+    rebuildMenu();
+    startPolling();
+  }).on('error', () => {
+    if (attempt < 30) {
+      setTimeout(() => waitForServer(attempt + 1), 500);
+    }
+  });
+}
+
+// ── Polling: Roon status ─────────────────────────────────────────────────────
+function pollRoon() {
+  if (!serverReady) return;
+  http.get(`${UI_URL}/api/roon/status`, (res) => {
+    let data = '';
+    res.on('data', (c) => (data += c));
+    res.on('end', () => {
+      try {
+        const json = JSON.parse(data);
+        if (json.connected && json.core_name) {
+          roonLabel = `Roon: ${json.core_name}`;
+        } else if (json.state === 'discovered') {
+          roonLabel = 'Roon: authorizing…';
+        } else {
+          roonLabel = 'Roon: not connected';
+        }
+      } catch {
+        roonLabel = 'Roon: —';
+      }
+      rebuildMenu();
+    });
+  }).on('error', () => {
+    roonLabel = 'Roon: server offline';
+    rebuildMenu();
+  });
+}
+
+// ── Polling: TFT credits ─────────────────────────────────────────────────────
+function pollCredits() {
+  if (!serverReady) return;
+  http.get(`${UI_URL}/api/tft/me`, (res) => {
+    let data = '';
+    res.on('data', (c) => (data += c));
+    res.on('end', () => {
+      try {
+        const json = JSON.parse(data);
+        if (json.token_configured === false) {
+          creditsLabel = null; // hide the credits item if no token
+        } else if (json.account?.credit_balance != null) {
+          creditsLabel = `Credits: ${json.account.credit_balance}`;
+        } else {
+          creditsLabel = null;
+        }
+      } catch {
+        creditsLabel = null;
+      }
+      rebuildMenu();
+    });
+  }).on('error', () => {
+    creditsLabel = null;
+  });
+}
+
+let roonTimer = null;
+let creditsTimer = null;
+
+function startPolling() {
+  pollRoon();
+  pollCredits();
+  if (!roonTimer) roonTimer = setInterval(pollRoon, POLL_ROON_MS);
+  if (!creditsTimer) creditsTimer = setInterval(pollCredits, POLL_CREDITS_MS);
+}
+
+// ── Tray menu ────────────────────────────────────────────────────────────────
+function rebuildMenu() {
+  if (!tray) return;
+
+  const items = [];
+
+  // Status items (non-clickable)
+  items.push({
+    label: serverReady ? roonLabel : 'Starting…',
+    enabled: false,
+  });
+
+  if (creditsLabel) {
+    items.push({ label: creditsLabel, enabled: false });
+  }
+
+  items.push({ type: 'separator' });
+
+  // Open UI
+  items.push({
+    label: 'Open UI',
+    click: () => {
+      if (serverReady) {
+        shell.openExternal(UI_URL);
+      } else {
+        dialog.showMessageBox({ message: 'The server is still starting. Please wait a moment.' });
+      }
+    },
+  });
+
+  items.push({ type: 'separator' });
+
+  // Start at login toggle
+  const loginItem = app.getLoginItemSettings();
+  items.push({
+    label: 'Start at Login',
+    type: 'checkbox',
+    checked: loginItem.openAtLogin,
+    click: (menuItem) => {
+      app.setLoginItemSettings({ openAtLogin: menuItem.checked });
+    },
+  });
+
+  items.push({ type: 'separator' });
+
+  items.push({
+    label: 'Quit TextFromTrack',
+    click: () => {
+      if (serverProcess) serverProcess.kill();
+      app.exit(0);
+    },
+  });
+
+  tray.setContextMenu(Menu.buildFromTemplate(items));
+}
+
+// ── Tray icon ─────────────────────────────────────────────────────────────────
+function createTray() {
+  const iconName = process.platform === 'darwin' ? 'tray-icon-mac.png' : 'tray-icon.png';
+  const iconPath = path.join(__dirname, 'assets', iconName);
+
+  let icon;
+  try {
+    icon = nativeImage.createFromPath(iconPath);
+    // macOS: template image follows system dark/light mode automatically
+    if (process.platform === 'darwin') icon.setTemplateImage(true);
+  } catch {
+    icon = nativeImage.createEmpty();
+  }
+
+  tray = new Tray(icon);
+  tray.setToolTip('TextFromTrack Roon Companion');
+
+  // Left-click on macOS shows context menu; double-click on Windows opens UI.
+  tray.on('double-click', () => {
+    if (serverReady) shell.openExternal(UI_URL);
+  });
+
+  rebuildMenu(); // initial state: Starting…
+}
+
+// ── App lifecycle ─────────────────────────────────────────────────────────────
+app.whenReady().then(() => {
+  // Hide from the macOS Dock — this is a tray-only app.
+  if (app.dock) app.dock.hide();
+
+  createTray();
+  startServer();
+});
+
+app.on('before-quit', () => {
+  if (serverProcess) {
+    serverProcess.kill();
+    serverProcess = null;
+  }
+});

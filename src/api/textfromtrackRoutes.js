@@ -20,12 +20,55 @@ const userSettings = require('../storage/userSettings');
 const router = Router();
 
 /**
+ * Returns the effective TFT token: env var takes priority, then user settings.
+ * This allows the token to be set via the UI without restarting the server.
+ */
+function getEffectiveToken() {
+  if (config.tftToken) return config.tftToken;
+  const settings = userSettings.get();
+  return settings.tft_token || '';
+}
+
+/**
+ * GET /api/tft/config
+ * Returns whether an API token is currently configured (never returns the raw token).
+ */
+router.get('/config', (req, res) => {
+  const token = getEffectiveToken();
+  res.json({
+    success: true,
+    token_configured: !!token,
+    token_source: config.tftToken ? 'env' : (token ? 'user_settings' : 'none'),
+  });
+});
+
+/**
+ * POST /api/tft/config
+ * Save or clear the TFT API token in user settings.
+ * Body: { tft_token: string }
+ * The raw token is NEVER returned in any response.
+ */
+router.post('/config', (req, res) => {
+  const { tft_token } = req.body || {};
+  if (typeof tft_token !== 'string') {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'tft_token must be a string'));
+  }
+  const cleaned = tft_token.trim();
+  userSettings.set({ tft_token: cleaned });
+  logger.info({ token_set: !!cleaned }, 'TFT token updated via UI');
+  res.json({
+    success: true,
+    token_configured: !!cleaned,
+  });
+});
+
+/**
  * GET /api/tft/me
  * Check API token and return safe account information.
  * The raw token is NEVER returned to the frontend.
  */
 router.get('/me', async (req, res) => {
-  if (!config.tftToken) {
+  if (!getEffectiveToken()) {
     return res.json({
       success: true,
       token_configured: false,
@@ -81,7 +124,7 @@ router.post('/generate-current', async (req, res) => {
   }
 
   // 2. Token check
-  if (!config.tftToken) {
+  if (!getEffectiveToken()) {
     return res.status(400).json(buildError(E.TFT_TOKEN_MISSING, 'TFT_TOKEN is not configured'));
   }
 

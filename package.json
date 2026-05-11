@@ -2,12 +2,16 @@
   "name": "roon-companion-textfromtrack",
   "version": "0.1.0",
   "description": "Local companion app connecting Roon to TextFromTrack for automated LRC generation",
-  "main": "src/server.js",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "node src/server.js",
     "start": "node src/server.js",
     "build": "cd client && npm run build",
     "dev:client": "cd client && npm run dev",
+    "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3888 && electron .\"",
+    "electron:build": "npm run build && electron-builder --mac --win --linux",
+    "electron:build:mac": "npm run build && electron-builder --mac",
+    "electron:publish": "electron-builder --publish always",
     "scan": "node scripts/scan-library.js",
     "test:tft": "node scripts/test-tft-api.js",
     "test": "node --test --test-reporter spec tests/utils/normalize.test.js tests/utils/fileUtils.test.js tests/music/matcher.test.js tests/music/lyricsDetector.test.js tests/music/lyricsEmbedder.test.js tests/music/flacTagger.test.js tests/music/pathMapper.test.js tests/textfromtrack/jobStore.test.js",
@@ -28,7 +32,11 @@
     "pino-pretty": "^11.2.1"
   },
   "devDependencies": {
-    "eslint": "^9.3.0"
+    "concurrently": "^8.2.2",
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3",
+    "eslint": "^9.3.0",
+    "wait-on": "^7.2.0"
   },
   "engines": {
     "node": ">=20.0.0"

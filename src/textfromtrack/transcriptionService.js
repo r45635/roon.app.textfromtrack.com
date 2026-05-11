@@ -11,6 +11,13 @@ const lyricsDetector = require('../music/lyricsDetector');
 const lyricsEmbedder = require('../music/lyricsEmbedder');
 const scanner = require('../music/scanner');
 const lrcCache = require('../utils/lrcCache');
+const userSettings = require('../storage/userSettings');
+
+function getEffectiveToken() {
+  if (config.tftToken) return config.tftToken;
+  const settings = userSettings.get();
+  return settings.tft_token || '';
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -257,7 +264,7 @@ async function startTranscription(sourcePath, trackMeta = {}, options = {}) {
     ? { enabled: true, onConflict: options.backup.onConflict || 'keep' }
     : { enabled: false };
   // 1. Validate token
-  if (!config.tftToken) {
+  if (!getEffectiveToken()) {
     throw new AppError(E.TFT_TOKEN_MISSING, 'TFT_TOKEN is not configured');
   }
 

@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TextFromTrack Roon Companion — User Guide</title>
+  <style>
+    :root {
+      /* TFT Design Tokens */
+      --tft-ink:         #15161A;
+      --tft-ink-2:       #2C2E36;
+      --tft-ink-3:       #555861;
+      --tft-mute:        #8A8C92;
+      --tft-line:        #E6E2D8;
+      --tft-line-2:      #EFEBE0;
+      --tft-paper:       #F6F4EE;
+      --tft-paper-2:     #FBF9F3;
+      --tft-card:        #FFFFFF;
+      --tft-signal:      oklch(70% 0.18 145);
+      --tft-signal-ink:  oklch(38% 0.10 145);
+      --tft-signal-soft: oklch(94% 0.06 145);
+      --tft-amber:       oklch(78% 0.14 75);
+      --tft-amber-ink:   oklch(42% 0.12 75);
+      --tft-amber-soft:  oklch(95% 0.05 75);
+      --tft-error:       oklch(58% 0.22 25);
+      --tft-error-ink:   oklch(38% 0.15 25);
+      --tft-error-soft:  oklch(95% 0.05 25);
+      --tft-info:        oklch(65% 0.14 220);
+      --tft-info-ink:    oklch(42% 0.10 220);
+      --tft-info-soft:   oklch(94% 0.04 220);
+      /* Aliases for component rules below */
+      --bg:          var(--tft-paper);
+      --bg-card:     var(--tft-card);
+      --bg-card-2:   var(--tft-paper-2);
+      --ink:         var(--tft-ink);
+      --ink-2:       var(--tft-ink-3);
+      --ink-3:       var(--tft-mute);
+      --line:        var(--tft-line);
+      --brand:       var(--tft-signal);
+      --brand-2:     var(--tft-signal-ink);
+      --brand-glow:  var(--tft-signal-soft);
+      --accent-green:  var(--tft-signal);
+      --accent-yellow: var(--tft-amber);
+      --accent-red:    var(--tft-error);
+      --radius:    12px;
+      --radius-sm: 8px;
+      --nav-width: 240px;
+      --shadow:      0 4px 24px rgba(21,22,26,0.08);
+      --shadow-card: 0 1px 0 rgba(21,22,26,0.04), 0 4px 16px rgba(21,22,26,0.06);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+
+    a { color: var(--tft-signal-ink); text-decoration: underline; text-underline-offset: 2px; }
+    a:hover { color: var(--tft-ink); }
+
+    /* ── SIDEBAR NAV ── */
+    .nav-sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--nav-width);
+      height: 100vh;
+      background: var(--bg-card);
+      border-right: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      z-index: 100;
+    }
+
+    .nav-logo {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .nav-logo-mark {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .nav-logo-mark svg { flex-shrink: 0; }
+
+    .nav-wordmark {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--tft-ink);
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .nav-sub {
+      display: block;
+      font-size: 11px;
+      color: var(--tft-ink-3);
+      line-height: 1.4;
+    }
+
+    .nav-guide-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--tft-mute);
+    }
+
+    .nav-list {
+      list-style: none;
+      padding: 12px 0;
+      flex: 1;
+    }
+
+    .nav-list li a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      color: var(--ink-2);
+      text-decoration: none;
+      font-size: 13px;
+      border-left: 2px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .nav-list li a:hover,
+    .nav-list li a.active {
+      color: var(--tft-signal-ink);
+      background: var(--tft-signal-soft);
+      border-left-color: var(--tft-signal);
+    }
+
+    .nav-list li a .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--ink-3);
+      padding: 16px 20px 4px;
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      margin-left: var(--nav-width);
+      min-height: 100vh;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 72px 60px 56px;
+      background: var(--tft-paper);
+      border-bottom: 1px solid var(--tft-line);
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -100px; right: -60px;
+      width: 420px; height: 420px;
+      background: radial-gradient(circle, var(--tft-signal-soft) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-content { position: relative; z-index: 1; max-width: 620px; }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: var(--tft-signal-soft);
+      border: 1px solid var(--tft-signal);
+      border-radius: 100px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--tft-signal-ink);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: 44px;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--tft-ink);
+      margin-bottom: 16px;
+    }
+
+    .hero p {
+      font-size: 17px;
+      color: var(--tft-ink-3);
+      line-height: 1.65;
+      margin-bottom: 32px;
+    }
+
+    .hero-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .hero-tag {
+      padding: 5px 12px;
+      background: var(--tft-card);
+      border: 1px solid var(--tft-line);
+      border-radius: 100px;
+      font-size: 12px;
+      color: var(--tft-ink-3);
+    }
+
+    .hero-screenshot {
+      margin-top: 48px;
+      position: relative;
+      max-width: 560px;
+    }
+
+    .hero-screenshot img {
+      width: 100%;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow), 0 0 0 1px var(--tft-line);
+      display: block;
+    }
+
+    /* ── CONTENT SECTIONS ── */
+    .content {
+      max-width: 900px;
+      padding: 0 60px 100px;
+    }
+
+    .section {
+      padding-top: 80px;
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .section-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .section-icon.purple { background: var(--tft-info-soft); }
+    .section-icon.green  { background: var(--tft-signal-soft); }
+    .section-icon.yellow { background: var(--tft-amber-soft); }
+    .section-icon.blue   { background: var(--tft-info-soft); }
+    .section-icon.red    { background: var(--tft-error-soft); }
+    .section-icon.teal   { background: var(--tft-signal-soft); }
+
+    .section-title { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--tft-ink); }
+
+    .section-subtitle {
+      font-size: 15px;
+      color: var(--ink-2);
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+
+    /* ── SCREENSHOT DISPLAY ── */
+    .screenshot-container {
+      margin: 28px 0;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-card), 0 0 0 1px var(--line);
+      background: var(--bg-card);
+      position: relative;
+    }
+
+    .screenshot-container::before {
+      content: '';
+      display: block;
+      height: 28px;
+      background: var(--bg-card-2);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .screenshot-container::after {
+      content: '● ● ●';
+      position: absolute;
+      top: 8px; left: 12px;
+      font-size: 9px;
+      color: var(--tft-line);
+      letter-spacing: 4px;
+    }
+
+    .screenshot-container img {
+      width: 100%;
+      display: block;
+      cursor: zoom-in;
+    }
+
+    /* Equal-height images in three-col grids */
+    .three-col .screenshot-container img {
+      height: 320px;
+      object-fit: contain;
+      background: var(--bg-card-2);
+    }
+
+    .screenshot-caption {
+      font-size: 12px;
+      color: var(--ink-3);
+      text-align: center;
+      margin-top: 10px;
+      font-style: italic;
+    }
+
+    /* ── LIGHTBOX ── */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: rgba(0,0,0,.75);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 10px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.5);
+      object-fit: contain;
+      animation: lb-in .18s ease;
+    }
+    @keyframes lb-in {
+      from { opacity: 0; transform: scale(.94); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    /* ── FEATURE GRID ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 28px 0;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 20px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .feature-card:hover {
+      border-color: var(--tft-signal);
+      box-shadow: 0 0 0 3px var(--tft-signal-soft);
+    }
+
+    .feature-card .icon { font-size: 22px; margin-bottom: 10px; }
+    .feature-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; color: var(--tft-ink); }
+    .feature-card p { font-size: 13px; color: var(--ink-2); line-height: 1.55; }
+
+    /* ── INFO BLOCKS ── */
+    .info-block {
+      display: flex;
+      gap: 14px;
+      padding: 16px 20px;
+      border-radius: var(--radius-sm);
+      margin: 20px 0;
+      align-items: flex-start;
+    }
+
+    .info-block.tip     { background: var(--tft-signal-soft); border-left: 3px solid var(--tft-signal); }
+    .info-block.warning { background: var(--tft-amber-soft);  border-left: 3px solid var(--tft-amber); }
+    .info-block.info    { background: var(--tft-info-soft);   border-left: 3px solid var(--tft-info); }
+    .info-block.danger  { background: var(--tft-error-soft);  border-left: 3px solid var(--tft-error); }
+
+    .info-block-icon { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+    .info-block-text { font-size: 13px; color: var(--tft-ink-3); line-height: 1.6; }
+    .info-block-text strong { color: var(--tft-ink); }
+    .info-block-text a { color: var(--tft-signal-ink); }
+
+    /* ── STEP LIST ── */
+    .step-list {
+      list-style: none;
+      margin: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step-list li {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .step-number {
+      width: 26px; height: 26px;
+      background: var(--tft-ink);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+      color: var(--tft-paper);
+    }
+
+    .step-content { font-size: 14px; color: var(--ink-2); line-height: 1.6; padding-top: 3px; }
+    .step-content strong { color: var(--ink); }
+
+    /* ── BADGE ROW ── */
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0;
+    }
+
+    .badge {
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge.green  { background: var(--tft-signal-soft); color: var(--tft-signal-ink); border: 1px solid var(--tft-signal); }
+    .badge.yellow { background: var(--tft-amber-soft);  color: var(--tft-amber-ink);  border: 1px solid var(--tft-amber); }
+    .badge.red    { background: var(--tft-error-soft);  color: var(--tft-error-ink);  border: 1px solid var(--tft-error); }
+    .badge.purple { background: var(--tft-info-soft);   color: var(--tft-info-ink);   border: 1px solid var(--tft-info); }
+    .badge.gray   { background: var(--tft-paper-2);     color: var(--tft-mute);       border: 1px solid var(--tft-line); }
+
+    /* ── TWO-COL ── */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    /* ── THREE-COL ── */
+    .three-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    /* ── DIVIDER ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--line), transparent);
+      margin: 60px 0 0;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-left: var(--nav-width);
+      padding: 28px 60px;
+      border-top: 1px solid var(--tft-line);
+      background: var(--tft-card);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--tft-mute);
+      font-size: 12px;
+    }
+
+    .footer a { color: var(--tft-signal-ink); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--tft-line); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--tft-line-2); }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .nav-sidebar { transform: translateX(-100%); }
+      .main, .footer { margin-left: 0; }
+      .hero, .content { padding-left: 24px; padding-right: 24px; }
+      .hero h1 { font-size: 32px; }
+      .two-col { grid-template-columns: 1fr; }
+      .three-col { grid-template-columns: 1fr; }
+    }
+
+    /* ── INLINE CODE ── */
+    code {
+      font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+      font-size: 12px;
+      background: var(--tft-signal-soft);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--tft-signal-ink);
+    }
+
+    /* ── LINK SMALL ── */
+    .link-small {
+      color: var(--tft-signal-ink);
+      text-decoration: underline;
+      text-decoration-color: var(--tft-signal);
+      text-underline-offset: 2px;
+    }
+    .link-small:hover { color: var(--tft-ink); }
+
+    /* ── TABLE ── */
+    .doc-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13px;
+    }
+
+    .doc-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--tft-paper-2);
+      color: var(--tft-ink-3);
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid var(--tft-line);
+    }
+
+    .doc-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--tft-line);
+      color: var(--tft-ink-3);
+      vertical-align: top;
+    }
+
+    .doc-table td:first-child { color: var(--tft-ink); font-weight: 500; }
+    .doc-table tr:last-child td { border-bottom: none; }
+
+    /* ── MOBILE PREVIEW ── */
+    .mobile-preview {
+      display: flex;
+      justify-content: center;
+      margin: 28px 0;
+    }
+
+    .mobile-frame {
+      width: 260px;
+      position: relative;
+    }
+
+    .mobile-frame img {
+      width: 100%;
+      border-radius: 28px;
+      box-shadow: var(--shadow), 0 0 0 10px var(--tft-card), 0 0 0 11px var(--tft-line);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<nav class="nav-sidebar">
+  <div class="nav-logo">
+    <div class="nav-logo-mark">
+      <svg width="28" height="28" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="0" y="0" width="96" height="96" rx="22" style="fill: var(--tft-ink)"/>
+        <path d="M22 26 L22 70 L30 70" style="stroke: var(--tft-paper); fill: none" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter"/>
+        <path d="M74 26 L74 70 L66 70 M74 26 L66 26" style="stroke: var(--tft-paper); fill: none" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter"/>
+        <rect x="36" y="34" width="24" height="6" style="fill: var(--tft-paper)"/>
+        <rect x="45" y="34" width="6" height="20" style="fill: var(--tft-paper)"/>
+        <g style="fill: var(--tft-signal)">
+          <rect x="36" y="58" width="3" height="6"/>
+          <rect x="42" y="54" width="3" height="14"/>
+          <rect x="48" y="50" width="3" height="22"/>
+          <rect x="54" y="56" width="3" height="10"/>
+          <rect x="60" y="60" width="3" height="3"/>
+        </g>
+      </svg>
+      <div>
+        <span class="nav-wordmark">TextFromTrack</span>
+        <span class="nav-sub">Roon Companion</span>
+      </div>
+    </div>
+    <p class="nav-guide-label">User Guide</p>
+  </div>
+  <ul class="nav-list">
+    <li><a href="#overview" class="active"><span class="nav-icon">🏠</span> Overview</a></li>
+    <li><a href="#getting-started"><span class="nav-icon">🚀</span> Getting Started</a></li>
+    <div class="nav-section-label">Interface</div>
+    <li><a href="#topbar"><span class="nav-icon">🔝</span> Top Bar</a></li>
+    <li><a href="#zone-selector"><span class="nav-icon">🔊</span> Zone Selector</a></li>
+    <li><a href="#now-playing"><span class="nav-icon">🎵</span> Now Playing</a></li>
+    <li><a href="#local-match"><span class="nav-icon">📂</span> Local File Match</a></li>
+    <li><a href="#file-tags"><span class="nav-icon">🏷️</span> File Tags</a></li>
+    <div class="nav-section-label">Lyrics</div>
+    <li><a href="#lyrics-actions"><span class="nav-icon">🎤</span> Lyrics Actions</a></li>
+    <li><a href="#search"><span class="nav-icon">🔍</span> Search</a></li>
+    <li><a href="#job-history"><span class="nav-icon">📋</span> Job History</a></li>
+    <div class="nav-section-label">Settings</div>
+    <li><a href="#configuration"><span class="nav-icon">⚙️</span> Configuration</a></li>
+    <li><a href="#mobile"><span class="nav-icon">📱</span> Mobile</a></li>
+  </ul>
+</nav>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+  <!-- HERO -->
+  <section class="hero" id="overview">
+    <div class="hero-content">
+      <div class="hero-badge">📖 User Guide</div>
+      <h1>TextFromTrack<br>Roon Companion</h1>
+      <p>A web companion for Roon that automatically finds, generates, and embeds synced LRC lyrics into your local music library — right from your browser.</p>
+      <div class="hero-tags">
+        <span class="hero-tag">🎵 Roon Extension</span>
+        <span class="hero-tag">🎤 AI Lyrics Generation</span>
+        <span class="hero-tag">🔍 LRCLIB Search</span>
+        <span class="hero-tag">🏷️ Tag Editor</span>
+        <span class="hero-tag">📱 Mobile-Friendly</span>
+      </div>
+    </div>
+    <div class="hero-screenshot">
+      <img src="screenshots/full.png" alt="TextFromTrack full interface screenshot" loading="lazy">
+    </div>
+  </section>
+
+  <div class="content">
+
+    <!-- GETTING STARTED -->
+    <section class="section" id="getting-started">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon purple">🚀</div>
+        <h2 class="section-title">Getting Started</h2>
+      </div>
+      <p class="section-subtitle">TextFromTrack works as a Roon Extension. Open the web app in any browser — your Roon player state syncs in real time.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">1️⃣</div>
+          <h3>Enable the Extension</h3>
+          <p>In Roon, go to <strong>Settings → Extensions</strong> and enable <strong>"TextFromTrack Roon Companion"</strong>.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">2️⃣</div>
+          <h3>Open the Web App</h3>
+          <p>Navigate to the server's URL in your browser. The interface loads instantly with your current Roon playback state.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">3️⃣</div>
+          <h3>Scan Your Library</h3>
+          <p>Go to <strong>Configuration → Library Settings</strong>, add your music root path(s), and click <strong>Save &amp; Rescan</strong>.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">4️⃣</div>
+          <h3>Generate Lyrics</h3>
+          <p>Play a track in Roon — the companion auto-matches the file and lets you fetch or generate synced lyrics in one click.</p>
+        </div>
+      </div>
+
+      <div class="info-block tip">
+        <span class="info-block-icon">💡</span>
+        <div class="info-block-text"><strong>Tip:</strong> Keep the web app open in a browser tab while you listen. Every time Roon switches tracks, the companion updates automatically.</div>
+      </div>
+    </section>
+
+    <!-- TOP BAR -->
+    <section class="section" id="topbar">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon blue">🔝</div>
+        <h2 class="section-title">Top Bar</h2>
+      </div>
+      <p class="section-subtitle">The top bar gives you quick access to language switching, Roon connection status, and the configuration panel.</p>
+
+      <div class="screenshot-container">
+        <img src="../dev-tools/tmp/E79109BB-97E8-4CC4-B1CD-2EDF4D9793B3_4_5005_c.jpeg" alt="Top bar screenshot" loading="lazy">
+      </div>
+      <p class="screenshot-caption">The top bar — always visible across the full width of the app</p>
+
+      <table class="doc-table">
+        <thead><tr><th>Element</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>🎵 Logo / Title</td><td>App name — clicking does nothing, it's purely decorative.</td></tr>
+          <tr><td>EN / FR toggle</td><td>Switch the entire interface between English and French. The preference is saved in your browser.</td></tr>
+          <tr><td>Roon status dot</td><td>Green = connected and authorized. Red = disconnected or not yet authorized. Hover for details.</td></tr>
+          <tr><td>⚙️ Configuration</td><td>Opens the configuration drawer on the right side of the screen.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ZONE SELECTOR -->
+    <section class="section" id="zone-selector">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon green">🔊</div>
+        <h2 class="section-title">Zone Selector</h2>
+      </div>
+      <p class="section-subtitle">The zone bar sits just below the top bar. It shows the currently active Roon zone and lets you switch between zones or transfer playback.</p>
+
+      <div class="screenshot-container">
+        <img src="screenshots/zones.jpg" alt="Zone selector dropdown" loading="lazy">
+      </div>
+      <p class="screenshot-caption">Zone dropdown — all Roon zones with currently playing track shown</p>
+
+      <ul class="step-list">
+        <li>
+          <div class="step-number">➜</div>
+          <div class="step-content"><strong>Click the zone button</strong> (e.g. "📻 Denon 150 R + 1") to open the zone picker.</div>
+        </li>
+        <li>
+          <div class="step-number">➜</div>
+          <div class="step-content"><strong>Select a zone</strong> to switch the companion's focus to that output. All now-playing data updates immediately.</div>
+        </li>
+        <li>
+          <div class="step-number">➜</div>
+          <div class="step-content"><strong>⇄ Transfer</strong> button moves playback from the current zone to the selected zone.</div>
+        </li>
+        <li>
+          <div class="step-number">➜</div>
+          <div class="step-content"><strong>⊕ Group</strong> button adds another zone into the current group for synchronized playback.</div>
+        </li>
+      </ul>
+
+      <div class="info-block info">
+        <span class="info-block-icon">ℹ️</span>
+        <div class="info-block-text">Each zone independently tracks its own playback. Switching zones in the companion <em>does not</em> change what's playing in Roon — it only changes which zone the companion is <em>watching</em>.</div>
+      </div>
+    </section>
+
+    <!-- NOW PLAYING -->
+    <section class="section" id="now-playing">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon purple">🎵</div>
+        <h2 class="section-title">Now Playing</h2>
+      </div>
+      <p class="section-subtitle">The main card shows everything about the track currently playing on your selected Roon zone — artwork, controls, progress, and volume.</p>
+
+      <div class="screenshot-container">
+        <img src="../dev-tools/tmp/D609609D-3B21-4102-AEE4-BE77BBCFFF10_4_5005_c.jpeg" alt="Now Playing card" loading="lazy">
+      </div>
+      <p class="screenshot-caption">Now Playing — album art, track info, transport controls, and volume</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">🖼️</div>
+          <h3>Album Artwork</h3>
+          <p>Displayed from Roon's own artwork store. Updates as soon as the track changes.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">⏯️</div>
+          <h3>Transport Controls</h3>
+          <p>Previous, Play/Pause, Next. Clicking these sends commands directly to your Roon zone.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🔁</div>
+          <h3>Repeat &amp; Shuffle</h3>
+          <p>Toggle repeat (off → all → one) and shuffle modes. State mirrors Roon in real time.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🔊</div>
+          <h3>Volume Control</h3>
+          <p>+/− buttons adjust volume by the configured step (default 3). Shows master volume with a visual bar.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">⏱️</div>
+          <h3>Progress Bar</h3>
+          <p>Scrubable progress bar. Click anywhere on the bar to seek to that position in the track.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🔗</div>
+          <h3>Artist / Album Links</h3>
+          <p>Click the artist or album name to immediately search for that artist/album in the Search panel.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- LOCAL MATCH -->
+    <section class="section" id="local-match">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon yellow">📂</div>
+        <h2 class="section-title">Local File Match</h2>
+      </div>
+      <p class="section-subtitle">When a track is playing, the companion searches your scanned music library for the corresponding local file. This is necessary before reading or writing tags.</p>
+
+      <div class="screenshot-container">
+        <img src="../dev-tools/tmp/5836F649-39AB-470E-9568-6EEE6276B743.png" alt="Local file match strip" loading="lazy">
+      </div>
+      <p class="screenshot-caption">Local File Match strip — shows matched file with confidence score badges</p>
+
+      <p class="section-subtitle">The match strip shows the matched file path, format details (bitrate, duration, size), and a row of <strong>confidence score badges</strong>:</p>
+
+      <div class="badge-row">
+        <span class="badge green">Artist 30/30</span>
+        <span class="badge green">Title 30/30</span>
+        <span class="badge yellow">Album 12/20</span>
+        <span class="badge purple">Duration ✓</span>
+        <span class="badge gray">ISRC matched</span>
+      </div>
+
+      <table class="doc-table">
+        <thead><tr><th>Badge color</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge green">Green</span></td><td>High confidence — exact or near-exact match on this field.</td></tr>
+          <tr><td><span class="badge yellow">Yellow</span></td><td>Medium confidence — partial match. Review before proceeding.</td></tr>
+          <tr><td><span class="badge red">Red</span></td><td>Low or zero confidence on this field.</td></tr>
+          <tr><td><span class="badge gray">Gray</span></td><td>Field matched by alternative method (ISRC, duration fingerprint).</td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-block warning">
+        <span class="info-block-icon">⚠️</span>
+        <div class="info-block-text"><strong>Medium confidence match:</strong> A confirmation dialog will appear before any write operation. You can also click <strong>"Alternatives"</strong> to review other candidate files and select the correct one manually.</div>
+      </div>
+
+      <div class="info-block tip">
+        <span class="info-block-icon">💡</span>
+        <div class="info-block-text"><strong>Library not scanned?</strong> Go to <strong>Configuration → Library Settings</strong>, add your music root, then click <strong>Save &amp; Rescan</strong>. The scanner indexes your files in the background.</div>
+      </div>
+    </section>
+
+    <!-- FILE TAGS -->
+    <section class="section" id="file-tags">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon teal">🏷️</div>
+        <h2 class="section-title">File Tags</h2>
+      </div>
+      <p class="section-subtitle">Once a local file is matched, the File Tags card reads and displays the audio file's embedded metadata tags — and lets you edit them.</p>
+
+      <div class="three-col">
+        <div>
+          <div class="screenshot-container">
+            <img src="screenshots/filetags-artwork.png" alt="File Tags - Artwork tab" loading="lazy">
+          </div>
+          <p class="screenshot-caption">Artwork tab — embedded cover art</p>
+        </div>
+        <div>
+          <div class="screenshot-container">
+            <img src="screenshots/filetags-lyrics.png" alt="File Tags - Lyrics tab" loading="lazy">
+          </div>
+          <p class="screenshot-caption">Lyrics tab — embedded LRC/lyrics</p>
+        </div>
+        <div>
+          <div class="screenshot-container">
+            <img src="screenshots/filetags-lyrics-sync.png" alt="File Tags - Lyrics Sync mode" loading="lazy">
+          </div>
+          <p class="screenshot-caption">Sync mode — highlights the current line as the track plays</p>
+        </div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:600;margin:24px 0 12px;">Tags Tab</h3>
+      <p style="color:var(--ink-2);font-size:14px;margin-bottom:16px;">Displays the full set of metadata tags: Title, Artist, Album Artist, Album, Year, Genre, ISRC, Composer, MusicBrainz IDs, and format info (codec, bitrate, sample rate, bit depth, channels).</p>
+
+      <h3 style="font-size:16px;font-weight:600;margin:24px 0 12px;">Artwork Tab</h3>
+      <p style="color:var(--ink-2);font-size:14px;margin-bottom:16px;">Shows the embedded album cover art, if any.</p>
+
+      <h3 style="font-size:16px;font-weight:600;margin:24px 0 12px;">Lyrics Tab</h3>
+      <p style="color:var(--ink-2);font-size:14px;margin-bottom:16px;">Shows any lyrics currently embedded in the audio file (plain text or LRC format). You can also:</p>
+
+      <ul class="step-list">
+        <li>
+          <div class="step-number">✎</div>
+          <div class="step-content"><strong>Edit lyrics</strong> — click "Edit lyrics" to manually type or paste lyrics into the file.</div>
+        </li>
+        <li>
+          <div class="step-number">🗑</div>
+          <div class="step-content"><strong>Delete lyrics</strong> — remove the embedded LYRICS tag from the file entirely.</div>
+        </li>
+      </ul>
+
+      <div class="info-block info">
+        <span class="info-block-icon">ℹ️</span>
+        <div class="info-block-text">Tag writing is supported for <code>FLAC</code> (Vorbis Comments) and <code>MP3</code> (ID3v2 tags). Other formats are read-only.</div>
+      </div>
+    </section>
+
+    <!-- LYRICS ACTIONS -->
+    <section class="section" id="lyrics-actions">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon purple">🎤</div>
+        <h2 class="section-title">Lyrics Actions</h2>
+      </div>
+      <p class="section-subtitle">Two primary actions let you fetch synced lyrics from external sources. Each saves the result as a <code>.lrc</code> sidecar file and optionally embeds it into the audio file.</p>
+
+      <div class="screenshot-container">
+        <img src="screenshots/lyrics-actions.jpg" alt="Lyrics action buttons" loading="lazy">
+      </div>
+      <p class="screenshot-caption">The two lyrics action buttons</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">🔍</div>
+          <h3>Search LRCLIB</h3>
+          <p>Searches the free, community-maintained <strong>LRCLIB</strong> database for synced lyrics. Instant and requires no account. Results appear in the LRCLIB panel below.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🤖</div>
+          <h3>Generate with TFT</h3>
+          <p>Submits the audio file to the <strong>TextFromTrack</strong> AI service for transcription. This generates synced lyrics from the audio itself — useful when no lyrics exist in the database.</p>
+        </div>
+      </div>
+
+      <div class="info-block tip">
+        <span class="info-block-icon">💡</span>
+        <div class="info-block-text"><strong>Recommended workflow:</strong> Try LRCLIB first (free, fast). If no result is found or the sync is poor, fall back to TextFromTrack AI generation (costs credits).</div>
+      </div>
+
+      <h3 style="font-size:16px;font-weight:600;margin:24px 0 12px;">Options available before generating</h3>
+      <table class="doc-table">
+        <thead><tr><th>Option</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Force re-transcribe</td><td>Deletes existing <code>.lrc</code> and re-submits even if lyrics already exist. The old LYRICS tag is renamed to LYRICS.ORG as a backup.</td></tr>
+          <tr><td>Embed [LYRICS] tag</td><td>After saving the <code>.lrc</code> file, also writes the LRC content into the audio file's <code>LYRICS</code> tag (FLAC / MP3 only).</td></tr>
+          <tr><td>Save .org backup</td><td>Before any write, creates a <code>.flac.org</code> / <code>.mp3.org</code> backup of the original file.</td></tr>
+          <tr><td>Save LRC beside source</td><td>Saves the <code>.lrc</code> sidecar next to the audio file on disk.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-size:16px;font-weight:600;margin:24px 0 12px;">LRCLIB — Contribute Back</h3>
+      <p style="color:var(--ink-2);font-size:14px;margin-bottom:16px;">If you've obtained synced lyrics for a track not yet in LRCLIB, you can contribute them back anonymously with a single button. The app performs a Proof-of-Work challenge to prevent spam.</p>
+    </section>
+
+    <!-- SEARCH -->
+    <section class="section" id="search">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon blue">🔍</div>
+        <h2 class="section-title">Search Panel</h2>
+      </div>
+      <p class="section-subtitle">The search panel lets you manually look up lyrics in the LRCLIB database by artist, track title, and album.</p>
+
+      <div class="screenshot-container">
+        <img src="../dev-tools/tmp/2E135545-CEFB-4997-8914-7B2FA53CBADC.png" alt="Search panel" loading="lazy">
+      </div>
+      <p class="screenshot-caption">Search panel — auto-populated with the current track's metadata</p>
+
+      <ul class="step-list">
+        <li>
+          <div class="step-number">1</div>
+          <div class="step-content">Fields are <strong>auto-filled</strong> from the currently playing track. You can edit them freely.</div>
+        </li>
+        <li>
+          <div class="step-number">2</div>
+          <div class="step-content">Click <strong>Search</strong> to query LRCLIB. Results appear as cards with a preview of the lyrics.</div>
+        </li>
+        <li>
+          <div class="step-number">3</div>
+          <div class="step-content">Select a result to save it as the track's lyrics. The LRC file is written and the tags card updates.</div>
+        </li>
+      </ul>
+
+      <div class="info-block info">
+        <span class="info-block-icon">ℹ️</span>
+        <div class="info-block-text">Clicking an <strong>artist or album button</strong> in the Now Playing card automatically populates the search fields with that artist or album and opens the search panel.</div>
+      </div>
+    </section>
+
+    <!-- JOB HISTORY -->
+    <section class="section" id="job-history">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon yellow">📋</div>
+        <h2 class="section-title">Job History</h2>
+      </div>
+      <p class="section-subtitle">Every TextFromTrack transcription request creates a job. The job history table tracks all past requests with their status, credit cost, and the resulting LRC file path.</p>
+
+      <div class="screenshot-container">
+        <img src="screenshots/jobs.jpg" alt="Job history table" loading="lazy">
+      </div>
+      <p class="screenshot-caption">Job history — per-job status, credits charged, and LRC file path</p>
+
+      <table class="doc-table">
+        <thead><tr><th>Column</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Date</td><td>When the job was submitted.</td></tr>
+          <tr><td>Track / Artist</td><td>The track metadata at submission time.</td></tr>
+          <tr><td>Status</td><td><span class="badge green">Done</span> <span class="badge yellow">Processing</span> <span class="badge red">Error</span> — live status updates while jobs run.</td></tr>
+          <tr><td>Credits</td><td>Number of credits deducted for this transcription.</td></tr>
+          <tr><td>LRC path</td><td>Path to the saved <code>.lrc</code> file. Includes a "Reveal in Finder" shortcut.</td></tr>
+          <tr><td>🔄 Retry</td><td>Deletes the existing LRC and re-submits the job. Useful when timestamps were unavailable (fallback model was used).</td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-block warning">
+        <span class="info-block-icon">⚠️</span>
+        <div class="info-block-text"><strong>No sync timestamps?</strong> Sometimes the AI model returns plain lyrics without timestamps. The <span class="badge yellow">No sync</span> badge appears on those jobs. Use the 🔄 Retry button to re-submit with a different model.</div>
+      </div>
+    </section>
+
+    <!-- CONFIGURATION -->
+    <section class="section" id="configuration">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon red">⚙️</div>
+        <h2 class="section-title">Configuration</h2>
+      </div>
+      <p class="section-subtitle">Click the <strong>⚙️ Configuration</strong> button in the top bar to open the settings drawer. It has two sections: App Preferences and Library Settings.</p>
+
+      <h3 style="font-size:16px;font-weight:600;margin:28px 0 12px;">TextFromTrack API Key</h3>
+      <p style="color:var(--ink-2);font-size:14px;margin-bottom:16px;">The TFT transcription feature requires a Personal Access Token (PAT). You can enter it directly in the <strong>Configuration</strong> drawer — no file editing required.</p>
+
+      <ol class="step-list" style="margin-bottom:16px;">
+        <li>
+          <div class="step-number">1</div>
+          <div class="step-content">Create a PAT at <a href="https://app.textfromtrack.com/" target="_blank" rel="noreferrer" class="link-small">app.textfromtrack.com ↗</a></div>
+        </li>
+        <li>
+          <div class="step-number">2</div>
+          <div class="step-content">Click <strong>⚙️ Configuration</strong> in the top bar, then open the <strong>TextFromTrack API Key</strong> section</div>
+        </li>
+        <li>
+          <div class="step-number">3</div>
+          <div class="step-content">Paste your key in the field and click <strong>Save</strong></div>
+        </li>
+        <li>
+          <div class="step-number">4</div>
+          <div class="step-content">The status badge turns green and the TFT panel shows your credit balance — you're ready to go</div>
+        </li>
+      </ol>
+
+      <div class="info-block tip">
+        <span class="info-block-icon">💡</span>
+        <div class="info-block-text"><strong>No account yet?</strong> Register at <a href="https://app.textfromtrack.com" target="_blank" rel="noreferrer" class="link-small">app.textfromtrack.com ↗</a>. New accounts receive free credits to get started.</div>
+      </div>
+
+      <div class="screenshot-container">
+        <img src="../dev-tools/tmp/2A491742-0749-4811-BA56-775AF01AD24D.png" alt="Configuration panel" loading="lazy" style="max-width:60%;margin:0 auto;display:block;">
+      </div>
+      <p class="screenshot-caption">Configuration drawer — App Preferences and Library Settings</p>
+
+      <h3 style="font-size:16px;font-weight:600;margin:28px 0 12px;">App Preferences</h3>
+      <table class="doc-table">
+        <thead><tr><th>Setting</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Volume step (± per click)</td><td>How many Roon volume units each +/− button press changes. Default: 3.</td></tr>
+          <tr><td>Player refresh interval</td><td>How often the progress bar and volume update. Lower = more responsive, higher = less network traffic. Options: 500ms, 1s, 2s, 3s, 5s, or a custom value.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-size:16px;font-weight:600;margin:28px 0 12px;">Library Settings</h3>
+      <table class="doc-table">
+        <thead><tr><th>Setting</th><th>Description</th></tr></thead>
+        <tbody>
+          <tr><td>Music Roots</td><td>One or more local paths to your music folders. The scanner recursively indexes all <code>FLAC</code> and <code>MP3</code> files.</td></tr>
+          <tr><td>Embed [LYRICS] tag by default</td><td>When enabled, LRC content is also written into the file's <code>LYRICS</code> tag on every save (both LRCLIB and TFT results).</td></tr>
+          <tr><td>Save .org backup before embedding</td><td>Creates a <code>.flac.org</code> / <code>.mp3.org</code> backup before any tag write. Requires "Embed LYRICS tag" to be enabled.</td></tr>
+          <tr><td>Save LRC file next to audio source</td><td>Saves a <code>.lrc</code> sidecar next to the audio file. Note: Roon does not read LRC files natively.</td></tr>
+          <tr><td>Save &amp; Rescan</td><td>Applies the settings and triggers a full library rescan. This may take a few minutes for large libraries.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-block tip">
+        <span class="info-block-icon">💡</span>
+        <div class="info-block-text"><strong>Roon and LRC sidecars:</strong> Roon does not read <code>.lrc</code> sidecar files. To use synced lyrics within Roon, enable <strong>"Embed [LYRICS] tag"</strong> — this writes the LRC into the audio file's tag, which Roon can display in compatible views.</div>
+      </div>
+    </section>
+
+    <!-- MOBILE -->
+    <section class="section" id="mobile">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon green">📱</div>
+        <h2 class="section-title">Mobile</h2>
+      </div>
+      <p class="section-subtitle">The interface is fully responsive. On mobile devices (≤ 767px), the layout switches to a vertically stacked single-column design optimized for thumb navigation.</p>
+
+      <div class="mobile-preview">
+        <div class="mobile-frame">
+          <img src="screenshots/mobile.png" alt="Mobile view" loading="lazy">
+        </div>
+      </div>
+      <p class="screenshot-caption">Mobile layout — compact vertical design for phones and tablets</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">📲</div>
+          <h3>Compact Player</h3>
+          <p>Album art, track title, and controls are stacked vertically for easy thumb access on small screens.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🤌</div>
+          <h3>Touch-Optimized</h3>
+          <p>All tap targets are sized to at least 44×44px. Buttons have generous padding for error-free tapping.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">📡</div>
+          <h3>Remote Control</h3>
+          <p>Use your phone as a full Roon remote — control volume, skip tracks, switch zones, and fetch lyrics from the couch.</p>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <span>TextFromTrack Roon Companion — User Guide</span>
+  <span>Built with ❤️ for Roon users</span>
+</footer>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+<script>
+  // ── Intersection observer for section animations
+  const sections = document.querySelectorAll('.section');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.08 });
+  sections.forEach(s => observer.observe(s));
+
+  // ── Active nav link on scroll
+  const navLinks = document.querySelectorAll('.nav-list a');
+  const sectionEls = document.querySelectorAll('section[id], .hero[id]');
+
+  function updateActiveNav() {
+    const scrollY = window.scrollY + 120;
+    let current = '';
+    sectionEls.forEach(sec => {
+      if (sec.offsetTop <= scrollY) current = sec.id;
+    });
+    navLinks.forEach(link => {
+      link.classList.toggle('active', link.getAttribute('href') === '#' + current);
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveNav, { passive: true });
+  updateActiveNav();
+
+  // ── Lightbox on double-click
+  const lightbox = document.getElementById('lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  document.querySelectorAll('.screenshot-container img').forEach(img => {
+    img.addEventListener('dblclick', () => {
+      lightboxImg.src = img.src;
+      lightboxImg.alt = img.alt;
+      lightbox.classList.add('open');
+    });
+  });
+  lightbox.addEventListener('click', () => lightbox.classList.remove('open'));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') lightbox.classList.remove('open');
+  });
+</script>
+
+</body>
+</html>

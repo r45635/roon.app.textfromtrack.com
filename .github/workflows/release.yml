@@ -1,0 +1,197 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# TextFromTrack Companion — Release workflow
+#
+# Triggers:
+#   • Push of a version tag (v0.9.0, v1.0.0, …)  →  publishes a real release
+#   • Manual dispatch                              →  creates a draft release
+#
+# Steps per platform:
+#   1. Build the React client  (client/dist/)
+#   2. Run electron-builder    (dist/*.dmg / *.exe / *.AppImage / *.deb)
+#   3. Upload platform artifact
+#
+# Final job downloads all artifacts and creates a single GitHub Release.
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+-*'   # pre-release tags: v1.0.0-beta.1
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version tag to release (e.g. v0.9.0)'
+        required: true
+        type: string
+      draft:
+        description: 'Create as draft release'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+# ── macOS ──────────────────────────────────────────────────────────────────────
+jobs:
+  build-mac:
+    name: Build — macOS (universal)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build React app
+        working-directory: client
+        run: npm run build
+
+      - name: Build Electron — macOS
+        run: npx electron-builder --mac --publish never
+        env:
+          # Skip codesigning on CI unless certificates are configured.
+          # Set CSC_LINK + CSC_KEY_PASSWORD secrets to enable notarization.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-mac
+          path: |
+            dist/*.dmg
+            dist/*.zip
+          if-no-files-found: error
+          retention-days: 3
+
+# ── Windows ────────────────────────────────────────────────────────────────────
+  build-windows:
+    name: Build — Windows (x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build React app
+        working-directory: client
+        run: npm run build
+
+      - name: Build Electron — Windows
+        run: npx electron-builder --win --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-windows
+          path: |
+            dist/*.exe
+          if-no-files-found: error
+          retention-days: 3
+
+# ── Linux ──────────────────────────────────────────────────────────────────────
+  build-linux:
+    name: Build — Linux (x64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install root dependencies
+        run: npm ci
+
+      - name: Install client dependencies
+        working-directory: client
+        run: npm ci
+
+      - name: Build React app
+        working-directory: client
+        run: npm run build
+
+      - name: Build Electron — Linux
+        run: npx electron-builder --linux --publish never
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-linux
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+          if-no-files-found: error
+          retention-days: 3
+
+# ── Publish GitHub Release ─────────────────────────────────────────────────────
+  release:
+    name: Publish GitHub Release
+    needs: [build-mac, build-windows, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: dist
+
+      - name: List release assets
+        run: ls -lh dist/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: >-
+            TextFromTrack Companion
+            ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          tag_name: >-
+            ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          draft: >-
+            ${{ github.event_name == 'workflow_dispatch' && (inputs.draft == true || inputs.draft == 'true') }}
+          prerelease: >-
+            ${{ contains(github.ref_name, '-') || contains(inputs.tag, '-') }}
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          files: dist/*
+          body: |
+            ## Installation
+
+            | Platform | File | Notes |
+            |---|---|---|
+            | macOS | `.dmg` | Drag to Applications. Requires macOS 11+. |
+            | Windows | `Setup.exe` | Run the NSIS installer. Requires Windows 10+. |
+            | Linux | `.AppImage` | `chmod +x *.AppImage && ./TextFromTrack*.AppImage` |
+            | Linux (Debian/Ubuntu) | `.deb` | `sudo dpkg -i *.deb` |
+
+            > Full install guide: https://r45635.github.io/roon.app.textfromtrack.com/docs/install.html
+            >
+            > **First launch:** The app starts silently in your tray / menu bar.
+            > Open the UI → authorize with Roon → you're ready.
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

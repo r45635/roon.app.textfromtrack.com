@@ -5,6 +5,16 @@ const path = require('path');
 const config = require('../config');
 const logger = require('../utils/logger');
 const { AppError, E, mapTftError } = require('../utils/normalize');
+const userSettings = require('../storage/userSettings');
+
+/**
+ * Returns the effective TFT token: env var takes priority, then user settings.
+ */
+function getEffectiveToken() {
+  if (config.tftToken) return config.tftToken;
+  const settings = userSettings.get();
+  return settings.tft_token || '';
+}
 
 // ─── Supported extensions for upload ─────────────────────────────────────────
 
@@ -67,7 +77,7 @@ function httpStatusToCode(status) {
  * @returns {Promise<{ ok: boolean, status: number, body: any }>}
  */
 async function apiFetch(endpoint, options = {}) {
-  const token = config.tftToken;
+  const token = getEffectiveToken();
   if (!token) throw new AppError(E.TFT_TOKEN_MISSING, 'TFT_TOKEN is not configured');
 
   logger.debug({ endpoint, method: options.method || 'GET', token: maskToken(token) }, 'TFT API request');
@@ -208,7 +218,7 @@ async function getSegments(jobId) {
  * @returns {Promise<string>}  Raw file content
  */
 async function downloadExport(jobId, format = config.tftDefaultExportFormat) {
-  const token = config.tftToken;
+  const token = getEffectiveToken();
   if (!token) throw new AppError(E.TFT_TOKEN_MISSING, 'TFT_TOKEN is not configured');
 
   const url = `${config.tftBaseUrl}/transcriptions/${jobId}/export?format=${format}`;

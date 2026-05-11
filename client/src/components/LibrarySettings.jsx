@@ -7,9 +7,6 @@ export default function LibrarySettings({ onRescanStarted }) {
   const [collapsed, toggleCollapsed] = useCollapsed('library-settings');
   const [roots, setRoots] = useState([]);
   const [newPath, setNewPath] = useState('');
-  const [embedDefault, setEmbedDefault] = useState(false);
-  const [backupDefault, setBackupDefault] = useState(true);
-  const [saveLrcBesideDefault, setSaveLrcBesideDefault] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -19,9 +16,6 @@ export default function LibrarySettings({ onRescanStarted }) {
       .then(data => {
         if (data.success) {
           setRoots(data.music_roots || []);
-          setEmbedDefault(!!data.embed_lyrics_default);
-          setBackupDefault(data.backup_before_embed_default !== false);
-          setSaveLrcBesideDefault(!!data.save_lrc_beside_source_default);
         }
       })
       .catch(() => setError('Failed to load library config'));
@@ -47,9 +41,6 @@ export default function LibrarySettings({ onRescanStarted }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           music_roots: roots,
-          embed_lyrics_default: embedDefault,
-          backup_before_embed_default: backupDefault,
-          save_lrc_beside_source_default: saveLrcBesideDefault,
         }),
       });
       const saveData = await saveRes.json();
@@ -113,37 +104,6 @@ export default function LibrarySettings({ onRescanStarted }) {
             disabled={!newPath.trim()}
           >{t('settings.add_path')}</button>
         </div>
-
-        <label className="embed-toggle settings-embed-toggle">
-          <input
-            type="checkbox"
-            checked={embedDefault}
-            onChange={e => setEmbedDefault(e.target.checked)}
-          />
-          <span>{t('settings.embed_lyrics_default')}</span>
-        </label>
-        <p className="muted small">{t('settings.embed_lyrics_default_hint')}</p>
-
-        <label className="embed-toggle settings-embed-toggle">
-          <input
-            type="checkbox"
-            checked={backupDefault}
-            disabled={!embedDefault}
-            onChange={e => setBackupDefault(e.target.checked)}
-          />
-          <span>{t('settings.backup_before_embed_default')}</span>
-        </label>
-        <p className="muted small">{t('settings.backup_before_embed_default_hint')}</p>
-
-        <label className="embed-toggle settings-embed-toggle">
-          <input
-            type="checkbox"
-            checked={saveLrcBesideDefault}
-            onChange={e => setSaveLrcBesideDefault(e.target.checked)}
-          />
-          <span>{t('settings.save_lrc_beside_source_default')}</span>
-        </label>
-        <p className="muted small">{t('settings.save_lrc_beside_source_default_hint')}</p>
 
         {error && <p className="settings-error">{error}</p>}
 

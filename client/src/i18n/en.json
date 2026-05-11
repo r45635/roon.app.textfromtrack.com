@@ -264,8 +264,25 @@
     "no_actions": "No actions available",
     "hide_empty": "Hide empty results"
   },
+  "tft_key": {
+    "title": "TextFromTrack API Key",
+    "status": "API Key",
+    "configured": "\u2713 Configured",
+    "not_configured": "\u2717 Not set",
+    "env_lock": "(set via .env \u2014 cannot override here)",
+    "hint": "Get your key at",
+    "placeholder_enter": "Paste your API key here\u2026",
+    "placeholder_replace": "Enter new key to replace\u2026",
+    "show": "Show",
+    "hide": "Hide",
+    "save": "Save",
+    "saving": "Saving\u2026",
+    "saved_ok": "Key saved \u2014 the TFT panel will refresh",
+    "clear": "Remove key",
+    "clear_title": "Clear the saved API key"
+  },
   "settings": {
-    "app_prefs_title": "App Preferences",
+    "files_mgmt_title": "Files Management",
     "volume_step": "Volume step (± per click)",
     "volume_step_hint": "How many units the volume changes on each + / − click in the player.",
     "roon_poll_ms": "Player refresh interval (ms)",

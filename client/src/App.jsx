@@ -7,6 +7,8 @@ import SearchPanel from './components/SearchPanel.jsx';
 import JobHistory from './components/JobHistory.jsx';
 import LibrarySettings from './components/LibrarySettings.jsx';
 import AppPrefs from './components/AppPrefs.jsx';
+import TftApiKey from './components/TftApiKey.jsx';
+import FilesManagement from './components/FilesManagement.jsx';
 import { useAppPrefs } from './hooks/useAppPrefs.js';
 
 const JOBS_POLL_MS = 5000;
@@ -249,11 +251,22 @@ export default function App() {
       {/* ── Topbar ──────────────────────────────────────────────────────────── */}
       <header className="tft-topbar">
         <div className="tft-topbar-brand">
-          <span className="tft-mark">
-            <span className="b">[</span><span className="t">T</span><span className="b">]</span>
-          </span>
+          <svg width="32" height="32" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect x="0" y="0" width="96" height="96" rx="22" fill="var(--tft-ink)"/>
+            <path d="M22 26 L22 70 L30 70" stroke="var(--tft-paper)" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter" fill="none"/>
+            <path d="M74 26 L74 70 L66 70 M74 26 L66 26" stroke="var(--tft-paper)" strokeWidth="6" strokeLinecap="square" strokeLinejoin="miter" fill="none"/>
+            <rect x="36" y="34" width="24" height="6" fill="var(--tft-paper)"/>
+            <rect x="45" y="34" width="6" height="20" fill="var(--tft-paper)"/>
+            <g fill="var(--tft-signal)">
+              <rect x="36" y="58" width="3" height="6"/>
+              <rect x="42" y="54" width="3" height="14"/>
+              <rect x="48" y="50" width="3" height="22"/>
+              <rect x="54" y="56" width="3" height="10"/>
+              <rect x="60" y="60" width="3" height="3"/>
+            </g>
+          </svg>
           <div className="tft-topbar-wordmark">
-            <span className="tft-topbar-name">extFromTrack</span>
+            <span className="tft-topbar-name">TextFromTrack</span>
             <span className="tft-topbar-sub">roon companion</span>
           </div>
         </div>
@@ -330,7 +343,9 @@ export default function App() {
               <button className="tft-settings-close" onClick={() => setSettingsOpen(false)} aria-label="Fermer">✕</button>
             </div>
             <div className="tft-settings-drawer-body">
+              <TftApiKey onTokenSaved={fetchTftAccount} />
               <AppPrefs prefs={prefs} setPref={setPref} />
+              <FilesManagement />
               <LibrarySettings onRescanStarted={handleRescanStarted} />
             </div>
           </aside>

@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TextFromTrack Roon Companion — Install</title>
+  <style>
+    :root {
+      --tft-ink:         #15161A;
+      --tft-ink-2:       #2C2E36;
+      --tft-ink-3:       #555861;
+      --tft-mute:        #8A8C92;
+      --tft-line:        #E6E2D8;
+      --tft-line-2:      #EFEBE0;
+      --tft-paper:       #F6F4EE;
+      --tft-paper-2:     #FBF9F3;
+      --tft-card:        #FFFFFF;
+      --tft-signal:      oklch(70% 0.18 145);
+      --tft-signal-ink:  oklch(38% 0.10 145);
+      --tft-signal-soft: oklch(94% 0.06 145);
+      --tft-amber:       oklch(78% 0.14 75);
+      --tft-amber-ink:   oklch(42% 0.12 75);
+      --tft-amber-soft:  oklch(95% 0.05 75);
+      --tft-error:       oklch(58% 0.22 25);
+      --tft-error-soft:  oklch(95% 0.05 25);
+      --tft-info:        oklch(65% 0.14 220);
+      --tft-info-ink:    oklch(42% 0.10 220);
+      --tft-info-soft:   oklch(94% 0.04 220);
+      --bg:        var(--tft-paper);
+      --bg-card:   var(--tft-card);
+      --ink:       var(--tft-ink);
+      --ink-2:     var(--tft-ink-3);
+      --line:      var(--tft-line);
+      --nav-width: 240px;
+      --shadow-card: 0 1px 0 rgba(21,22,26,0.04), 0 4px 16px rgba(21,22,26,0.06);
+      --radius: 12px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      font-size: 15px;
+    }
+    a { color: var(--tft-signal-ink); text-decoration: underline; text-underline-offset: 2px; }
+    a:hover { color: var(--tft-ink); }
+
+    /* ── SIDEBAR NAV ── */
+    .nav-sidebar {
+      position: fixed; top: 0; left: 0;
+      width: var(--nav-width); height: 100vh;
+      background: var(--bg-card);
+      border-right: 1px solid var(--line);
+      display: flex; flex-direction: column;
+      overflow-y: auto; z-index: 100;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 20px 18px 16px;
+      border-bottom: 1px solid var(--line);
+      text-decoration: none;
+    }
+    .nav-wordmark { display: flex; flex-direction: column; }
+    .nav-name { font-size: 13px; font-weight: 700; color: var(--tft-ink); letter-spacing: -0.01em; line-height: 1.2; }
+    .nav-sub  { font-size: 11px; color: var(--tft-mute); }
+    .nav-guide-label {
+      font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--tft-signal-ink); background: var(--tft-signal-soft);
+      border-radius: 4px; padding: 2px 6px; margin-top: 4px; align-self: flex-start;
+    }
+    .nav-section { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--tft-mute); padding: 20px 18px 6px; }
+    .nav-item { display: block; padding: 7px 18px; font-size: 13px; color: var(--ink-2); text-decoration: none; border-left: 2px solid transparent; transition: all 0.15s; }
+    .nav-item:hover { color: var(--tft-ink); background: var(--tft-signal-soft); border-left-color: var(--tft-signal); }
+    .nav-item.active { color: var(--tft-signal-ink); background: var(--tft-signal-soft); border-left-color: var(--tft-signal); font-weight: 600; }
+    .nav-footer { margin-top: auto; padding: 16px 18px; border-top: 1px solid var(--line); }
+    .nav-footer a { font-size: 12px; color: var(--tft-mute); text-decoration: none; display: block; margin-bottom: 4px; }
+    .nav-footer a:hover { color: var(--tft-signal-ink); }
+
+    /* ── MAIN CONTENT ── */
+    .main-content { margin-left: var(--nav-width); min-height: 100vh; }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--tft-card);
+      border-bottom: 1px solid var(--line);
+      padding: 64px 64px 52px;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--tft-signal-ink); margin-bottom: 16px;
+    }
+    .hero-eyebrow-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tft-signal); }
+    .hero h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em; color: var(--tft-ink); line-height: 1.15; margin-bottom: 16px; }
+    .hero-desc { font-size: 16px; color: var(--tft-ink-3); max-width: 560px; margin-bottom: 28px; }
+    .hero-badges { display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px;
+    }
+    .badge.green  { background: var(--tft-signal-soft); color: var(--tft-signal-ink); }
+    .badge.gray   { background: var(--tft-paper-2);     color: var(--tft-mute); border: 1px solid var(--tft-line); }
+    .badge.yellow { background: var(--tft-amber-soft);  color: var(--tft-amber-ink); }
+
+    /* ── VERSION BANNER ── */
+    #version-banner {
+      display: none;
+      background: var(--tft-signal-soft);
+      border-bottom: 1px solid var(--tft-line);
+      padding: 12px 64px;
+      font-size: 13px; color: var(--tft-signal-ink);
+      align-items: center; gap: 10px;
+    }
+    #version-banner.loaded { display: flex; }
+    #version-banner strong { font-weight: 700; }
+    #version-banner a { color: var(--tft-signal-ink); font-weight: 600; margin-left: auto; }
+
+    /* ── SECTION LAYOUT ── */
+    .section { padding: 52px 64px; border-bottom: 1px solid var(--line); }
+    .section:last-child { border-bottom: none; }
+    .section-title {
+      font-size: 1.3rem; font-weight: 700; color: var(--tft-ink);
+      letter-spacing: -0.02em; margin-bottom: 6px;
+    }
+    .section-sub { font-size: 14px; color: var(--tft-mute); margin-bottom: 32px; }
+
+    /* ── DOWNLOAD GRID ── */
+    .download-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px; margin-bottom: 28px;
+    }
+    .dl-card {
+      background: var(--bg-card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 24px 22px 20px;
+      box-shadow: var(--shadow-card);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .dl-card-head { display: flex; align-items: center; gap: 10px; }
+    .dl-icon { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: var(--tft-paper-2); }
+    .dl-icon svg { width: 20px; height: 20px; }
+    .dl-platform { font-size: 15px; font-weight: 700; color: var(--tft-ink); }
+    .dl-version { font-size: 12px; color: var(--tft-mute); }
+    .dl-format { font-size: 12px; color: var(--tft-ink-3); }
+    .dl-btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 9px 16px; border-radius: 8px;
+      background: var(--tft-ink); color: var(--tft-paper);
+      font-size: 13px; font-weight: 600; text-decoration: none;
+      transition: background 0.15s;
+    }
+    .dl-btn:hover { background: var(--tft-ink-2); color: var(--tft-paper); }
+    .dl-btn svg { width: 14px; height: 14px; stroke: currentColor; }
+    .dl-btn-alt {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--tft-mute); text-decoration: none;
+      margin-top: -4px;
+    }
+    .dl-btn-alt:hover { color: var(--tft-signal-ink); }
+    .dl-loading { font-size: 13px; color: var(--tft-mute); font-style: italic; }
+
+    /* ── INFO BLOCKS ── */
+    .info-block {
+      border-radius: var(--radius); padding: 14px 18px;
+      display: flex; gap: 12px; align-items: flex-start;
+      margin-bottom: 20px; font-size: 14px;
+    }
+    .info-block.tip     { background: var(--tft-signal-soft); border-left: 3px solid var(--tft-signal); color: var(--tft-signal-ink); }
+    .info-block.warning { background: var(--tft-amber-soft);  border-left: 3px solid var(--tft-amber);  color: var(--tft-amber-ink); }
+    .info-block.info    { background: var(--tft-info-soft);   border-left: 3px solid var(--tft-info);   color: var(--tft-info-ink); }
+    .info-block-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── PLATFORM TABS ── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--line); padding-bottom: 0; }
+    .tab-btn {
+      padding: 9px 16px; font-size: 13px; font-weight: 500;
+      color: var(--tft-mute); background: none; border: none; cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s;
+    }
+    .tab-btn:hover  { color: var(--tft-ink); }
+    .tab-btn.active { color: var(--tft-signal-ink); border-bottom-color: var(--tft-signal); font-weight: 600; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── STEPS ── */
+    .steps { display: flex; flex-direction: column; gap: 20px; }
+    .step { display: flex; gap: 18px; }
+    .step-num {
+      flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%;
+      background: var(--tft-ink); color: var(--tft-paper);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; margin-top: 2px;
+    }
+    .step-body { flex: 1; }
+    .step-title { font-size: 14px; font-weight: 600; color: var(--tft-ink); margin-bottom: 4px; }
+    .step-desc  { font-size: 13px; color: var(--tft-ink-3); line-height: 1.6; }
+
+    /* ── CODE BLOCKS ── */
+    code {
+      font-family: "JetBrains Mono", "Fira Code", ui-monospace, Menlo, monospace;
+      font-size: 13px; background: var(--tft-signal-soft); color: var(--tft-signal-ink);
+      padding: 2px 6px; border-radius: 4px;
+    }
+    pre {
+      background: var(--tft-ink); color: #e8e6e0;
+      border-radius: var(--radius); padding: 16px 20px; overflow-x: auto;
+      font-size: 13px; line-height: 1.7; margin: 12px 0;
+    }
+    pre code { background: none; color: inherit; padding: 0; font-size: inherit; }
+    .comment { color: #6a7a6a; }
+    .kw      { color: var(--tft-signal); }
+
+    /* ── REQ TABLE ── */
+    .req-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+    .req-card {
+      background: var(--bg-card); border: 1px solid var(--line);
+      border-radius: 10px; padding: 16px 18px;
+    }
+    .req-icon  { font-size: 22px; margin-bottom: 8px; }
+    .req-title { font-size: 13px; font-weight: 700; color: var(--tft-ink); margin-bottom: 3px; }
+    .req-desc  { font-size: 12px; color: var(--tft-mute); }
+
+    /* ── ADVANCED SECTION EXTRAS ── */
+    .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .method-card {
+      background: var(--bg-card); border: 1px solid var(--line);
+      border-radius: var(--radius); padding: 22px 20px;
+    }
+    .method-title { font-size: 14px; font-weight: 700; color: var(--tft-ink); margin-bottom: 6px; }
+    .method-desc  { font-size: 13px; color: var(--tft-ink-3); margin-bottom: 14px; }
+
+    /* ── FOOTER ── */
+    .footer {
+      background: var(--tft-card); border-top: 1px solid var(--line);
+      padding: 28px 64px; display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; color: var(--tft-mute);
+    }
+    .footer a { color: var(--tft-mute); text-decoration: none; }
+    .footer a:hover { color: var(--tft-signal-ink); }
+    .footer-links { display: flex; gap: 20px; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--tft-line-2); }
+    ::-webkit-scrollbar-thumb { background: var(--tft-line); border-radius: 3px; }
+
+    @media (max-width: 900px) {
+      .nav-sidebar { display: none; }
+      .main-content { margin-left: 0; }
+      .hero, .section, #version-banner { padding-left: 24px; padding-right: 24px; }
+      .req-grid, .method-grid { grid-template-columns: 1fr; }
+      .footer { flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR NAV ──────────────────────────────────────────────────────────── -->
+<nav class="nav-sidebar">
+  <a class="nav-logo" href="../docs/user-guide.html">
+    <svg width="32" height="32" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <rect x="0" y="0" width="96" height="96" rx="22" fill="var(--tft-ink)"/>
+      <path d="M22 26 L22 70 L30 70" stroke="var(--tft-paper)" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+      <path d="M74 26 L74 70 L66 70 M74 26 L66 26" stroke="var(--tft-paper)" stroke-width="6" stroke-linecap="square" stroke-linejoin="miter" fill="none"/>
+      <rect x="36" y="34" width="24" height="6" fill="var(--tft-paper)"/>
+      <rect x="45" y="34" width="6" height="20" fill="var(--tft-paper)"/>
+      <g fill="var(--tft-signal)">
+        <rect x="36" y="58" width="3" height="6"/>
+        <rect x="42" y="54" width="3" height="14"/>
+        <rect x="48" y="50" width="3" height="22"/>
+        <rect x="54" y="56" width="3" height="10"/>
+        <rect x="60" y="60" width="3" height="3"/>
+      </g>
+    </svg>
+    <div class="nav-wordmark">
+      <span class="nav-name">TextFromTrack</span>
+      <span class="nav-sub">roon companion</span>
+      <span class="nav-guide-label">Install Guide</span>
+    </div>
+  </a>
+
+  <span class="nav-section">Get Started</span>
+  <a class="nav-item active" href="#download">Download</a>
+  <a class="nav-item" href="#requirements">Requirements</a>
+  <a class="nav-item" href="#install">Installation</a>
+  <a class="nav-item" href="#first-launch">First Launch</a>
+
+  <span class="nav-section">Advanced</span>
+  <a class="nav-item" href="#self-hosted">Self-Hosted (VPS / NAS)</a>
+  <a class="nav-item" href="#updates">Updates</a>
+  <a class="nav-item" href="#faq">FAQ</a>
+
+  <span class="nav-section">Docs</span>
+  <a class="nav-item" href="user-guide.html">User Guide</a>
+
+  <div class="nav-footer">
+    <a href="https://github.com/r45635/roon.app.textfromtrack.com" target="_blank">GitHub Repository</a>
+    <a href="https://github.com/r45635/roon.app.textfromtrack.com/releases" target="_blank">All Releases</a>
+    <a href="https://textfromtrack.com" target="_blank">textfromtrack.com</a>
+  </div>
+</nav>
+
+<!-- ── MAIN ─────────────────────────────────────────────────────────────────── -->
+<div class="main-content">
+
+  <!-- Version banner (filled by JS) -->
+  <div id="version-banner">
+    <span>🎉 Latest release: <strong id="vb-tag"></strong> — <span id="vb-date"></span></span>
+    <a id="vb-link" href="https://github.com/r45635/roon.app.textfromtrack.com/releases/latest" target="_blank">View release notes →</a>
+  </div>
+
+  <!-- Hero -->
+  <section class="hero" id="download">
+    <div class="hero-eyebrow"><span class="hero-eyebrow-dot"></span>Free Download</div>
+    <h1>TextFromTrack Companion</h1>
+    <p class="hero-desc">
+      Bring LRC lyrics to your Roon library — automatically transcribed, matched, and embedded.
+      Download the desktop app for macOS, Windows, or Linux.
+    </p>
+    <div class="hero-badges">
+      <span class="badge green">✓ No cloud required</span>
+      <span class="badge green">✓ Runs locally</span>
+      <span class="badge gray">Requires Roon</span>
+      <span class="badge gray">Requires Node.js 20+ <em>(advanced)</em></span>
+    </div>
+  </section>
+
+  <!-- Download section -->
+  <section class="section">
+    <h2 class="section-title">Download</h2>
+    <p class="section-sub">Choose the installer for your platform. All builds are published automatically from the <a href="https://github.com/r45635/roon.app.textfromtrack.com/releases" target="_blank">GitHub Releases page</a>.</p>
+
+    <div class="download-grid" id="dl-grid">
+      <!-- macOS -->
+      <div class="dl-card">
+        <div class="dl-card-head">
+          <div class="dl-icon">
+            <svg viewBox="0 0 24 24" fill="var(--tft-ink)" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="dl-platform">macOS</div>
+            <div class="dl-version" id="dl-mac-version">Loading…</div>
+          </div>
+        </div>
+        <div class="dl-format">macOS 11 Big Sur or later · Universal (Apple Silicon + Intel)</div>
+        <a class="dl-btn" id="dl-mac-dmg" href="https://github.com/r45635/roon.app.textfromtrack.com/releases/latest" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download .dmg
+        </a>
+        <a class="dl-btn-alt" id="dl-mac-zip" href="https://github.com/r45635/roon.app.textfromtrack.com/releases/latest" target="_blank">Also available as .zip</a>
+      </div>
+
+      <!-- Windows -->
+      <div class="dl-card">
+        <div class="dl-card-head">
+          <div class="dl-icon">
+            <svg viewBox="0 0 24 24" fill="var(--tft-ink)" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+            </svg>
+          </div>
+          <div>
+            <div class="dl-platform">Windows</div>
+            <div class="dl-version" id="dl-win-version">Loading…</div>
+          </div>
+        </div>
+        <div class="dl-format">Windows 10 or later · x64</div>
+        <a class="dl-btn" id="dl-win-exe" href="https://github.com/r45635/roon.app.textfromtrack.com/releases/latest" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download installer
+        </a>
+        <a class="dl-btn-alt" id="dl-win-portable" href="https://github.com/r45635/roon.app.textfromtrack.com/releases/latest" target="_blank">Also available as portable .zip</a>
+      </div>
+
+      <!-- Linux -->
+      <div class="dl-card">
+        <div class="dl-card-head">
+          <div class="dl-icon">
+            <svg viewBox="0 0 24 24" fill="var(--tft-ink)" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.74.356 2.315 1.246.165.242.3.498.54.628.374.094.553-.22.676-.474l.101-.22c.317-.459.843-.995 1.366-1.376l.109-.081c.47-.35.94-.7 1.156-1.195.109-.222.149-.468.132-.706-.016-.24-.08-.48-.165-.688-.168-.428-.398-.856-.492-1.321-.094-.466-.016-.95.424-1.395l.218-.212c.217-.2.424-.404.622-.623.394-.439.71-.943.838-1.572a2.43 2.43 0 00-.01-.86c-.105-.43-.327-.826-.574-1.173-.247-.348-.517-.668-.742-.977a4.33 4.33 0 01-.585-1.375 7.39 7.39 0 01-.12-1.434c.025-.55.09-1.1.163-1.645.149-1.083.33-2.178.285-3.289-.018-.431-.082-.854-.222-1.255-.126-.373-.347-.704-.6-.99-.516-.577-1.2-1.008-1.9-1.287C13.636.05 13.06 0 12.504 0zm.985 8.876c.215.051.448.127.693.24.656.312.982.783.982 1.435 0 .59-.254 1.18-.57 1.73-.315.55-.69 1.04-1.02 1.474l-.245.324c-.28.38-.54.774-.743 1.212-.204.438-.333.922-.333 1.5 0 .57.13 1.05.322 1.485.196.436.45.83.695 1.232.246.403.48.82.643 1.29.163.468.247.997.127 1.63-.12.633-.44 1.14-.85 1.56-.409.42-.913.757-1.427 1.059-.257.152-.524.293-.787.453-.263.16-.517.34-.735.57-.438.454-.694 1.006-.877 1.54l-.067.198c-.059.181-.097.356-.183.498-.059.097-.134.163-.237.183-.103.02-.228-.01-.37-.123-.284-.226-.46-.595-.606-.975-.144-.38-.261-.776-.414-1.144-.157-.37-.358-.716-.668-.994a3.48 3.48 0 00-1.046-.617c-.393-.142-.81-.235-1.2-.362-.393-.126-.77-.29-.994-.574a.84.84 0 01-.16-.35c-.02-.128-.01-.275.04-.44.097-.332.308-.63.487-.936.27-.455.494-.944.576-1.47.08-.527.007-1.07-.196-1.568a10.28 10.28 0 00-.53-1.116c-.179-.338-.352-.67-.47-1.02-.12-.35-.18-.72-.154-1.118.053-.8.374-1.59.835-2.296.462-.705 1.09-1.321 1.77-1.814a5.5 5.5 0 011.246-.638 3.85 3.85 0 01.652-.148c.213-.027.43-.03.643-.013.657.05 1.307.258 1.81.652z"/>
+            </svg>
+          </div>
+          <div>
+            <div class="dl-platform">Linux</div>
+            <div class="dl-version" id="dl-linux-version">Loading…</div>
+          </div>
+        </div>
+        <div class="dl-format">x86_64 · AppImage or .deb (Debian/Ubuntu)</div>
+        <a class="dl-btn" id="dl-linux-appimage" href="https://github.com/r45635/roon.app.textfromtrack.com/releases/latest" target="_blank">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download .AppImage
+        </a>
+        <a class="dl-btn-alt" id="dl-linux-deb" href="https://github.com/r45635/roon.app.textfromtrack.com/releases/latest" target="_blank">Also available as .deb</a>
+      </div>
+    </div>
+
+    <div class="info-block tip">
+      <span class="info-block-icon">💡</span>
+      <div>
+        Not seeing the right version? Browse <a href="https://github.com/r45635/roon.app.textfromtrack.com/releases" target="_blank">all releases on GitHub</a> including pre-release builds.
+      </div>
+    </div>
+  </section>
+
+  <!-- Requirements -->
+  <section class="section" id="requirements">
+    <h2 class="section-title">Requirements</h2>
+    <p class="section-sub">Everything the app needs to run on your machine.</p>
+
+    <div class="req-grid">
+      <div class="req-card">
+        <div class="req-icon">🎵</div>
+        <div class="req-title">Roon Core</div>
+        <div class="req-desc">A running Roon Core on your network (Nucleus, ROCK, or any Roon-supported device). The companion app runs on the same machine or any computer on the same local network.</div>
+      </div>
+      <div class="req-card">
+        <div class="req-icon">🖥️</div>
+        <div class="req-title">Operating System</div>
+        <div class="req-desc">macOS 11 Big Sur or later · Windows 10 (1903) or later · Ubuntu 20.04 / Debian 11 or later. The Electron app bundles its own Node.js runtime — no separate install needed.</div>
+      </div>
+      <div class="req-card">
+        <div class="req-icon">📂</div>
+        <div class="req-title">Music Library Access</div>
+        <div class="req-desc">Local or network-mounted access to the same music files Roon serves. The app reads and writes FLAC/MP3/M4A tags directly on disk.</div>
+      </div>
+    </div>
+
+    <div class="info-block info">
+      <span class="info-block-icon">ℹ️</span>
+      <div>
+        <strong>Node.js not required for the desktop app.</strong>
+        Node.js ≥ 20 is only needed if you choose the <a href="#self-hosted">self-hosted / server install</a>.
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation -->
+  <section class="section" id="install">
+    <h2 class="section-title">Installation</h2>
+    <p class="section-sub">Platform-specific steps after downloading.</p>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="showTab('mac')">macOS</button>
+      <button class="tab-btn" onclick="showTab('win')">Windows</button>
+      <button class="tab-btn" onclick="showTab('linux')">Linux</button>
+    </div>
+
+    <!-- macOS -->
+    <div class="tab-panel active" id="tab-mac">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Open the .dmg</div>
+            <div class="step-desc">Double-click the downloaded <code>.dmg</code> file. A Finder window opens.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Drag to Applications</div>
+            <div class="step-desc">Drag <strong>TextFromTrack Companion.app</strong> into the <strong>Applications</strong> folder shortcut shown in the window.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">First launch — bypass Gatekeeper</div>
+            <div class="step-desc">
+              Since the app is not yet notarized, macOS may block it on first launch.
+              Right-click (or Control-click) the app in <em>Applications</em> → <strong>Open</strong> → confirm <em>Open</em> in the dialog.
+              You only need to do this once.
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Find it in the menu bar</div>
+            <div class="step-desc">The app runs as a tray icon in the macOS menu bar (top-right). Click it to open the context menu.</div>
+          </div>
+        </div>
+      </div>
+      <div class="info-block warning" style="margin-top:20px">
+        <span class="info-block-icon">⚠️</span>
+        <div>
+          On Apple Silicon Macs, if you see <em>"damaged and can't be opened"</em>, run:
+          <br><code>xattr -cr /Applications/TextFromTrack\ Companion.app</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Windows -->
+    <div class="tab-panel" id="tab-win">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <div class="step-title">Run the installer</div>
+            <div class="step-desc">Double-click <code>TextFromTrack Companion Setup X.X.X.exe</code>. The NSIS wizard runs silently and installs the app to <code>%LOCALAPPDATA%\Programs\TextFromTrack Companion</code>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <div class="step-title">Allow SmartScreen (first run)</div>
+            <div class="step-desc">Windows may show a SmartScreen warning for unsigned software. Click <strong>More info</strong> → <strong>Run anyway</strong>.</div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <div class="step-title">Find it in the system tray</div>
+            <div class="step-desc">The app starts after install and adds an icon to the Windows system tray (bottom-right, near the clock). Right-click it for the menu.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Linux -->
+    <div class="tab-panel" id="tab-linux">
+      <div class="tabs" style="margin-bottom:20px; border-color: var(--tft-line-2);">
+        <button class="tab-btn active" onclick="showSubTab('appimage')" style="font-size:12px">AppImage</button>
+        <button class="tab-btn" onclick="showSubTab('deb')" style="font-size:12px">.deb (Debian/Ubuntu)</button>
+      </div>
+
+      <div class="tab-panel active" id="tab-appimage">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Make executable</div>
+              <div class="step-desc">
+                <pre><code><span class="comment"># Replace with the actual filename</span>
+chmod +x TextFromTrack*.AppImage</code></pre>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Run</div>
+              <div class="step-desc">
+                <pre><code>./TextFromTrack*.AppImage</code></pre>
+                The app runs in the background and adds a tray icon to your desktop environment.
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <div class="step-title">Optional: integrate with desktop</div>
+              <div class="step-desc">
+                <pre><code><span class="comment"># Install AppImageLauncher for system integration (optional)</span>
+<span class="comment"># https://github.com/TheAssassin/AppImageLauncher</span></code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tab-deb">
+        <div class="steps">
+          <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <div class="step-title">Install the .deb package</div>
+              <div class="step-desc">
+                <pre><code>sudo dpkg -i textfromtrack-companion_*.deb
+<span class="comment"># Fix missing deps if any:</span>
+sudo apt-get install -f</code></pre>
+              </div>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <div class="step-title">Launch</div>
+              <div class="step-desc">
+                Find <strong>TextFromTrack Companion</strong> in your application launcher, or run <code>textfromtrack-companion</code> from a terminal.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- First Launch -->
+  <section class="section" id="first-launch">
+    <h2 class="section-title">First Launch</h2>
+    <p class="section-sub">The app starts silently in the tray. Here's how to complete the setup.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Click "Open UI" in the tray menu</div>
+          <div class="step-desc">Click the tray icon → <strong>Open UI</strong>. Your default browser opens to <code>http://localhost:3888</code>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Authorize with Roon</div>
+          <div class="step-desc">In the <strong>Roon</strong> section of the app, you'll see a "Waiting for authorization" status. On your Roon Core, go to <em>Settings → Extensions</em> and enable <strong>TextFromTrack Roon Companion</strong>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Add your music library</div>
+          <div class="step-desc">In <em>Settings → Music Library</em>, add the root path(s) where your music files live on this machine. Click <strong>Scan Library</strong>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">(Optional) Add a TextFromTrack API key</div>
+          <div class="step-desc">In <em>Settings → TextFromTrack API</em>, paste your API token to enable AI transcription for tracks that have no existing lyrics.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-block tip" style="margin-top:24px">
+      <span class="info-block-icon">✅</span>
+      <div>
+        Enable <strong>Start at Login</strong> in the tray menu so the companion is always running when your computer starts.
+      </div>
+    </div>
+  </section>
+
+  <!-- Self-Hosted -->
+  <section class="section" id="self-hosted">
+    <h2 class="section-title">Self-Hosted Install (VPS / NAS / Server)</h2>
+    <p class="section-sub">Run the companion as a headless Node.js service — ideal for always-on machines, NAS, Raspberry Pi, or a VPS.</p>
+
+    <div class="info-block info">
+      <span class="info-block-icon">ℹ️</span>
+      <div>Requires <strong>Node.js ≥ 20</strong> and <strong>git</strong>. The UI is still accessible in any browser at <code>http://&lt;host&gt;:3888</code>.</div>
+    </div>
+
+    <div class="method-grid" style="margin-bottom:28px">
+      <div class="method-card">
+        <div class="method-title">Recommended: PM2 (process manager)</div>
+        <div class="method-desc">Keeps the server running, auto-restarts on crash, starts on boot.</div>
+        <pre><code><span class="comment"># 1. Clone the repo</span>
+git clone https://github.com/r45635/roon.app.textfromtrack.com.git
+cd roon.app.textfromtrack.com
+
+<span class="comment"># 2. Install dependencies</span>
+npm ci
+cd client && npm ci && npm run build && cd ..
+
+<span class="comment"># 3. Configure</span>
+cp .env.example .env
+<span class="comment"># Edit .env: set MUSIC_ROOTS, PORT, etc.</span>
+
+<span class="comment"># 4. Start with PM2</span>
+npm install -g pm2
+pm2 start src/server.js --name tft-companion
+pm2 save
+pm2 startup     <span class="comment"># follow instructions to enable boot</span></code></pre>
+      </div>
+      <div class="method-card">
+        <div class="method-title">Alternative: npm global (quick start)</div>
+        <div class="method-desc">Installs the CLI globally for a faster first run. No PM2 required — but not auto-restarted.</div>
+        <pre><code><span class="comment"># Requires npm ≥ 9 and Node.js ≥ 20</span>
+npm install -g \
+  github:r45635/roon.app.textfromtrack.com
+
+<span class="comment"># Start</span>
+roon-companion
+
+<span class="comment"># Or with custom port</span>
+PORT=4000 roon-companion</code></pre>
+      </div>
+    </div>
+
+    <h3 style="font-size:14px;font-weight:700;color:var(--tft-ink);margin-bottom:12px">VPS — Updating to a new version</h3>
+    <pre><code>ssh your-server
+cd roon.app.textfromtrack.com
+
+<span class="kw">git</span> pull
+npm ci
+cd client && npm run build && cd ..
+
+<span class="comment"># Restart (source changes reload automatically with PM2's watch, or restart manually)</span>
+pm2 restart tft-companion</code></pre>
+
+    <h3 style="font-size:14px;font-weight:700;color:var(--tft-ink);margin:24px 0 12px">HTTPS with a reverse proxy (recommended for remote access)</h3>
+    <div class="method-grid">
+      <div class="method-card">
+        <div class="method-title">Nginx</div>
+        <div class="method-desc">Proxy <code>tft.yourdomain.com</code> to <code>localhost:3888</code>.</div>
+        <pre><code>server {
+  listen 443 ssl;
+  server_name tft.yourdomain.com;
+
+  ssl_certificate     /etc/letsencrypt/live/.../fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/.../privkey.pem;
+
+  location / {
+    proxy_pass         http://127.0.0.1:3888;
+    proxy_http_version 1.1;
+    proxy_set_header   Upgrade $http_upgrade;
+    proxy_set_header   Connection "upgrade";
+    proxy_set_header   Host $host;
+    proxy_set_header   X-Real-IP $remote_addr;
+  }
+}</code></pre>
+      </div>
+      <div class="method-card">
+        <div class="method-title">Caddy</div>
+        <div class="method-desc">Caddy auto-provisions TLS via Let's Encrypt — one-line config.</div>
+        <pre><code>tft.yourdomain.com {
+    reverse_proxy localhost:3888
+}</code></pre>
+        <div class="step-desc" style="margin-top:10px;font-size:12px;color:var(--tft-mute)">
+          Then run: <code>caddy run</code><br>
+          Caddy handles HTTPS automatically.
+        </div>
+      </div>
+    </div>
+
+    <div class="info-block warning" style="margin-top:24px">
+      <span class="info-block-icon">⚠️</span>
+      <div>
+        If you expose the companion over the internet, protect it with a firewall or HTTP Basic Auth.
+        The app has no built-in authentication and is designed for trusted local-network use.
+      </div>
+    </div>
+  </section>
+
+  <!-- Updates -->
+  <section class="section" id="updates">
+    <h2 class="section-title">Updates</h2>
+    <p class="section-sub">The desktop app checks for updates automatically.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Automatic update check</div>
+          <div class="step-desc">The app checks GitHub Releases on startup. When a new version is available, a notification appears in the tray menu: <em>"Update to vX.Y.Z available"</em>.</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Manual update</div>
+          <div class="step-desc">Download the latest installer from the <a href="https://github.com/r45635/roon.app.textfromtrack.com/releases/latest" target="_blank">Releases page</a> and install over the existing version. Your settings are preserved in the OS user-data folder.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section" id="faq">
+    <h2 class="section-title">FAQ</h2>
+
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--tft-ink);margin-bottom:6px">The app doesn't appear in the tray after launch</div>
+        <div style="font-size:13px;color:var(--tft-ink-3)">On Windows, the tray icon may be hidden in the overflow area. Click the <strong>^</strong> arrow near the clock and look for the TextFromTrack icon. On macOS, check the menu bar — if it's off-screen, try resizing other menu-bar icons.</div>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--tft-ink);margin-bottom:6px">Roon shows "Waiting for authorization" indefinitely</div>
+        <div style="font-size:13px;color:var(--tft-ink-3)">Ensure Roon Core and the companion are on the same local network subnet. Go to Roon → <em>Settings → Extensions</em> and manually click <strong>Enable</strong> next to <em>TextFromTrack Roon Companion</em>.</div>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--tft-ink);margin-bottom:6px">My music files aren't found after scanning</div>
+        <div style="font-size:13px;color:var(--tft-ink-3)">Check that the path in <em>Settings → Music Library</em> points to the <strong>exact location on this machine</strong>. If Roon sees files over SMB but the companion runs on a different machine, add a Path Mapping in settings (e.g. <code>smb://NAS/Music</code> → <code>/Volumes/Music</code>).</div>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--tft-ink);margin-bottom:6px">Port 3888 is already in use</div>
+        <div style="font-size:13px;color:var(--tft-ink-3)">For the Electron app, edit the <code>.env</code> file in the app's user-data folder and set <code>PORT=xxxx</code>. For the self-hosted install, set <code>PORT=xxxx</code> in your <code>.env</code> before starting the server.</div>
+      </div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--tft-ink);margin-bottom:6px">Where are settings and logs stored?</div>
+        <div style="font-size:13px;color:var(--tft-ink-3)">
+          Desktop app user-data:
+          <ul style="margin:6px 0 0 16px;line-height:2">
+            <li>macOS: <code>~/Library/Application Support/TextFromTrack Companion/</code></li>
+            <li>Windows: <code>%APPDATA%\TextFromTrack Companion\</code></li>
+            <li>Linux: <code>~/.config/TextFromTrack Companion/</code></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>© 2024 TextFromTrack · TextFromTrack Roon Companion is open source under the MIT license</span>
+    <div class="footer-links">
+      <a href="user-guide.html">User Guide</a>
+      <a href="https://github.com/r45635/roon.app.textfromtrack.com" target="_blank">GitHub</a>
+      <a href="https://github.com/r45635/roon.app.textfromtrack.com/releases" target="_blank">Releases</a>
+      <a href="https://github.com/r45635/roon.app.textfromtrack.com/issues" target="_blank">Report Issue</a>
+    </div>
+  </footer>
+</div>
+
+<script>
+  const REPO = 'r45635/roon.app.textfromtrack.com';
+  const API  = `https://api.github.com/repos/${REPO}/releases/latest`;
+
+  // ── Fetch latest release and populate download links ────────────────────────
+  fetch(API)
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(release => {
+      const tag  = release.tag_name;
+      const date = new Date(release.published_at).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+
+      // Version banner
+      document.getElementById('vb-tag').textContent = tag;
+      document.getElementById('vb-date').textContent = date;
+      document.getElementById('vb-link').href = release.html_url;
+      document.getElementById('version-banner').classList.add('loaded');
+
+      // Asset helpers
+      const assets = release.assets || [];
+      const find   = (fn) => assets.find(fn);
+      const urlOf  = (a) => a ? a.browser_download_url : release.html_url;
+
+      const dmg       = find(a => a.name.endsWith('.dmg'));
+      const macZip    = find(a => a.name.endsWith('-mac.zip') || (a.name.endsWith('.zip') && a.name.includes('mac')));
+      const exe       = find(a => a.name.endsWith('.exe') && (a.name.includes('Setup') || a.name.includes('setup')));
+      const winZip    = find(a => a.name.endsWith('.zip') && !a.name.includes('mac'));
+      const appimage  = find(a => a.name.endsWith('.AppImage'));
+      const deb       = find(a => a.name.endsWith('.deb'));
+
+      // macOS
+      const macVer = document.querySelectorAll('[id^="dl-mac-"]');
+      document.getElementById('dl-mac-version').textContent = tag;
+      if (dmg) {
+        const btn = document.getElementById('dl-mac-dmg');
+        btn.href = urlOf(dmg);
+        btn.innerHTML = btn.innerHTML.replace('Download .dmg', `Download .dmg  (${(dmg.size/1e6).toFixed(0)} MB)`);
+      }
+      if (macZip) document.getElementById('dl-mac-zip').href = urlOf(macZip);
+
+      // Windows
+      document.getElementById('dl-win-version').textContent = tag;
+      if (exe) {
+        const btn = document.getElementById('dl-win-exe');
+        btn.href = urlOf(exe);
+        btn.innerHTML = btn.innerHTML.replace('Download installer', `Download installer  (${(exe.size/1e6).toFixed(0)} MB)`);
+      }
+      if (winZip) document.getElementById('dl-win-portable').href = urlOf(winZip);
+
+      // Linux
+      document.getElementById('dl-linux-version').textContent = tag;
+      if (appimage) {
+        const btn = document.getElementById('dl-linux-appimage');
+        btn.href = urlOf(appimage);
+        btn.innerHTML = btn.innerHTML.replace('Download .AppImage', `Download .AppImage  (${(appimage.size/1e6).toFixed(0)} MB)`);
+      }
+      if (deb) document.getElementById('dl-linux-deb').href = urlOf(deb);
+    })
+    .catch(() => {
+      // GitHub API unavailable or no release yet — leave the default "releases/latest" links
+      ['dl-mac-version','dl-win-version','dl-linux-version'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = 'See releases page';
+      });
+    });
+
+  // ── Platform tabs ────────────────────────────────────────────────────────────
+  function showTab(platform) {
+    document.querySelectorAll('.tab-panel[id^="tab-mac"], .tab-panel[id^="tab-win"], .tab-panel[id^="tab-linux"]')
+      .forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tabs:first-of-type .tab-btn')
+      .forEach(b => b.classList.remove('active'));
+
+    const panel = document.getElementById('tab-' + platform);
+    if (panel) panel.classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  function showSubTab(name) {
+    ['tab-appimage','tab-deb'].forEach(id => {
+      document.getElementById(id)?.classList.remove('active');
+    });
+    document.getElementById('tab-' + name)?.classList.add('active');
+    document.querySelectorAll('#tab-linux .tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+
+  // ── Active nav item on scroll ─────────────────────────────────────────────
+  const sections = ['download','requirements','install','first-launch','self-hosted','updates','faq'];
+  const navItems = {};
+  sections.forEach(id => {
+    navItems[id] = document.querySelector(`.nav-item[href="#${id}"]`);
+  });
+
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        Object.values(navItems).forEach(el => el?.classList.remove('active'));
+        navItems[entry.target.id]?.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+</script>
+</body>
+</html>

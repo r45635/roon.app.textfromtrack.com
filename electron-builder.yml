@@ -1,0 +1,80 @@
+appId: com.textfromtrack.roon-companion
+productName: TextFromTrack Companion
+copyright: Copyright © 2026 TextFromTrack
+
+# ── Source files to bundle ───────────────────────────────────────────────────
+files:
+  - "electron/**"
+  - "src/**"
+  - "client/dist/**"
+  - "package.json"
+  - "config.json"
+  # Exclude runtime-mutable storage from the asar — it lives in userData instead.
+  - "!src/storage/**"
+  # Exclude dev/test artefacts
+  - "!tests/**"
+  - "!scripts/**"
+  - "!dev-tools/**"
+  - "!screenshoots/**"
+  - "!**/*.test.js"
+  - "!**/.env*"
+
+directories:
+  buildResources: electron/assets
+  output: dist
+
+# ── macOS ────────────────────────────────────────────────────────────────────
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+    - target: zip
+      arch: [x64, arm64]
+  icon: electron/assets/icon.png
+  # Uncomment and fill in when you have an Apple Developer ID certificate:
+  # identity: "Developer ID Application: Your Name (XXXXXXXXXX)"
+  # hardenedRuntime: true
+  # gatekeeperAssess: false
+  # entitlements: electron/entitlements.plist
+  # entitlementsInherit: electron/entitlements.plist
+  # notarize: true
+
+dmg:
+  title: TextFromTrack Companion
+  icon: electron/assets/icon.png
+
+# ── Windows ──────────────────────────────────────────────────────────────────
+win:
+  target:
+    - target: nsis
+      arch: [x64, ia32]
+    - target: portable
+      arch: [x64]
+  icon: electron/assets/icon.png
+  # Uncomment when you have a code-signing certificate:
+  # certificateSubjectName: "Your Company Name"
+  # certificateSha1: "..."
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: false
+  createStartMenuShortcut: true
+  shortcutName: TextFromTrack Companion
+
+# ── Linux ────────────────────────────────────────────────────────────────────
+linux:
+  target:
+    - AppImage
+    - deb
+  icon: electron/assets/icon.png
+  category: AudioVideo
+  desktop:
+    StartupNotify: false
+
+# ── Auto-update: publish to GitHub Releases ──────────────────────────────────
+publish:
+  provider: github
+  owner: r45635
+  repo: roon.app.textfromtrack.com
+  releaseType: release

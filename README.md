@@ -68,6 +68,7 @@ roon.app.textfromtrack.com/
 │   │   ├── routes.js           Top-level router
 │   │   ├── roonRoutes.js       /api/roon/*
 │   │   ├── musicRoutes.js      /api/music/*
+│   │   ├── lrclibRoutes.js     /api/lrclib/*
 │   │   └── textfromtrackRoutes.js  /api/tft/*
 │   ├── storage/
 │   │   ├── userSettings.js     Read/write user-settings.json (music roots, embed/backup defaults)
@@ -404,6 +405,19 @@ The button only appears on items that Roon marks as directly playable (`hint: ac
 | `GET` | `/api/music/config` | User-settings (music roots, path mappings, embed/backup defaults) |
 | `POST` | `/api/music/config` | Persist user-settings; body accepts `music_roots`, `path_mappings`, `embed_lyrics_default`, `backup_before_embed_default` |
 | `GET` | `/api/music/match-current` | Match current Roon track to local file. **Lyrics status is re-detected live** for the matched track and every alternative, then written through to the index, so the panel always reflects the current file state on disk. |
+| `GET` | `/api/music/file-cover` | Return the embedded album art for a local file. Query: `?path=...` |
+| `GET` | `/api/music/file-lyrics` | Read the embedded `LYRICS` tag (and any sidecar `.lrc`) for a local file. Query: `?path=...` |
+| `GET` | `/api/music/file-tags` | Read all metadata tags for a local file. Query: `?path=...` |
+| `POST` | `/api/music/file-lyrics` | Write (or update) the `LYRICS` tag in a local file. Body: `{ path, lrc_content, embed, backup, save_beside }` |
+| `DELETE` | `/api/music/file-lyrics` | Remove the `LYRICS` tag from a local file. Query: `?path=...` |
+| `GET` | `/api/music/open-folder` | Open the enclosing folder of a local file in the host OS file manager. Query: `?path=...` |
+
+### LRCLIB endpoints
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/lrclib/lookup` | Look up lyrics from [lrclib.net](https://lrclib.net) for a given track. Query: `?title=...&artist=...&album=...&duration=...&path=...`. Tries `/api/get` (exact match with duration) first, then `/api/search` as fallback. Returns `{ found, synced, plain, instrumental, source }`. Hits a local LRC cache before reaching the network. |
+| `POST` | `/api/lrclib/save` | Save an LRCLIB (or any) LRC result to disk and/or embed it into the audio file tags. Body: `{ path, lrc_content, embed, backup, save_beside }`. Returns `{ success, lrc_file, lyrics_embedded, backup_path }`. |
 
 ### TextFromTrack endpoints
 
@@ -549,3 +563,100 @@ A built-in player so the user can audibly confirm the local match before spendin
 - HTTP Basic Auth or token auth when exposed outside localhost
 - HTTPS reverse proxy deployment guide (Nginx / Caddy)
 - Background job queue with priority and retry logic
+
+### v1.0 — Public standalone distribution (Electron desktop app)
+
+The goal of v1.0 is to make the app **installable by any Roon user without technical prerequisites** — no Node.js, no terminal, no Docker. A single download for macOS, Windows, and Linux.
+
+#### Architecture: Electron tray app
+
+Electron is the chosen approach because:
+- The backend is **100% pure JavaScript** (no native binaries) — trivially bundleable.
+- The frontend is already a browser-based React app — no window migration needed.
+- A **tray-only** design (no `BrowserWindow`) keeps it lightweight: Electron just acts as the daemon that starts Express and puts an icon in the menu bar / system tray.
+
+**Runtime model:**
+
+```
+electron electron/main.js
+  ├── spawn child_process → node src/server.js   (Express + Roon SDK)
+  ├── Tray icon  (menu bar on macOS / system tray on Windows + Linux)
+  │     ├── Open UI          → shell.openExternal('http://localhost:3888')
+  │     ├── ● Roon: <name>   → polled from /api/roon/status every 5 s
+  │     ├── ◎ Credits: N     → polled from /api/tft/me every 60 s
+  │     ├── ─────────────────
+  │     ├── Start at login   → toggle (app.setLoginItemSettings)
+  │     └── Quit
+  └── app.on('window-all-closed') → suppress default quit, stay in tray
+```
+
+The UI stays in the user's default browser — `shell.openExternal()` on "Open UI". No `BrowserWindow` needed.
+
+#### New files
+
+```
+electron/
+  ├── main.js              Electron entry (tray, server spawn, IPC)
+  └── assets/
+        ├── icon.png              512×512 full-colour app icon
+        ├── tray-icon.png         16×16 (Windows) / 22×22 (Linux)
+        ├── tray-icon@2x.png      32×32 / 44×44 Retina
+        └── tray-icon-mac.png     Monochrome template for macOS (follows dark/light mode)
+electron-builder.yml             Build configuration (targets, signing, update channel)
+```
+
+#### Changes to existing files
+
+- `package.json` — `"main"` field set to `"electron/main.js"`, new `electron:*` scripts, `electron` + `electron-builder` in devDependencies.
+- `src/storage/userSettings.js` — use `app.getPath('userData')` for the storage folder when running inside Electron so that `user-settings.json` and `jobs.json` survive asar re-packaging.
+
+#### Build targets
+
+| Platform | Artifact | Notes |
+|---|---|---|
+| macOS | `.dmg` + universal `.zip` (arm64 + x64) | Code-signed + notarized (Apple Developer ID) |
+| Windows | NSIS `.exe` installer + portable `.exe` | Code-signed (EV cert or self-signed for early builds) |
+| Linux | `.AppImage` + `.deb` | No signing required |
+
+#### npm scripts added
+
+```json
+"electron:dev":       "concurrently \"npm run dev\" \"wait-on http://localhost:3888 && electron .\"",
+"electron:build":     "npm run build && electron-builder --mac --win --linux",
+"electron:build:mac": "npm run build && electron-builder --mac",
+"electron:publish":   "electron-builder --publish always"
+```
+
+#### Auto-update
+
+`electron-updater` (bundled with electron-builder) publishes to GitHub Releases. The tray menu shows "Update to vX.Y.Z" when a newer release is detected.
+
+#### Distribution channels
+
+| Channel | Method | Audience |
+|---|---|---|
+| **GitHub Releases** | CI on push of `v*.*.*` tags | Primary — all users |
+| `docs/install.html` (GitHub Pages) | Static download + install guide | Public marketing |
+| Homebrew cask _(future)_ | `brew install --cask textfromtrack-companion` | macOS power users |
+| Winget _(future)_ | `winget install TextFromTrack.Companion` | Windows power users |
+
+#### Implementation checklist
+
+- [x] `electron/main.js` — tray icon, server spawn, open-in-browser, start-at-login toggle
+- [x] `electron-builder.yml` — appId, productName, mac/win/linux targets, GitHub publisher
+- [x] `package.json` — Electron entry, scripts, devDependencies
+- [x] SVG logo rasterized → `electron/assets/icon.png` (512×512), `tray-icon-mac.png` (22×22 monochrome template for macOS), `tray-icon.png` / `tray-icon@2x.png` (16/32 px colour for Windows + Linux)
+- [x] `.github/workflows/release.yml` — matrix build on push of `v*.*.*` tags, publishes to GitHub Releases
+- [x] `.github/workflows/ci.yml` — test suite on Node 20 + 22 on every PR/push to main
+- [x] `docs/install.html` — public download page with dynamic GitHub Releases API, per-platform install steps, self-hosted guide
+- [ ] `src/storage/userSettings.js` — resolve storage path via `app.getPath('userData')` when `process.type === 'browser'`
+- [ ] Code-signing certificates (Apple Developer ID, Windows EV)
+
+#### v0.9 early-access: npm global package
+
+Before the Electron release, ship a `v0.9` for technical users (requires Node.js ≥ 20):
+
+```bash
+npm install -g @r45635/roon-companion
+roon-companion   # starts the server at :3888
+```
