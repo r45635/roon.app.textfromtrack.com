@@ -28,6 +28,7 @@ config.json
 # Stub files are committed; runtime data is not tracked
 src/storage/jobs.json
 src/storage/music-index.json
+src/storage/lrc-cache/
 
 # ─── Dev tools (local scripts, experiments, not part of the project) ───────────
 dev-tools/
