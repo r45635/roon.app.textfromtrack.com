@@ -236,9 +236,14 @@ function startRoon() {
   });
 
   _svcStatus.set_status('Waiting for Roon...', false);
-  _roon.start_discovery();
 
-  logger.info('Roon discovery started — authorize the extension in Roon > Settings > Extensions');
+  if (config.roonCoreHost) {
+    _roon.ws_connect({ host: config.roonCoreHost, port: 9100 });
+    logger.info({ host: config.roonCoreHost }, 'Roon direct connect — authorize the extension in Roon > Settings > Extensions');
+  } else {
+    _roon.start_discovery();
+    logger.info('Roon discovery started — authorize the extension in Roon > Settings > Extensions');
+  }
 }
 
 /**

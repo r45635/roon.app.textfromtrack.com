@@ -34,6 +34,7 @@ on:
 
 permissions:
   contents: write
+  packages: write   # required for ghcr.io push
 
 # ── macOS ──────────────────────────────────────────────────────────────────────
 jobs:
@@ -149,10 +150,54 @@ jobs:
           if-no-files-found: error
           retention-days: 3
 
-# ── Publish GitHub Release ─────────────────────────────────────────────────────
+# ── Docker ──────────────────────────────────────────────────────────────────────────────
+  build-docker:
+    name: Build — Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG=${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ghcr.io/r45635/roon-companion:latest
+            ghcr.io/r45635/roon-companion:${{ steps.version.outputs.version }}
+            r45635/roon-companion:latest
+            r45635/roon-companion:${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+# ── Publish GitHub Release ─────────────────────────────────────────────────────────────────────
   release:
     name: Publish GitHub Release
-    needs: [build-mac, build-windows, build-linux]
+    needs: [build-mac, build-windows, build-linux, build-docker]
     runs-on: ubuntu-latest
     steps:
       - name: Download all build artifacts
@@ -188,6 +233,17 @@ jobs:
             | Windows | `Setup.exe` | Run the NSIS installer. Requires Windows 10+. |
             | Linux | `.AppImage` | `chmod +x *.AppImage && ./TextFromTrack*.AppImage` |
             | Linux (Debian/Ubuntu) | `.deb` | `sudo dpkg -i *.deb` |
+            | Docker (all platforms) | — | `docker compose up -d` — see below |
+
+            ### Docker (headless / server)
+
+            ```bash
+            # Download docker-compose.yml
+            curl -O https://raw.githubusercontent.com/r45635/roon.app.textfromtrack.com/main/docker-compose.yml
+            # Edit TFT_TOKEN and the music volume path, then:
+            docker compose up -d
+            ```
+            Images: `ghcr.io/r45635/roon-companion` · `r45635/roon-companion`
 
             > Full install guide: https://r45635.github.io/roon.app.textfromtrack.com/docs/install.html
             >

@@ -35,6 +35,9 @@ const config = {
     process.env.ROON_DISPLAY_NAME || 'TextFromTrack Roon Companion',
   roonDisplayVersion: process.env.ROON_DISPLAY_VERSION || '0.1.0',
   roonPublisher: process.env.ROON_PUBLISHER || 'TextFromTrack',
+  // When set, skip Sood UDP auto-discovery and connect directly via WebSocket.
+  // Required in Docker on macOS/Windows where network_mode: host is unavailable.
+  roonCoreHost: process.env.ROON_CORE_HOST || null,
 
   // ── Music library ───────────────────────────────────────────────────────────
   musicRoots: (process.env.MUSIC_ROOTS || '')

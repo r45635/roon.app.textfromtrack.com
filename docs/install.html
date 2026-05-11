@@ -288,6 +288,7 @@
   <a class="nav-item" href="#first-launch">First Launch</a>
 
   <span class="nav-section">Advanced</span>
+  <a class="nav-item" href="#docker">Docker (headless)</a>
   <a class="nav-item" href="#self-hosted">Self-Hosted (VPS / NAS)</a>
   <a class="nav-item" href="#updates">Updates</a>
   <a class="nav-item" href="#faq">FAQ</a>
@@ -633,6 +634,95 @@ sudo apt-get install -f</code></pre>
     </div>
   </section>
 
+  <!-- Docker -->
+  <section class="section" id="docker">
+    <h2 class="section-title">Docker (recommended for headless installs)</h2>
+    <p class="section-sub">The easiest way to run the companion on a NAS, VPS, Raspberry Pi, or any Linux server — no Node.js required, no build step, one command.</p>
+
+    <div class="info-block tip">
+      <span class="info-block-icon">🐳</span>
+      <div>
+        Images are published to <strong>ghcr.io/r45635/roon-companion</strong> and
+        <strong>r45635/roon-companion</strong> (Docker Hub) on every release.
+        Requires <a href="https://docs.docker.com/get-docker/" target="_blank">Docker Engine</a>
+        (Linux) or <a href="https://www.docker.com/products/docker-desktop/" target="_blank">Docker Desktop</a>
+        (macOS / Windows).
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <div class="step-title">Download <code>docker-compose.yml</code></div>
+          <div class="step-desc">
+            <pre><code>curl -O https://raw.githubusercontent.com/r45635/roon.app.textfromtrack.com/main/docker-compose.yml</code></pre>
+            Or just download the file from the <a href="https://github.com/r45635/roon.app.textfromtrack.com" target="_blank">GitHub repository</a>.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <div class="step-title">Edit the two required settings</div>
+          <div class="step-desc">
+            Open <code>docker-compose.yml</code> in any text editor and set:
+            <ul style="margin:10px 0 0 20px;line-height:1.8">
+              <li><code>TFT_TOKEN</code> — your <a href="https://app.textfromtrack.com/account/tokens" target="_blank">TextFromTrack Personal Access Token</a></li>
+              <li>The music volume path (left side of <code>- /path/to/your/music:/music:ro</code>) — the directory where your FLAC/MP3 files live on the host</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <div class="step-title">Start</div>
+          <div class="step-desc">
+            <pre><code>docker compose up -d</code></pre>
+            The image is pulled automatically. The UI is available at
+            <strong>http://localhost:3888</strong> (or <code>http://&lt;server-ip&gt;:3888</code> from another machine).
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <div class="step-title">Authorize with Roon</div>
+          <div class="step-desc">
+            Open the UI, then on your Roon Core go to
+            <em>Settings → Extensions</em> and enable <strong>TextFromTrack Roon Companion</strong>.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:14px;font-weight:700;color:var(--tft-ink);margin:28px 0 12px">macOS / Windows Docker Desktop — direct Core connection</h3>
+    <p style="font-size:13px;color:var(--tft-ink-2);margin-bottom:12px">
+      Docker Desktop does not support <code>network_mode: host</code>, so Roon's automatic
+      extension discovery (Sood UDP) cannot reach the container. Use
+      <code>ROON_CORE_HOST</code> to connect directly instead:
+    </p>
+    <pre><code><span class="comment"># In docker-compose.yml:</span>
+<span class="comment"># 1. Comment out network_mode: host</span>
+<span class="comment"># 2. Uncomment the ports block</span>
+<span class="comment"># 3. Set the IP of your Roon Core machine</span>
+ROON_CORE_HOST: 192.168.1.10   <span class="comment"># ← replace with your Roon Core IP</span></code></pre>
+
+    <h3 style="font-size:14px;font-weight:700;color:var(--tft-ink);margin:24px 0 12px">Updating to a new version</h3>
+    <pre><code>docker compose pull
+docker compose up -d</code></pre>
+
+    <h3 style="font-size:14px;font-weight:700;color:var(--tft-ink);margin:24px 0 12px">Useful commands</h3>
+    <pre><code><span class="comment"># View logs</span>
+docker compose logs -f roon-companion
+
+<span class="comment"># Stop</span>
+docker compose down
+
+<span class="comment"># Persistent data is in ./data/ — back it up to preserve settings and job history</span></code></pre>
+  </section>
+
   <!-- Self-Hosted -->
   <section class="section" id="self-hosted">
     <h2 class="section-title">Self-Hosted Install (VPS / NAS / Server)</h2>
@@ -892,7 +982,7 @@ pm2 restart tft-companion</code></pre>
   }
 
   // ── Active nav item on scroll ─────────────────────────────────────────────
-  const sections = ['download','requirements','install','first-launch','self-hosted','updates','faq'];
+  const sections = ['download','requirements','install','first-launch','docker','self-hosted','updates','faq'];
   const navItems = {};
   sections.forEach(id => {
     navItems[id] = document.querySelector(`.nav-item[href="#${id}"]`);

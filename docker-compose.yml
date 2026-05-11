@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TextFromTrack Roon Companion — Docker Compose
+#
+# Quick start (Linux / NAS / VPS / Raspberry Pi):
+#   1. Edit the two required values below: TFT_TOKEN and the music volume path
+#   2. docker compose up -d
+#   3. Open http://localhost:3888 — authorize with Roon → done
+#
+# Image: ghcr.io/r45635/roon-companion  (also on Docker Hub: r45635/roon-companion)
+# GitHub: https://github.com/r45635/roon.app.textfromtrack.com
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  roon-companion:
+    image: ghcr.io/r45635/roon-companion:latest
+    container_name: roon-companion
+
+    # ── Networking ─────────────────────────────────────────────────────────────
+    # network_mode: host is required on Linux for Roon's Sood UDP auto-discovery.
+    # The Roon Core will detect the extension automatically on the local network.
+    #
+    # macOS / Windows (Docker Desktop): host mode is NOT supported.
+    # Remove or comment out network_mode and uncomment the ports block below,
+    # then set ROON_CORE_HOST to the IP address of your Roon Core machine.
+    network_mode: host   # Linux only
+
+    # Uncomment for macOS / Windows Docker Desktop (and set ROON_CORE_HOST below):
+    # ports:
+    #   - "3888:3888"
+
+    volumes:
+      # Persistent storage: settings, job history, lrc-cache
+      # A ./data/ directory will be created automatically on first run.
+      - ./data:/app/src/storage
+
+      # Your music library — read-only inside the container.
+      # Change the LEFT side to the actual path on your host machine.
+      # Inside the container the library is always at /music.
+      - /path/to/your/music:/music:ro
+
+    environment:
+      # ── Required ─────────────────────────────────────────────────────────────
+
+      # Your TextFromTrack Personal Access Token.
+      # Create one at https://app.textfromtrack.com/account/tokens
+      TFT_TOKEN: ""
+
+      # Absolute path(s) to your music inside the container.
+      # Must match the container path in the volume mount above.
+      MUSIC_ROOTS: /music
+
+      # ── Optional ─────────────────────────────────────────────────────────────
+
+      PORT: 3888
+
+      # Direct Roon Core IP address.
+      # Required on macOS / Windows where network_mode: host is not supported.
+      # Roon auto-discovery (Sood UDP) does not work through Docker's NAT —
+      # setting this bypasses discovery and connects directly via WebSocket.
+      # Example: ROON_CORE_HOST: 192.168.1.10
+      ROON_CORE_HOST: ""
+
+      # Path mappings: translate Roon's view of a file path to the local path.
+      # Useful when Roon sees SMB/NFS paths that differ from /music inside Docker.
+      # Format: <roon_path>=<container_path>,<roon_path2>=<container_path2>
+      # Example: PATH_MAPPINGS: "smb://NAS.local/Music=/music"
+      PATH_MAPPINGS: ""
+
+    restart: unless-stopped

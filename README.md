@@ -106,7 +106,21 @@ roon.app.textfromtrack.com/
 
 ## 3. Installation
 
-### Prerequisites
+### Quick start (Docker — recommended for headless / server)
+
+```bash
+# 1. Download docker-compose.yml
+curl -O https://raw.githubusercontent.com/r45635/roon.app.textfromtrack.com/main/docker-compose.yml
+
+# 2. Edit TFT_TOKEN and the music volume path inside docker-compose.yml, then:
+docker compose up -d
+```
+
+The UI is available at **http://localhost:3888**. See [docs/install.html](docs/install.html) for full Docker documentation (including macOS/Windows notes).
+
+---
+
+### Manual install (Node.js)
 
 - **Node.js 20+** — https://nodejs.org
 - A running **Roon Core** on the local network
@@ -164,6 +178,7 @@ Copy `.env.example` to `.env` and fill in the values.
 | `ROON_DISPLAY_NAME` | `TextFromTrack Roon Companion` | Name shown in Roon Settings |
 | `ROON_DISPLAY_VERSION` | `0.1.0` | Version shown in Roon Settings |
 | `ROON_PUBLISHER` | `TextFromTrack` | Publisher shown in Roon Settings |
+| `ROON_CORE_HOST` | _(empty)_ | Direct Roon Core IP — skips auto-discovery (required in Docker on macOS/Windows) |
 | `MUSIC_ROOTS` | _(empty)_ | Comma-separated absolute paths to scan |
 | `PATH_MAPPINGS` | _(empty)_ | `from=to` pairs for SMB/NAS path translation (comma-separated) |
 | `TFT_BASE_URL` | `https://app.textfromtrack.com/api/v1` | TextFromTrack API base URL |
