@@ -2,6 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { exec } = require('child_process');
 const { Router } = require('express');
 const config = require('../config');
 const logger = require('../utils/logger');
@@ -9,9 +10,14 @@ const { E, buildError } = require('../utils/normalize');
 const scanner = require('../music/scanner');
 const matcher = require('../music/matcher');
 const lyricsDetector = require('../music/lyricsDetector');
+const lyricsEmbedder = require('../music/lyricsEmbedder');
+const flacTagger = require('../music/flacTagger');
+const NodeID3 = require('node-id3');
 const nowPlayingStore = require('../roon/nowPlayingStore');
 const { getRoonStatus } = require('../roon/roonClient');
 const userSettings = require('../storage/userSettings');
+const lrcCache = require('../utils/lrcCache');
+const jobStore = require('../textfromtrack/jobStore');
 
 const router = Router();
 
@@ -147,19 +153,29 @@ router.get('/match-current', async (req, res) => {
     if (!track || !track.path) return;
     try {
       const liveStatus = await lyricsDetector.detect(track.path);
-      if (liveStatus !== track.lyrics_status) {
+      // If no disk-based lyrics, check the LRC cache before reporting NO_LOCAL_LYRICS
+      let finalStatus = liveStatus;
+      if (liveStatus === lyricsDetector.STATUS.NO_LOCAL_LYRICS) {
+        if (lrcCache.get(track.path)) {
+          finalStatus = lyricsDetector.STATUS.HAS_CACHED_LYRICS;
+        }
+      }
+      if (finalStatus !== track.lyrics_status) {
         logger.info(
-          { path: track.path, cached: track.lyrics_status, live: liveStatus },
+          { path: track.path, cached: track.lyrics_status, live: finalStatus },
           'Lyrics status drift detected — refreshing index'
         );
         // Write-through: keep the index aligned for subsequent calls.
-        try {
-          scanner.updateTrackLyricsStatus(track.path, liveStatus);
-        } catch (err) {
-          logger.warn({ err: err.message }, 'Could not write-through live lyrics status to index');
+        // Only persist disk-based statuses to the index (cache status is dynamic).
+        if (finalStatus !== lyricsDetector.STATUS.HAS_CACHED_LYRICS) {
+          try {
+            scanner.updateTrackLyricsStatus(track.path, finalStatus);
+          } catch (err) {
+            logger.warn({ err: err.message }, 'Could not write-through live lyrics status to index');
+          }
         }
       }
-      track.lyrics_status = liveStatus;
+      track.lyrics_status = finalStatus;
     } catch (err) {
       logger.warn({ err: err.message, path: track.path }, 'Live lyrics detection failed — keeping cached value');
     }
@@ -168,6 +184,15 @@ router.get('/match-current', async (req, res) => {
   if (result) {
     if (result.matched && result.track) {
       await refreshTrackLyrics(result.track);
+      // Inject audio format fields (lightweight parse, covers skipped)
+      try {
+        const { parseFile } = await import('music-metadata');
+        const meta = await parseFile(result.track.path, { skipCovers: true, duration: false });
+        const f = meta.format;
+        result.track.sample_rate_hz  = f.sampleRate      || null;
+        result.track.bits_per_sample = f.bitsPerSample   || null;
+        result.track.lossless        = f.lossless        ?? null;
+      } catch { /* non-fatal */ }
     }
     if (Array.isArray(result.alternatives)) {
       // Run alternatives in parallel — they're independent and stat-bound.
@@ -260,10 +285,31 @@ router.get('/file-lyrics', async (req, res) => {
     const metadata = await parseFile(resolved, { skipCovers: true, duration: false });
     const lyricsArr = metadata.common.lyrics || [];
     const text = lyricsArr
-      .map(l => (typeof l === 'string' ? l : l?.text || ''))
+      .map(l => {
+        if (typeof l === 'string') return l;
+        if (l?.text) return l.text;
+        // Synchronized lyrics: reconstruct LRC format with [MM:SS.xx] timestamps
+        if (Array.isArray(l?.syncText) && l.syncText.length > 0) {
+          return l.syncText.map(s => {
+            const ms = s.timestamp || 0;
+            const mins = Math.floor(ms / 60000);
+            const secs = Math.floor((ms % 60000) / 1000);
+            const centis = Math.floor((ms % 1000) / 10);
+            const tag = `[${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(centis).padStart(2, '0')}]`;
+            return `${tag}${s.text || ''}`;
+          }).filter(s => s.trim()).join('\n');
+        }
+        return '';
+      })
       .filter(Boolean)
       .join('\n');
     if (text) return res.json({ success: true, source: 'embedded', text });
+
+    // 3. LRC cache (only when include_cache param is set)
+    if (req.query.include_cache === '1' || req.query.include_cache === 'true') {
+      const cached = lrcCache.get(resolved);
+      if (cached) return res.json({ success: true, source: 'cache', text: cached });
+    }
 
     return res.json({ success: true, source: null, text: null });
   } catch (err) {
@@ -324,6 +370,193 @@ router.get('/file-tags', async (req, res) => {
       duration_seconds: format.duration       ? Math.round(format.duration * 10) / 10 : null,
       tag_types:       format.tagTypes        || [],
     },
+  });
+});
+
+/**
+ * POST /api/music/file-lyrics
+ * Body: { path, lrc_content }
+ * Writes lyrics to the audio file and/or an .lrc sidecar using user preferences
+ * (embed_lyrics_default, backup_before_embed_default, save_lrc_beside_source_default).
+ * This is the generic "Transfer to File Tags" endpoint used by both LRCLIB and TFT providers.
+ */
+router.post('/file-lyrics', async (req, res) => {
+  const { path: audioPath, lrc_content } = req.body || {};
+
+  if (!audioPath || typeof audioPath !== 'string') {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'path is required'));
+  }
+  if (!lrc_content || typeof lrc_content !== 'string' || lrc_content.trim().length === 0) {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'lrc_content is required'));
+  }
+
+  const resolved = path.resolve(audioPath);
+  const settings = userSettings.get();
+  const roots = settings.music_roots.length ? settings.music_roots : config.musicRoots;
+  const allowed = roots.some(r => resolved.startsWith(path.resolve(r) + path.sep) || resolved === path.resolve(r));
+  if (!allowed) {
+    return res.status(403).json(buildError('FORBIDDEN', 'Path is not under a configured music root'));
+  }
+  if (!fs.existsSync(resolved)) {
+    return res.status(404).json(buildError('FILE_NOT_FOUND', 'File not found'));
+  }
+
+  const bodyHas = (key) => req.body && Object.prototype.hasOwnProperty.call(req.body, key);
+  const doEmbed      = bodyHas('embed')       ? !!req.body.embed       : !!settings.embed_lyrics_default;
+  const doBackup     = bodyHas('backup')      ? !!req.body.backup      : (settings.backup_before_embed_default !== false);
+  const doSaveBeside = bodyHas('save_beside') ? !!req.body.save_beside : !!settings.save_lrc_beside_source_default;
+
+  const result = { success: true, lrc_file: null, lyrics_embedded: false, backup_path: null };
+
+  try {
+    if (doSaveBeside) {
+      const lrcPath = resolved.replace(/\.[^.]+$/, '.lrc');
+      fs.writeFileSync(lrcPath, lrc_content, 'utf8');
+      result.lrc_file = lrcPath;
+      logger.info({ lrcPath }, 'file-lyrics POST: LRC sidecar written');
+    }
+
+    if (doEmbed) {
+      const embedResult = lyricsEmbedder.embedLyrics(resolved, lrc_content, {
+        backup: { enabled: doBackup, onConflict: 'overwrite' },
+      });
+      result.lyrics_embedded = true;
+      result.backup_path = embedResult.backup_path || null;
+      logger.info({ audioPath: resolved }, 'file-lyrics POST: lyrics embedded');
+    }
+
+    try {
+      const newStatus = doEmbed
+        ? lyricsDetector.STATUS.HAS_EMBEDDED_LYRICS
+        : doSaveBeside
+          ? lyricsDetector.STATUS.HAS_LRC_FILE
+          : null;
+      if (newStatus) scanner.updateTrackLyricsStatus(resolved, newStatus);
+    } catch { /* non-fatal */ }
+
+    res.json(result);
+  } catch (err) {
+    logger.error({ err: err.message, path: resolved }, 'file-lyrics POST: write failed');
+    res.status(500).json(buildError('WRITE_ERROR', err.message));
+  }
+});
+
+/**
+ * DELETE /api/music/file-lyrics?path=<encoded>
+ * Removes embedded lyrics from a FLAC (LYRICS vorbis tag) or MP3 (USLT frame).
+ */
+router.delete('/file-lyrics', (req, res) => {
+  const resolved = resolveAndValidatePath(req, res);
+  if (!resolved) return;
+  try {
+    const result = lyricsEmbedder.removeLyrics(resolved);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    const status = err.code === E.SOURCE_FILE_NOT_FOUND ? 404
+                 : err.code === E.LYRICS_EMBED_UNSUPPORTED ? 422
+                 : 500;
+    res.status(status).json(buildError(err.code || 'REMOVE_ERROR', err.message));
+  }
+});
+
+/**
+ * PATCH /api/music/file-tags?path=<encoded>
+ * Body: { tags: { title, artist, albumartist, album, year, genre, track, disc,
+ *                 composer, label, comment, isrc } }
+ * null = remove the tag. Omitted fields are left untouched.
+ */
+
+// Map from our "common" field names to FLAC vorbis keys
+const VORBIS_FIELD_MAP = {
+  title:       'TITLE',
+  artist:      'ARTIST',
+  albumartist: 'ALBUMARTIST',
+  album:       'ALBUM',
+  year:        'DATE',
+  genre:       'GENRE',
+  comment:     'COMMENT',
+  track:       'TRACKNUMBER',
+  disc:        'DISCNUMBER',
+  composer:    'COMPOSER',
+  label:       'ORGANIZATION',
+  isrc:        'ISRC',
+};
+
+router.patch('/file-tags', async (req, res) => {
+  const resolved = resolveAndValidatePath(req, res);
+  if (!resolved) return;
+
+  const incomingTags = req.body?.tags;
+  if (!incomingTags || typeof incomingTags !== 'object' || Array.isArray(incomingTags)) {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'Body must be { tags: {...} }'));
+  }
+
+  const ext = path.extname(resolved).toLowerCase();
+
+  try {
+    if (ext === '.flac') {
+      const updates = {};
+      for (const [field, vorbisKey] of Object.entries(VORBIS_FIELD_MAP)) {
+        if (Object.prototype.hasOwnProperty.call(incomingTags, field)) {
+          updates[vorbisKey] = incomingTags[field] == null ? null : String(incomingTags[field]);
+        }
+      }
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json(buildError(E.INVALID_REQUEST, 'No recognized tag fields in body'));
+      }
+      const result = flacTagger.setVorbisTags(resolved, updates);
+      logger.info({ path: resolved, fields: Object.keys(updates) }, 'file-tags PATCH (FLAC)');
+      return res.json({ success: true, format: 'flac', ...result });
+    }
+
+    if (ext === '.mp3') {
+      const currentTags = NodeID3.read(resolved);
+      const apply = (key, value) => {
+        if (value == null || String(value).trim() === '') delete currentTags[key];
+        else currentTags[key] = value;
+      };
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'title'))       apply('title', incomingTags.title);
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'artist'))      apply('artist', incomingTags.artist);
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'albumartist')) apply('performerInfo', incomingTags.albumartist);
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'album'))       apply('album', incomingTags.album);
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'year'))        apply('year', incomingTags.year);
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'genre'))       apply('genre', incomingTags.genre);
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'track'))       apply('trackNumber', incomingTags.track);
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'disc'))        apply('partOfSet', incomingTags.disc);
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'composer'))    apply('composer', incomingTags.composer);
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'isrc'))        apply('TSRC', incomingTags.isrc);
+      if (Object.prototype.hasOwnProperty.call(incomingTags, 'comment')) {
+        const v = incomingTags.comment;
+        if (!v) delete currentTags.comment;
+        else currentTags.comment = { language: 'eng', shortText: '', text: String(v) };
+      }
+      const ok = NodeID3.write(currentTags, resolved);
+      if (ok !== true) throw new Error(ok?.message || 'NodeID3.write failed');
+      logger.info({ path: resolved }, 'file-tags PATCH (MP3)');
+      return res.json({ success: true, format: 'mp3' });
+    }
+
+    return res.status(422).json(buildError('UNSUPPORTED_FORMAT', `Tag editing not supported for ${ext} files`));
+  } catch (err) {
+    logger.warn({ path: resolved, err: err.message }, 'file-tags PATCH failed');
+    res.status(500).json(buildError('WRITE_ERROR', err.message));
+  }
+});
+
+/**
+ * GET /api/music/open-folder?path=<encoded>
+ * Opens the containing folder of the given file in the system file manager (macOS Finder).
+ */
+router.get('/open-folder', (req, res) => {
+  const resolved = resolveAndValidatePath(req, res);
+  if (!resolved) return;
+  const dir = path.dirname(resolved);
+  exec(`open ${JSON.stringify(dir)}`, err => {
+    if (err) {
+      logger.warn({ dir, err: err.message }, 'open-folder failed');
+      return res.status(500).json(buildError('OPEN_FOLDER_ERROR', err.message));
+    }
+    res.json({ success: true });
   });
 });
 

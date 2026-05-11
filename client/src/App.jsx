@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import HeroCard from './components/HeroCard.jsx';
 import RoonStatus from './components/RoonStatus.jsx';
@@ -6,12 +6,16 @@ import ZoneSelector from './components/ZoneSelector.jsx';
 import SearchPanel from './components/SearchPanel.jsx';
 import JobHistory from './components/JobHistory.jsx';
 import LibrarySettings from './components/LibrarySettings.jsx';
+import AppPrefs from './components/AppPrefs.jsx';
+import { useAppPrefs } from './hooks/useAppPrefs.js';
 
-const ROON_POLL_MS = 3000;
 const JOBS_POLL_MS = 5000;
 
 export default function App() {
   const { i18n, t } = useTranslation();
+  const [prefs, setPref] = useAppPrefs();
+  const roonPollMsRef = useRef(prefs.roonPollMs);
+  useEffect(() => { roonPollMsRef.current = prefs.roonPollMs; }, [prefs.roonPollMs]);
 
   const [roonStatus, setRoonStatus] = useState(null);
   const [nowPlaying, setNowPlaying] = useState(null);
@@ -96,12 +100,15 @@ export default function App() {
     fetchTftAccount();
     fetchJobs();
 
-    // Continuous polling
+    // Continuous polling — tick every 500 ms, actual fetch rate governed by roonPollMsRef
+    let lastRoonFetch = Date.now();
     const roonInterval = setInterval(async () => {
+      if (Date.now() - lastRoonFetch < roonPollMsRef.current) return;
+      lastRoonFetch = Date.now();
       await fetchRoonStatus();
       await fetchNowPlaying();
       await fetchZones();
-    }, ROON_POLL_MS);
+    }, 500);
 
     const jobsInterval = setInterval(fetchJobs, JOBS_POLL_MS);
 
@@ -323,6 +330,7 @@ export default function App() {
               <button className="tft-settings-close" onClick={() => setSettingsOpen(false)} aria-label="Fermer">✕</button>
             </div>
             <div className="tft-settings-drawer-body">
+              <AppPrefs prefs={prefs} setPref={setPref} />
               <LibrarySettings onRescanStarted={handleRescanStarted} />
             </div>
           </aside>
@@ -358,6 +366,7 @@ export default function App() {
             onSettings={handleSettings}
             onGenerated={handleGenerated}
             onSearch={(q) => setSearchTrigger({ q, ts: Date.now() })}
+            volumeStep={prefs.volumeStep}
           />
           <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} externalQuery={searchTrigger} />
           <JobHistory jobs={jobs} onJobRetried={handleJobRetried} />

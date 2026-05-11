@@ -26,6 +26,10 @@ const _zones = new Map();
 // Manually selected active zone_id (null = auto-select playing zone)
 let _activeZoneId = null;
 
+// Last auto-selected zone_id — kept sticky so transient state changes
+// (e.g. 'loading' during a track transition) don't cause zone flapping.
+let _autoZoneId = null;
+
 // Roon HTTP server base URL (for image proxy)
 let _roonImageBase = null;
 
@@ -76,20 +80,56 @@ function _extractNowPlaying(zone) {
 // ─── Find and update the active zone in the store ────────────────────────────
 
 function _refreshActiveZone() {
-  // If user has selected a zone, prefer it; fall back to first playing zone
-  let active = null;
+  // ── Manual selection takes absolute precedence ────────────────────────────
   if (_activeZoneId) {
-    active = _zones.get(_activeZoneId) || null;
-  }
-  if (!active) {
-    for (const zone of _zones.values()) {
-      if (zone.state === 'playing') { active = zone; break; }
-      if (!active && zone.now_playing) active = zone;
+    const active = _zones.get(_activeZoneId);
+    if (active) {
+      const state = _extractNowPlaying(active);
+      if (state) { nowPlayingStore.set(state); return; }
     }
+    // Explicitly selected zone is gone — fall through to auto but don't cling
+    // to a stale _activeZoneId (let the UI re-select).
+    _activeZoneId = null;
   }
 
-  if (active) {
-    const state = _extractNowPlaying(active);
+  // ── Auto-selection with sticky behaviour ──────────────────────────────────
+  // If we already have an auto-selected zone, keep it unless:
+  //   (a) it was removed from the zones map, OR
+  //   (b) a different zone is actively 'playing' (user pressed play elsewhere).
+  // Transient states like 'loading' during a track transition are ignored so
+  // we don't flip zones and trigger unwanted events.
+
+  if (_autoZoneId && _zones.has(_autoZoneId)) {
+    const currentZone = _zones.get(_autoZoneId);
+    if (currentZone.state !== 'playing') {
+      // Our zone isn't playing right now — only switch if another is explicitly playing.
+      for (const zone of _zones.values()) {
+        if (zone.zone_id !== _autoZoneId && zone.state === 'playing') {
+          logger.debug({ from: _autoZoneId, to: zone.zone_id }, 'Auto-zone switched: another zone started playing');
+          _autoZoneId = zone.zone_id;
+          break;
+        }
+      }
+    }
+    const active = _zones.get(_autoZoneId);
+    if (active) {
+      const state = _extractNowPlaying(active);
+      if (state) { nowPlayingStore.set(state); return; }
+    }
+    _autoZoneId = null;
+  }
+
+  // ── First-time auto-selection ─────────────────────────────────────────────
+  _autoZoneId = null;
+  let fallback = null;
+  for (const zone of _zones.values()) {
+    if (zone.state === 'playing') { _autoZoneId = zone.zone_id; break; }
+    if (!fallback && zone.now_playing) fallback = zone.zone_id;
+  }
+  if (!_autoZoneId) _autoZoneId = fallback;
+
+  if (_autoZoneId) {
+    const state = _extractNowPlaying(_zones.get(_autoZoneId));
     if (state) { nowPlayingStore.set(state); return; }
   }
   nowPlayingStore.clear();
@@ -182,6 +222,7 @@ function startRoon() {
       _coreVersion = null;
       _roonImageBase = null;
       _zones.clear();
+      _autoZoneId = null;
       nowPlayingStore.clear();
       if (_svcStatus) _svcStatus.set_status('Disconnected from Roon', true);
     },
@@ -301,6 +342,7 @@ function getAllZones() {
 function setActiveZone(zoneId) {
   if (!_zones.has(zoneId)) throw new Error(`Zone not found: ${zoneId}`);
   _activeZoneId = zoneId;
+  _autoZoneId = null; // clear auto-selected zone so manual choice is honoured
   _refreshActiveZone();
 }
 

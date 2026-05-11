@@ -23,6 +23,7 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
   const [embed, setEmbed] = useState(false);
   const [backup, setBackup] = useState(true);
   const [force, setForce] = useState(false);
+  const [lowConfirmOverride, setLowConfirmOverride] = useState(false);
   const pollingRef = useRef(null);
 
   // Cleanup polling on unmount
@@ -40,6 +41,12 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
       })
       .catch(() => { /* keep defaults */ });
   }, []);
+
+  // Reset low-confidence override when the matched file changes
+  const _matchedPathForReset = matchData?.match?.track?.path;
+  useEffect(() => {
+    setLowConfirmOverride(false);
+  }, [_matchedPathForReset]);
 
   function startPolling(jobId) {
     pollingRef.current = setInterval(async () => {
@@ -66,10 +73,15 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
     setIsGenerating(true);
 
     try {
+      const body = { embed, backup, force };
+      // Low-confidence override: pass confirmed_path so the server skips the confidence gate
+      if (hasLowMatch && lowConfirmOverride && match?.track?.path) {
+        body.confirmed_path = match.track.path;
+      }
       const res = await fetch('/api/tft/generate-current', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ embed, backup, force }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
 
@@ -93,16 +105,20 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
   const hasCredits = !tokenConfigured || spendable > 0;
   const hasTrack = nowPlaying?.state === 'playing';
   const match = matchData?.match;
+  const hasLowMatch = match?.matched && match?.confidence === 'low';
   const hasHighMatch = match?.matched && (match?.confidence === 'high' || match?.confidence === 'medium');
+  const hasUsableMatch = hasHighMatch || (hasLowMatch && lowConfirmOverride);
   const lyricsExist =
     match?.track?.lyrics_status === 'HAS_LRC_FILE' ||
-    match?.track?.lyrics_status === 'HAS_EMBEDDED_LYRICS';
+    match?.track?.lyrics_status === 'HAS_EMBEDDED_LYRICS' ||
+    match?.track?.lyrics_status === 'HAS_CACHED_LYRICS';
 
   let disabledReason = null;
   if (!tokenConfigured) disabledReason = t('tft.no_token');
   else if (!hasCredits) disabledReason = t('tft.no_credits');
   else if (!hasTrack) disabledReason = t('tft.no_track');
-  else if (!hasHighMatch) disabledReason = t('tft.no_match');
+  else if (!hasUsableMatch && !hasLowMatch) disabledReason = t('tft.no_match');
+  else if (hasLowMatch && !lowConfirmOverride) disabledReason = t('tft.low_confidence_confirm_required');
   else if (lyricsExist && !force) disabledReason = t('tft.lyrics_exist');
 
   const buttonDisabled = isGenerating || !!disabledReason;
@@ -223,7 +239,31 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
           {isGenerating ? t('tft.generating') : t('tft.generate_button')}
         </button>
 
-        {disabledReason && !isGenerating && (
+        {hasLowMatch && !lowConfirmOverride && !isGenerating && (
+          <div className="alert alert-warning" style={{ marginTop: '0.5rem' }}>
+            <p style={{ marginBottom: '0.5rem' }}>{t('tft.low_confidence_warning')}</p>
+            <label className="embed-toggle">
+              <input
+                type="checkbox"
+                checked={lowConfirmOverride}
+                onChange={e => setLowConfirmOverride(e.target.checked)}
+              />
+              <span>{t('tft.low_confidence_confirm')}</span>
+            </label>
+          </div>
+        )}
+        {hasLowMatch && lowConfirmOverride && !isGenerating && (
+          <label className="embed-toggle" style={{ marginTop: '0.25rem' }}>
+            <input
+              type="checkbox"
+              checked={lowConfirmOverride}
+              onChange={e => setLowConfirmOverride(e.target.checked)}
+            />
+            <span className="muted small">{t('tft.low_confidence_confirm')}</span>
+          </label>
+        )}
+
+        {disabledReason && !isGenerating && !(hasLowMatch && !lowConfirmOverride) && (
           <p className="muted small">{disabledReason}</p>
         )}
       </div>

@@ -179,9 +179,48 @@ function canEmbed(audioPath) {
 
 module.exports = {
   embedLyrics,
+  removeLyrics,
   canEmbed,
   getBackupPath,
   backupExists,
   SUPPORTED_EXTENSIONS,
   BACKUP_SUFFIX,
 };
+
+/**
+ * Remove embedded lyrics from an audio file.
+ *  - FLAC: removes LYRICS (and LYRICS.ORG) vorbis comment tags.
+ *  - MP3:  removes the USLT (unsynchronised lyrics) ID3 frame.
+ *
+ * @param {string} audioPath
+ * @returns {{ format: 'mp3'|'flac', removed: boolean }}
+ */
+function removeLyrics(audioPath) {
+  if (!fs.existsSync(audioPath)) {
+    throw new AppError(E.SOURCE_FILE_NOT_FOUND, `File not found: ${audioPath}`);
+  }
+  const ext = path.extname(audioPath).toLowerCase();
+  if (!SUPPORTED_EXTENSIONS.has(ext)) {
+    throw new AppError(E.LYRICS_EMBED_UNSUPPORTED, `Unsupported format for lyrics removal: ${ext}`);
+  }
+
+  if (ext === '.flac') {
+    const result = flacTagger.removeLyrics(audioPath);
+    logger.info({ audioPath, removed: result.removed }, 'removeLyrics: FLAC');
+    return { format: 'flac', ...result };
+  }
+
+  // MP3: read all tags, delete the USLT frame, re-write everything else.
+  const currentTags = NodeID3.read(audioPath);
+  if (!currentTags.unsynchronisedLyrics) {
+    return { format: 'mp3', removed: false };
+  }
+  delete currentTags.unsynchronisedLyrics;
+  const ok = NodeID3.write(currentTags, audioPath);
+  if (ok !== true) {
+    throw new AppError(E.LYRICS_EMBED_FAILED, `MP3 lyrics removal failed: ${ok?.message || 'unknown'}`);
+  }
+  logger.info({ audioPath }, 'removeLyrics: MP3 USLT removed');
+  return { format: 'mp3', removed: true };
+}
+

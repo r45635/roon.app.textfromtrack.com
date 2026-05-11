@@ -10,6 +10,7 @@ const jobStore = require('./jobStore');
 const lyricsDetector = require('../music/lyricsDetector');
 const lyricsEmbedder = require('../music/lyricsEmbedder');
 const scanner = require('../music/scanner');
+const lrcCache = require('../utils/lrcCache');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -128,6 +129,17 @@ async function _downloadAndSave(jobId, sourcePath, lrcPath, remoteJob, embed = f
 
   logger.info({ jobId, lrcPath, saveBeside }, 'Downloading LRC export from TextFromTrack');
   const lrcContent = await tftClient.downloadExport(jobId, 'lrc');
+
+  // Cache the raw LRC (keyed by path + metadata) so future requests can skip TFT
+  const cachedJob = jobStore.findById(jobId);
+  lrcCache.setAll(
+    sourcePath,
+    cachedJob ? cachedJob.artist : null,
+    cachedJob ? cachedJob.title : null,
+    cachedJob ? cachedJob.album : null,
+    lrcContent
+  );
+  logger.info({ jobId }, 'LRC written to local cache');
 
   if (saveBeside) {
     try {
@@ -251,6 +263,60 @@ async function startTranscription(sourcePath, trackMeta = {}, options = {}) {
 
   // 2. Validate file
   await validateFile(sourcePath);
+
+  // 2b. Check local LRC cache (no credit consumed)
+  if (!force) {
+    const cached = lrcCache.get(sourcePath);
+    if (cached) {
+      logger.info({ sourcePath }, 'Cache hit — serving LRC from local cache, no TFT credit consumed');
+      const lrcPath = lyricsDetector.getLrcPath(sourcePath);
+      const cacheJobId = require('crypto').randomUUID();
+      const cacheJob = {
+        job_id: cacheJobId,
+        source_file: sourcePath,
+        lrc_file: saveBeside ? lrcPath : null,
+        title: trackMeta.title || null,
+        artist: trackMeta.artist || null,
+        album: trackMeta.album || null,
+        status: 'done',
+        source: 'cache',
+        cache_hit: true,
+        embed_requested: embed,
+        force_requested: false,
+        lyrics_embedded: false,
+        timestamps_requested: options.timestamps || 'required',
+        timestamps_mode: null,
+        credits_quoted: 0,
+        credits_charged: 0,
+        segment_count: (cached.match(/^\[[\d:\.]+\]/gm) || []).length,
+        created_at: new Date().toISOString(),
+        completed_at: new Date().toISOString(),
+        has_timestamps: !cached.includes('--- Timestamps not available for this model ---'),
+        has_timestamps_source: 'lrc_cache',
+        embed_error: null,
+        backup_path: null,
+        backup_created: false,
+        error: null,
+      };
+      if (saveBeside && !fs.existsSync(lrcPath)) {
+        try { fs.writeFileSync(lrcPath, cached, 'utf8'); } catch (e) { /* non-fatal */ }
+      }
+      if (embed && lyricsEmbedder.canEmbed(sourcePath)) {
+        try {
+          const embedResult = lyricsEmbedder.embedLyrics(sourcePath, cached, {
+            backup: backup && backup.enabled ? { enabled: true, onConflict: backup.onConflict || 'keep' } : { enabled: false },
+          });
+          cacheJob.lyrics_embedded = true;
+          cacheJob.backup_path = embedResult.backup_path;
+          cacheJob.backup_created = embedResult.backup_created;
+        } catch (e) {
+          cacheJob.embed_error = e.message;
+        }
+      }
+      jobStore.create(cacheJob);
+      return { success: true, job_id: cacheJobId, status: 'done', cache_hit: true };
+    }
+  }
 
   // 3. Check current lyrics status (live). Skip the gate when the caller
   //    explicitly forces a re-transcription.

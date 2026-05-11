@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import FileTagsCard from './FileTagsCard.jsx';
+import LyricsSection from './LyricsSection.jsx';
 
 const EMBED_SUPPORTED_EXTS = ['.mp3', '.flac'];
 
@@ -26,6 +27,7 @@ function LyricsPill({ status }) {
   const tone = {
     HAS_LRC_FILE: 'signal',
     HAS_EMBEDDED_LYRICS: '',
+    HAS_CACHED_LYRICS: 'signal',
     NO_LOCAL_LYRICS: 'amber',
     UNKNOWN: '',
   }[status] || '';
@@ -36,12 +38,13 @@ function LyricsPill({ status }) {
   );
 }
 
-function ScoreChip({ label, points, max }) {
+function ScoreChip({ label, points, max, hint }) {
   let cls = 'badge badge-sm badge-neutral';
   if (points > 0 && points >= max) cls = 'badge badge-sm badge-success';
   else if (points > 0) cls = 'badge badge-sm badge-warning';
+  const title = hint ? `${label}: ${points}/${max} — ${hint}` : `${label}: ${points}/${max}`;
   return (
-    <span className={cls} title={`${label}: ${points}/${max}`}>
+    <span className={cls} title={title}>
       {label} {points}/{max}
     </span>
   );
@@ -58,84 +61,44 @@ export default function HeroCard({
   onSettings,
   onGenerated,
   onSearch,
+  volumeStep = 1,
 }) {
   const { t } = useTranslation();
 
-  // ── Generate state (from TftPanel) ──────────────────────────────────────────
-  const [embed, setEmbed] = useState(false);
-  const [backup, setBackup] = useState(true);
-  const [saveBeside, setSaveBeside] = useState(false);
-  const [force, setForce] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [activeJob, setActiveJob] = useState(null);
-  const [genError, setGenError] = useState(null);
+  // ── UI state ────────────────────────────────────────────────────────────────
   const [altOpen, setAltOpen] = useState(false);
   const [confirmedPath, setConfirmedPath] = useState(null);
-  const pollingRef = useRef(null);
+  const [tagsRefreshKey, setTagsRefreshKey] = useState(0);
+  const [volDetailOpen, setVolDetailOpen] = useState(false);
 
-  useEffect(() => () => clearInterval(pollingRef.current), []);
-
+  // ── Volume drag helper ───────────────────────────────────────────────────────
+  function startVolumeDrag(e, outputIds, vMax) {
+    e.preventDefault();
+    const bar = e.currentTarget;
+    let lastVal = -1;
+    const apply = (clientX) => {
+      const rect = bar.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      const val = Math.round(pct * vMax);
+      if (val === lastVal) return;
+      lastVal = val;
+      outputIds.forEach(id => onVolume?.(id, 'absolute', val));
+    };
+    apply(e.clientX);
+    const onMove = (me) => apply(me.clientX);
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  }
   // Reset alternative selection when track changes
   const trackKey = nowPlaying?.now_playing?.one_line?.line1 ?? nowPlaying?.zone_id;
   useEffect(() => {
     setAltOpen(false);
     setConfirmedPath(null);
   }, [trackKey]);
-
-  useEffect(() => {
-    fetch('/api/music/config')
-      .then(r => r.json())
-      .then(d => {
-        if (d?.success) {
-          setEmbed(!!d.embed_lyrics_default);
-          setBackup(d.backup_before_embed_default !== false);
-          setSaveBeside(!!d.save_lrc_beside_source_default);
-        }
-      })
-      .catch(() => {});
-  }, []);
-
-  function startPolling(jobId) {
-    pollingRef.current = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/tft/jobs/${jobId}`);
-        const data = await res.json();
-        if (!data.success) return;
-        setActiveJob(data.job);
-        if (data.job.status === 'done' || data.job.status === 'error') {
-          clearInterval(pollingRef.current);
-          setIsGenerating(false);
-          if (onGenerated) onGenerated();
-        }
-      } catch { /* silent */ }
-    }, 2000);
-  }
-
-  async function handleGenerate() {
-    setGenError(null);
-    setActiveJob(null);
-    setIsGenerating(true);
-    try {
-      const res = await fetch('/api/tft/generate-current', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ embed, backup, save_beside: saveBeside, force, ...(confirmedPath ? { confirmed_path: confirmedPath } : {}) }),
-      });
-      const data = await res.json();
-      if (!data.success) { setGenError(data.error); setIsGenerating(false); return; }
-      if (data.status === 'reused') {
-        setActiveJob({ job_id: data.job_id, status: 'done', lrc_file: data.lrc_file });
-        setIsGenerating(false);
-        if (onGenerated) onGenerated();
-        return;
-      }
-      setActiveJob({ job_id: data.job_id, status: data.status });
-      startPolling(data.job_id);
-    } catch (err) {
-      setGenError({ code: 'UNKNOWN_ERROR', message: err.message });
-      setIsGenerating(false);
-    }
-  }
 
   // ── Derived values ───────────────────────────────────────────────────────────
   const np = nowPlaying;
@@ -147,30 +110,19 @@ export default function HeroCard({
 
   const match = matchData?.match;
   const lyricsStatus = match?.track?.lyrics_status;
-  const lyricsExist = lyricsStatus === 'HAS_LRC_FILE' || lyricsStatus === 'HAS_EMBEDDED_LYRICS';
+  const lyricsExist = lyricsStatus === 'HAS_LRC_FILE' || lyricsStatus === 'HAS_EMBEDDED_LYRICS' || lyricsStatus === 'HAS_CACHED_LYRICS';
   const matchedPath = match?.track?.path || '';
   const effectivePath = confirmedPath || matchedPath;
   const effectiveFilename = effectivePath ? effectivePath.split('/').pop() : '';
+  const effectiveDir = effectivePath ? effectivePath.slice(0, effectivePath.lastIndexOf('/') + 1) : '';
   const matchedExt = matchedPath ? matchedPath.slice(matchedPath.lastIndexOf('.')).toLowerCase() : '';
   const embedSupported = !matchedPath || EMBED_SUPPORTED_EXTS.includes(matchedExt);
 
-  const tokenConfigured = tftAccount?.token_configured;
-  const spendable = tftAccount?.credit_available ?? tftAccount?.credit_balance ?? 1;
-  const hasCredits = !tokenConfigured || spendable > 0;
-  const hasHighMatch = match?.matched && (match?.confidence === 'high' || match?.confidence === 'medium');
-
-  let disabledReason = null;
-  if (!tokenConfigured) disabledReason = t('tft.no_token');
-  else if (!hasCredits) disabledReason = t('tft.no_credits');
-  else if (!np || np.state !== 'playing') disabledReason = t('tft.no_track');
-  else if (!hasHighMatch) disabledReason = t('tft.no_match');
-  else if (lyricsExist && !force) disabledReason = t('tft.lyrics_exist');
-
-  // Volume: use master output or first output
+  // Volume: collect all outputs with volume data
   const firstOutput = np?.outputs?.[0];
   const volumeVal = firstOutput?.volume?.value ?? null;
-  const volumeMax = firstOutput?.volume?.soft_limit ?? firstOutput?.volume?.max ?? 100;
-  const volumePct = volumeVal != null ? Math.round((volumeVal / volumeMax) * 100) : null;
+  const volumeOutputs = (np?.outputs ?? []).filter(o => o.volume != null);
+  const multiVolume = volumeOutputs.length > 1;
 
   const loopLabel = {
     loop: t('now_playing.loop_all'),
@@ -178,12 +130,12 @@ export default function HeroCard({
   }[np?.loop] ?? null;
 
   const scoreFields = [
-    { key: 'title',    label: t('match.detail_title',    'Title') },
-    { key: 'artist',   label: t('match.detail_artist',   'Artist') },
-    { key: 'album',    label: t('match.detail_album',    'Album') },
-    { key: 'duration', label: t('match.detail_duration', 'Dur.') },
-    { key: 'filename', label: t('match.detail_filename', 'File') },
-    { key: 'isrc',     label: 'ISRC' },
+    { key: 'title',    label: t('match.detail_title',    'Title'),  hint: t('match.hint_title',    'Titre · exact=50, similaire ≥0.85=35, ≥0.70=20 · max 50') },
+    { key: 'artist',   label: t('match.detail_artist',   'Artist'), hint: t('match.hint_artist',   'Artiste · exact=30, similaire ≥0.85=21, ≥0.70=12 · max 30') },
+    { key: 'album',    label: t('match.detail_album',    'Album'),  hint: t('match.hint_album',    'Album · exact=20, similaire ≥0.85=14, ≥0.70=8 · max 20') },
+    { key: 'duration', label: t('match.detail_duration', 'Dur.'),   hint: t('match.hint_duration', 'Durée · ≤2s=20, ≤5s=10 · max 20') },
+    { key: 'filename', label: t('match.detail_filename', 'File'),   hint: t('match.hint_filename', 'Nom de fichier contient le titre · max 10') },
+    { key: 'isrc',     label: 'ISRC',                                hint: t('match.hint_isrc',     'International Standard Recording Code · correspondance exacte · max 60') },
   ];
 
   return (
@@ -224,7 +176,14 @@ export default function HeroCard({
           <h1 className="tft-np-title">{np?.title || t('now_playing.no_track')}</h1>
           {np && <>
             {onSearch && np.artist
-              ? <button type="button" className="tft-np-artist tft-search-link" onClick={() => onSearch(np.artist)}>{np.artist}</button>
+              ? <div className="tft-np-artist">
+                  {np.artist.split('/').map((a, i, arr) => (
+                    <React.Fragment key={i}>
+                      <button type="button" className="tft-search-link tft-np-artist-part" onClick={() => onSearch(a.trim())}>{a.trim()}</button>
+                      {i < arr.length - 1 && <span className="tft-np-artist-sep"> / </span>}
+                    </React.Fragment>
+                  ))}
+                </div>
               : <div className="tft-np-artist">{np?.artist}</div>
             }
             {onSearch && np.album
@@ -277,26 +236,104 @@ export default function HeroCard({
 
               <div className="tft-ctrl-spacer" />
 
-              {/* Volume */}
-              {volumeVal != null && firstOutput && (
-                <div className="tft-volume">
-                  <span className="tft-volume-icon">🔊</span>
-                  <div className="tft-volume-bar">
-                    <div className="tft-volume-fill" style={{ width: `${volumePct}%` }} />
+              {/* Volume — single output */}
+              {!multiVolume && volumeVal != null && firstOutput && (() => {
+                const vMax = firstOutput.volume?.soft_limit ?? firstOutput.volume?.max ?? 100;
+                const vPct = Math.round((volumeVal / vMax) * 100);
+                return (
+                  <div className="tft-volume">
+                    <span className="tft-volume-icon">🔊</span>
+                    <div
+                      className="tft-volume-bar tft-volume-bar--interactive"
+                      onMouseDown={(e) => startVolumeDrag(e, [firstOutput.output_id], vMax)}
+                    >
+                      <div className="tft-volume-fill" style={{ width: `${vPct}%` }} />
+                    </div>
+                    <div className="tft-volume-val tft-mono">{volumeVal}</div>
+                    <button
+                      className="tft-round-btn"
+                      style={{ width: 26, height: 26, fontSize: 12 }}
+                      onClick={() => onVolume?.(firstOutput.output_id, 'relative', -volumeStep)}
+                    >−</button>
+                    <button
+                      className="tft-round-btn"
+                      style={{ width: 26, height: 26, fontSize: 12 }}
+                      onClick={() => onVolume?.(firstOutput.output_id, 'relative', volumeStep)}
+                    >+</button>
                   </div>
-                  <div className="tft-volume-val tft-mono">{volumeVal}</div>
-                  <button
-                    className="tft-round-btn"
-                    style={{ width: 26, height: 26, fontSize: 12 }}
-                    onClick={() => onVolume?.(firstOutput.output_id, 'relative', -5)}
-                  >−</button>
-                  <button
-                    className="tft-round-btn"
-                    style={{ width: 26, height: 26, fontSize: 12 }}
-                    onClick={() => onVolume?.(firstOutput.output_id, 'relative', 5)}
-                  >+</button>
-                </div>
-              )}
+                );
+              })()}
+
+              {/* Volume — multiple outputs (grouped zone) */}
+              {multiVolume && (() => {
+                const avgVal = Math.round(volumeOutputs.reduce((s, o) => s + o.volume.value, 0) / volumeOutputs.length);
+                const globalMax = Math.max(...volumeOutputs.map(o => o.volume.soft_limit ?? o.volume.max ?? 100));
+                const avgPct = Math.round((avgVal / globalMax) * 100);
+                return (
+                  <div className="tft-volume-group">
+                    {/* Master row */}
+                    <div className="tft-volume">
+                      <button
+                        className="tft-volume-detail-toggle"
+                        onClick={() => setVolDetailOpen(v => !v)}
+                        title={volDetailOpen ? 'Masquer le détail' : 'Voir le détail par enceinte'}
+                      >{volDetailOpen ? '▾' : '▸'}</button>
+                      <span className="tft-volume-icon">🔊</span>
+                      <div
+                        className="tft-volume-bar tft-volume-bar--interactive"
+                        onMouseDown={(e) => startVolumeDrag(e, volumeOutputs.map(o => o.output_id), globalMax)}
+                      >
+                        <div className="tft-volume-fill" style={{ width: `${avgPct}%` }} />
+                      </div>
+                      <div className="tft-volume-val tft-mono">{avgVal}</div>
+                      <button
+                        className="tft-round-btn"
+                        style={{ width: 26, height: 26, fontSize: 12 }}
+                        onClick={() => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'relative', -volumeStep))}
+                      >−</button>
+                      <button
+                        className="tft-round-btn"
+                        style={{ width: 26, height: 26, fontSize: 12 }}
+                        onClick={() => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'relative', volumeStep))}
+                      >+</button>
+                    </div>
+
+                    {/* Detail rows — foldable */}
+                    {volDetailOpen && (
+                      <div className="tft-volume-rows">
+                        {volumeOutputs.map(o => {
+                          const vMax = o.volume.soft_limit ?? o.volume.max ?? 100;
+                          const vPct = Math.round((o.volume.value / vMax) * 100);
+                          return (
+                            <div className="tft-volume-row" key={o.output_id}>
+                              <span className="tft-volume-name tft-mono" title={o.display_name}>
+                                {o.display_name.split(' ').pop()}
+                              </span>
+                              <div
+                                className="tft-volume-bar tft-volume-bar--interactive"
+                                onMouseDown={(e) => startVolumeDrag(e, [o.output_id], vMax)}
+                              >
+                                <div className="tft-volume-fill" style={{ width: `${vPct}%` }} />
+                              </div>
+                              <div className="tft-volume-val tft-mono">{o.volume.value}</div>
+                              <button
+                                className="tft-round-btn"
+                                style={{ width: 22, height: 22, fontSize: 11 }}
+                                onClick={() => onVolume?.(o.output_id, 'relative', -volumeStep)}
+                              >−</button>
+                              <button
+                                className="tft-round-btn"
+                                style={{ width: 22, height: 22, fontSize: 11 }}
+                                onClick={() => onVolume?.(o.output_id, 'relative', volumeStep)}
+                              >+</button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Shuffle / Loop */}
               {onSettings && np && (
@@ -336,15 +373,41 @@ export default function HeroCard({
               {match.score != null && (
                 <span className="tft-pill tft-mono">{match.score} pts</span>
               )}
+              {match.track && (() => {
+                const tr = match.track;
+                const fmtParts = [];
+                if (tr.sample_rate_hz  != null) fmtParts.push(`${Math.round(tr.sample_rate_hz / 1000)}kHz`);
+                if (tr.bits_per_sample != null) fmtParts.push(`${tr.bits_per_sample}bits`);
+                const audioFmt = fmtParts.join('-');
+                const dur  = tr.duration_seconds != null ? fmt(tr.duration_seconds) : null;
+                const size = tr.size_bytes       != null ? `${(tr.size_bytes / 1024 / 1024).toFixed(1)}MB` : null;
+                return (
+                  <>
+                    {audioFmt && <span className="tft-pill tft-mono">{audioFmt}</span>}
+                    {tr.lossless && <span className="tft-pill sky tft-mono">Lossless</span>}
+                    {dur  && <span className="tft-pill tft-mono">{dur}</span>}
+                    {size && <span className="tft-pill tft-mono">{size}</span>}
+                  </>
+                );
+              })()}
             </div>
-            <div className="tft-match-filename">{effectiveFilename}</div>
-            <div className="tft-match-path">{effectivePath}</div>
+            {effectiveFilename && (
+              <div className="tft-match-filename">{effectiveFilename}</div>
+            )}
+            <div className="tft-match-path">
+              <button
+                className="tft-folder-btn"
+                title="Ouvrir le dossier dans le Finder"
+                onClick={e => { e.stopPropagation(); fetch(`/api/music/open-folder?path=${encodeURIComponent(effectivePath)}`); }}
+              >📂</button>
+              {effectiveDir}
+            </div>
             {!confirmedPath && match.score_detail && (
               <div className="tft-match-chips">
-                {scoreFields.map(({ key, label }) => {
+                {scoreFields.map(({ key, label, hint }) => {
                   const d = match.score_detail[key];
                   if (!d) return null;
-                  return <ScoreChip key={key} label={label} points={d.points} max={d.max} />;
+                  return <ScoreChip key={key} label={label} points={d.points} max={d.max} hint={hint} />;
                 })}
               </div>
             )}
@@ -395,79 +458,20 @@ export default function HeroCard({
       {/* ═══ FILE TAGS ═══════════════════════════════════════════════════════════ */}
       {match?.matched && effectivePath && (
         <div style={{ padding: '0 28px 4px' }}>
-          <FileTagsCard filePath={effectivePath} />
+          <FileTagsCard filePath={effectivePath} refreshKey={tagsRefreshKey} nowPlaying={np} />
         </div>
       )}
 
-      {/* ═══ GENERATE STRIP ═════════════════════════════════════════════════════ */}
-      {!(activeJob?.status === 'done') && (
-      <div className="tft-generate-strip">
-        <div className="tft-generate-toggles">
-          {lyricsExist && (
-            <label className={`tft-toggle-label${force ? ' warning' : ''}`}>
-              <input type="checkbox" checked={force} disabled={isGenerating} onChange={e => setForce(e.target.checked)} />
-              {t('tft.force_retranscribe')}
-            </label>
-          )}
-        </div>
-
-        <button
-          className="btn btn-primary"
-          style={{ flexShrink: 0 }}
-          onClick={handleGenerate}
-          disabled={isGenerating || !!disabledReason}
-        >
-          {isGenerating ? t('tft.generating') : t('tft.generate_button')}
-        </button>
-      </div>
-      )}
-
-      {/* Disabled reason — hidden when a job just completed */}
-      {disabledReason && !isGenerating && !(activeJob?.status === 'done') && (
-        <div style={{ padding: '0 28px 12px' }}>
-          <span className="tft-mono" style={{ fontSize: 11, color: 'var(--tft-mute)' }}>{disabledReason}</span>
-        </div>
-      )}
-
-      {/* Progress box */}
-      {activeJob && (
-        <div style={{ padding: '0 28px 16px' }}>
-          <div className={`progress-box ${activeJob.status === 'error' ? 'progress-error' : activeJob.status === 'done' ? 'progress-done' : 'progress-active'}`}>
-            <div className="progress-status">
-              {activeJob.status === 'done'   ? t('tft.progress_done') :
-               activeJob.status === 'error'  ? t('tft.progress_error') :
-               activeJob.status === 'processing' ? t('tft.progress_processing') :
-               t('common.loading')}
-            </div>
-            {activeJob.status === 'done' && activeJob.lrc_file && (
-              <div className="progress-detail muted small">{t('tft.lrc_saved')}: {activeJob.lrc_file}</div>
-            )}
-            {activeJob.status === 'done' && activeJob.lyrics_embedded && (
-              <div className="progress-detail embed-success">🏷️ {t('tft.lyrics_embedded_ok')}</div>
-            )}
-            {activeJob.status === 'done' && (
-              <button
-                className="tft-regen-link"
-                onClick={() => { setActiveJob(null); setForce(true); }}
-              >
-                {t('tft.regenerate_anyway', 'Regénérer quand même…')}
-              </button>
-            )}
-            {activeJob.status === 'error' && activeJob.error && (
-              <div className="progress-detail text-error small">[{activeJob.error.code}] {activeJob.error.message}</div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Generate error */}
-      {genError && !activeJob && (
-        <div style={{ padding: '0 28px 16px' }}>
-          <div className="alert alert-error">
-            <strong>[{genError.code}]</strong> {genError.message}
-          </div>
-        </div>
-      )}
+      {/* ═══ LYRICS PROVIDERS ════════════════════════════════════════════════ */}
+      <LyricsSection
+        nowPlaying={np}
+        effectivePath={effectivePath || null}
+        confirmedPath={confirmedPath}
+        lyricsExist={lyricsExist}
+        tftAccount={tftAccount}
+        matchConfidence={match?.confidence ?? null}
+        onTagsRefresh={() => setTagsRefreshKey(k => k + 1)}
+      />
     </section>
   );
 }

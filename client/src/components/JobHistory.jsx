@@ -284,7 +284,15 @@ export default function JobHistory({ jobs, onJobRetried }) {
                     t('common.na')
                   )}
                 </td>
-                <td className="td-credits">{job.credits_charged ?? job.credits_quoted ?? t('common.na')}</td>
+                <td className="td-credits">
+                  {job.source === 'lrclib' ? (
+                    <span className="badge badge-neutral" title="Paroles obtenues depuis LRCLIB (gratuit)">LRCLIB</span>
+                  ) : job.cache_hit ? (
+                    <span className="badge badge-neutral" title="Servi depuis le cache local (0 crédit)">Cache</span>
+                  ) : (
+                    job.credits_charged ?? job.credits_quoted ?? t('common.na')
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

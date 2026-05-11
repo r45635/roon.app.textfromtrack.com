@@ -123,7 +123,8 @@ router.post('/generate-current', async (req, res) => {
   const force = !!(req.body && req.body.force);
   if (!force && (
     track.lyrics_status === lyricsDetector.STATUS.HAS_LRC_FILE ||
-    track.lyrics_status === lyricsDetector.STATUS.HAS_EMBEDDED_LYRICS
+    track.lyrics_status === lyricsDetector.STATUS.HAS_EMBEDDED_LYRICS ||
+    track.lyrics_status === lyricsDetector.STATUS.HAS_CACHED_LYRICS
   )) {
     return res.status(409).json(
       buildError(E.LYRICS_ALREADY_EXIST, 'This track already has local lyrics')

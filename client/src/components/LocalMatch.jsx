@@ -8,6 +8,7 @@ function LyricsStatusBadge({ status }) {
   const cls = {
     HAS_LRC_FILE: 'badge-success',
     HAS_EMBEDDED_LYRICS: 'badge-info',
+    HAS_CACHED_LYRICS: 'badge-success',
     NO_LOCAL_LYRICS: 'badge-warning',
     UNKNOWN: 'badge-neutral',
   }[status] || 'badge-neutral';

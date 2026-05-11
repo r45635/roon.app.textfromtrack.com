@@ -265,6 +265,79 @@ module.exports = {
   buildFlac,
   applyLyricsUpdate,
   setLyrics,
+  removeLyrics,
+  setVorbisTags,
   // exposed for tests
   _internals: { tagKeyEquals, encodeBlock },
 };
+
+/**
+ * Remove LYRICS and LYRICS.ORG vorbis comments from a FLAC file.
+ * All other tags and blocks (art, seektable, …) are preserved.
+ * @param {string} audioPath
+ * @returns {{ removed: boolean }}
+ */
+function removeLyrics(audioPath) {
+  const buffer = fs.readFileSync(audioPath);
+  const { blocks, framesBuffer } = readFlac(buffer);
+  const vorbisIdx = blocks.findIndex(b => b.type === VORBIS_COMMENT);
+  if (vorbisIdx < 0) return { removed: false };
+  const { vendorString, tags } = parseVorbisComment(blocks[vorbisIdx].payload);
+  const hadLyrics = tags.some(t => tagKeyEquals(t, LYRICS_KEY));
+  if (!hadLyrics) return { removed: false };
+
+  const newTags = tags.filter(
+    t => !tagKeyEquals(t, LYRICS_KEY) && !tagKeyEquals(t, LYRICS_ORG_KEY)
+  );
+  blocks[vorbisIdx] = { ...blocks[vorbisIdx], payload: formatVorbisComment(vendorString, newTags) };
+
+  const tmpPath = `${audioPath}.tft-tmp`;
+  fs.writeFileSync(tmpPath, buildFlac(blocks, framesBuffer));
+  fs.renameSync(tmpPath, audioPath);
+  return { removed: true };
+}
+
+/**
+ * Update or remove arbitrary vorbis comment tags in a FLAC file.
+ * All other tags and blocks (art, seektable, …) are preserved.
+ *
+ * @param {string} audioPath
+ * @param {Record<string, string|null>} updates
+ *   KEY (any case) → value. null or '' = remove all existing tags with that key.
+ * @returns {{ tagCountBefore: number, tagCountAfter: number }}
+ */
+function setVorbisTags(audioPath, updates) {
+  const buffer = fs.readFileSync(audioPath);
+  const { blocks, framesBuffer } = readFlac(buffer);
+
+  let vorbisIdx = blocks.findIndex(b => b.type === VORBIS_COMMENT);
+  let vendorString = '';
+  let tags = [];
+  if (vorbisIdx >= 0) {
+    const parsed = parseVorbisComment(blocks[vorbisIdx].payload);
+    vendorString = parsed.vendorString;
+    tags = parsed.tags;
+  }
+  const tagCountBefore = tags.length;
+
+  let newTags = [...tags];
+  for (const [key, value] of Object.entries(updates)) {
+    const upperKey = key.toUpperCase();
+    newTags = newTags.filter(t => !tagKeyEquals(t, upperKey));
+    const strVal = value == null ? '' : String(value).trim();
+    if (strVal !== '') newTags.push(`${upperKey}=${strVal}`);
+  }
+
+  const newPayload = formatVorbisComment(vendorString, newTags);
+  if (vorbisIdx >= 0) {
+    blocks[vorbisIdx] = { ...blocks[vorbisIdx], payload: newPayload };
+  } else {
+    blocks.splice(1, 0, { type: VORBIS_COMMENT, isLast: false, payload: newPayload });
+  }
+
+  const tmpPath = `${audioPath}.tft-tmp`;
+  fs.writeFileSync(tmpPath, buildFlac(blocks, framesBuffer));
+  fs.renameSync(tmpPath, audioPath);
+  return { tagCountBefore, tagCountAfter: newTags.length };
+}
+

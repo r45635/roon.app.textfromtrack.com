@@ -62,6 +62,7 @@ const config = {
   storageDir: path.join(__dirname, 'storage'),
   musicIndexPath: path.join(__dirname, 'storage', 'music-index.json'),
   jobsPath: path.join(__dirname, 'storage', 'jobs.json'),
+  lrcCacheDir: path.join(__dirname, 'storage', 'lrc-cache'),
 
   // ── Logging ─────────────────────────────────────────────────────────────────
   logLevel: process.env.LOG_LEVEL || 'info',
