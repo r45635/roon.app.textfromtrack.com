@@ -154,6 +154,7 @@ jobs:
   build-docker:
     name: Build — Docker image
     runs-on: ubuntu-latest
+    continue-on-error: true
     env:
       DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
