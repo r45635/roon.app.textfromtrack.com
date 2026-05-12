@@ -31,13 +31,20 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [roonModalOpen, setRoonModalOpen] = useState(false);
   const [searchTrigger, setSearchTrigger] = useState(null);
+  const [backendOnline, setBackendOnline] = useState(true);
 
   // ── API helpers ──────────────────────────────────────────────────────────────
 
   async function apiFetch(endpoint) {
-    const res = await fetch(endpoint);
-    if (!res.ok) return null;
-    return res.json().catch(() => null);
+    try {
+      const res = await fetch(endpoint);
+      setBackendOnline(true);
+      if (!res.ok) return null;
+      return res.json().catch(() => null);
+    } catch {
+      setBackendOnline(false);
+      return null;
+    }
   }
 
   // ── Fetch functions ──────────────────────────────────────────────────────────
@@ -70,7 +77,7 @@ export default function App() {
 
   const fetchTftAccount = useCallback(async () => {
     const data = await apiFetch('/api/tft/me');
-    if (data) setTftAccount(data);
+    if (data) setTftAccount({ token_valid: data.token_valid !== false, ...data });
   }, []);
 
   const fetchJobs = useCallback(async () => {
@@ -277,6 +284,12 @@ export default function App() {
         </div>
 
         <div className="tft-topbar-right">
+          {!backendOnline && (
+            <div className="tft-backend-offline-pill" title={t('status.backend_offline_hint')}>
+              <span className="backend-offline-dot" />
+              <span>{t('status.backend_offline')}</span>
+            </div>
+          )}
           {roonStatus && (
             <button className="tft-roon-strip tft-roon-strip-btn" onClick={() => setRoonModalOpen(true)} title={t('section.roon_connection')}>
               <span className={`roon-dot${roonStatus.connected ? '' : ' offline'}`} />

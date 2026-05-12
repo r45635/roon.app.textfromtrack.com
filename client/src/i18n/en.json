@@ -7,6 +7,10 @@
     "lang_en": "EN",
     "lang_fr": "FR"
   },
+  "status": {
+    "backend_offline": "Backend offline",
+    "backend_offline_hint": "Cannot reach the local server — check that the backend is running"
+  },
   "section": {
     "roon_connection": "Roon Connection",
     "now_playing": "Now Playing",
@@ -157,10 +161,11 @@
     "top_up": "Top up credits",
     "generate_button": "Generate lyrics with TextFromTrack",
     "generating": "Generating…",
-    "no_token": "Set TFT_TOKEN in .env to enable",
-    "no_credits": "Insufficient credits",
-    "lyrics_exist": "Lyrics already exist",
-    "no_match": "No high-confidence file match",
+    "no_token": "No API key configured — add your TextFromTrack key in ⚙ Settings",
+    "invalid_token": "API key rejected (401) — regenerate your token on textfromtrack.com and update it in ⚙ Settings",
+    "no_credits": "No credits remaining — top up your account on textfromtrack.com",
+    "lyrics_exist": "Lyrics already exist — check \"Re-transcribe\" above to overwrite",
+    "no_match": "No local file matched for this track — the file is required to generate lyrics",
     "low_confidence_warning": "The file match confidence is low — the matched file may be incorrect.",
     "low_confidence_confirm": "I understand — proceed anyway with this file",
     "low_confidence_confirm_required": "Please confirm the low-confidence match to proceed",
@@ -306,7 +311,7 @@
     "status": "API Key",
     "configured": "\u2713 Configured",
     "not_configured": "\u2717 Not set",
-    "env_lock": "(set via .env \u2014 cannot override here)",
+    "env_fallback": "(from .env \u2014 enter a key below to override)",
     "hint": "Get your key at",
     "placeholder_enter": "Paste your API key here\u2026",
     "placeholder_replace": "Enter new key to replace\u2026",
@@ -365,6 +370,7 @@
     "found_plain": "Lyrics (no timestamps)",
     "instrumental": "🎵 Instrumental",
     "not_found": "Not found on LRCLIB",
+    "lrclib_error": "LRCLIB unreachable",
     "source_get": "exact match",
     "source_search": "search result",
     "tft_button": "Generate lyrics with TextFromTrack",

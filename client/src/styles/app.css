@@ -106,6 +106,23 @@ body {
 .tft-roon-strip .roon-dot.offline { background: var(--tft-mute); }
 .tft-roon-strip .roon-label { font-family: var(--tft-mono); font-size: 11px; color: var(--tft-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
 
+/* Backend offline pill */
+.tft-backend-offline-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 12px; background: var(--badge-error-bg, #fde8e8); border-radius: 999px;
+  font-family: var(--tft-mono); font-size: 12px; font-weight: 500;
+  color: var(--badge-error-ink, #c0392b);
+  animation: tft-offline-pulse 2s ease-in-out infinite;
+}
+.tft-backend-offline-pill .backend-offline-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--badge-error-ink, #c0392b); flex-shrink: 0;
+}
+@keyframes tft-offline-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 /* Credit pill */
 .tft-credit-pill {
   display: flex; align-items: center; gap: 6px;
@@ -870,10 +887,16 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
 }
 .file-tabs-artwork {
   display: flex; flex-direction: column; align-items: center;
-  gap: 8px; height: 100%;
+  gap: 8px; height: 100%; overflow: hidden;
+}
+.file-tabs-artwork-img-wrap {
+  flex: 1; min-height: 0; min-width: 0;
+  width: 100%;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
 }
 .file-tabs-artwork-img {
-  flex: 1; min-height: 0;
+  display: block;
   max-width: 100%; max-height: 100%;
   border-radius: 4px; object-fit: contain;
 }

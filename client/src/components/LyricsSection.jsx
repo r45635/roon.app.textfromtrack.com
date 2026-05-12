@@ -193,6 +193,7 @@ export default function LyricsSection({
 
   // ── TFT: disabled reasons ───────────────────────────────────────────────────
   const tokenConfigured = tftAccount?.token_configured;
+  const tokenValid = tftAccount?.token_valid !== false; // true if unknown or explicitly true
   const spendable = tftAccount?.credit_available ?? tftAccount?.credit_balance ?? 1;
   const hasCredits = !tokenConfigured || spendable > 0;
   const isLowConfidence = matchConfidence === 'low';
@@ -202,11 +203,12 @@ export default function LyricsSection({
   useEffect(() => { setLowConfirmOverride(false); }, [effectivePath]);
 
   let tftDisabledReason = null;
-  if (!effectivePath)                          tftDisabledReason = t('match.no_match');
-  else if (!tokenConfigured)                   tftDisabledReason = t('tft.no_token');
-  else if (!hasCredits)                        tftDisabledReason = t('tft.no_credits');
-  else if (isLowConfidence && !lowConfirmOverride) tftDisabledReason = t('tft.low_confidence_confirm_required');
-  else if (lyricsExist && !force)              tftDisabledReason = t('tft.lyrics_exist');
+  if (!effectivePath)                                    tftDisabledReason = t('match.no_match');
+  else if (!tokenConfigured)                             tftDisabledReason = t('tft.no_token');
+  else if (!tokenValid)                                  tftDisabledReason = t('tft.invalid_token');
+  else if (!hasCredits)                                  tftDisabledReason = t('tft.no_credits');
+  else if (isLowConfidence && !lowConfirmOverride)       tftDisabledReason = t('tft.low_confidence_confirm_required');
+  else if (lyricsExist && !force)                        tftDisabledReason = t('tft.lyrics_exist');
 
   // ── LRCLIB: check ──────────────────────────────────────────────────────────
   async function handleLrclibCheck() {
@@ -418,7 +420,7 @@ export default function LyricsSection({
     if (lrclibStatus === 'not_found')
       return <span className="tft-lyrics-badge tft-lyrics-badge--miss">{t('lyrics.not_found')}</span>;
     if (lrclibStatus === 'error')
-      return <span className="tft-lyrics-badge tft-lyrics-badge--err" title={lrclibError?.message}>{lrclibError?.code || 'Error'}</span>;
+      return <span className="tft-lyrics-badge tft-lyrics-badge--err" title={lrclibError?.message}>{t('lyrics.lrclib_error')}</span>;
     return null;
   }
 
@@ -538,7 +540,7 @@ export default function LyricsSection({
       </div>
 
       {/* ── TFT advanced options (compact) ───────────────────────────────────── */}
-      {!tftGenerating && !tftJob && (
+      {!tftGenerating && !tftJob && tokenConfigured && tokenValid && hasCredits && effectivePath && (
         <div className="tft-options-block" style={{ marginTop: 6 }}>
           <div className="tft-options-header tft-options-header--collapsible" onClick={toggleOptionsCollapsed}>
             <span className="tft-options-chevron">{optionsCollapsed ? '▶' : '▼'}</span>

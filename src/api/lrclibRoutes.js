@@ -125,7 +125,8 @@ router.get('/lookup', async (req, res) => {
     });
   } catch (err) {
     logger.error({ err: err.message }, 'LRCLIB lookup failed');
-    return res.status(502).json(buildError('LRCLIB_ERROR', err.message));
+    // Return 200 so the browser does not log a 5xx console error.
+    return res.json({ ...buildError('LRCLIB_ERROR', err.message), found: false });
   }
 });
 

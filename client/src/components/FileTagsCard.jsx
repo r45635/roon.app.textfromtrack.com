@@ -53,7 +53,9 @@ function ArtworkPanel({ filePath, active }) {
 
   return (
     <div className="file-tabs-artwork">
-      <img src={cover.data} alt={cover.type || 'cover'} className="file-tabs-artwork-img" />
+      <div className="file-tabs-artwork-img-wrap">
+        <img src={cover.data} alt={cover.type || 'cover'} className="file-tabs-artwork-img" />
+      </div>
       {total > 1 && (
         <div className="file-tabs-artwork-nav">
           <button

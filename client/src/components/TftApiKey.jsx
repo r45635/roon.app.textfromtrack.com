@@ -53,13 +53,7 @@ export default function TftApiKey({ onTokenSaved }) {
     }
   }
 
-  function handleClear() {
-    setInputValue('');
-    setSaveResult(null);
-    setError(null);
-  }
-
-  const isEnvLocked = tokenSource === 'env';
+  const isEnvFallback = tokenSource === 'env';
 
   return (
     <section className={`card${collapsed ? ' collapsed' : ''}`}>
@@ -83,89 +77,85 @@ export default function TftApiKey({ onTokenSaved }) {
                   ? t('tft_key.configured', '✓ Configured')
                   : t('tft_key.not_configured', '✗ Not set')}
               </span>
-              {isEnvLocked && (
+              {isEnvFallback && (
                 <span style={{ marginLeft: 8, fontSize: 11, color: 'var(--tft-ink-3)' }}>
-                  {t('tft_key.env_lock', '(set via .env — cannot override)')}
+                  {t('tft_key.env_fallback', '(from .env — enter a key below to override)')}
                 </span>
               )}
             </div>
 
-            {!isEnvLocked && (
-              <>
-                {/* Hint */}
-                <p style={{ fontSize: 12, color: 'var(--tft-ink-3)', margin: '4px 0 10px' }}>
-                  {t('tft_key.hint', 'Get your key at')}{' '}
-                  <a
-                    href="https://app.textfromtrack.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ color: 'var(--tft-brand)' }}
-                  >
-                    app.textfromtrack.com ↗
-                  </a>
-                </p>
+            {/* Hint */}
+            <p style={{ fontSize: 12, color: 'var(--tft-ink-3)', margin: '4px 0 10px' }}>
+              {t('tft_key.hint', 'Get your key at')}{' '}
+              <a
+                href="https://app.textfromtrack.com"
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: 'var(--tft-brand)' }}
+              >
+                app.textfromtrack.com ↗
+              </a>
+            </p>
 
-                {/* Token input */}
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
-                  <div style={{ position: 'relative', flex: '1 1 200px' }}>
-                    <input
-                      type={showToken ? 'text' : 'password'}
-                      className="app-pref-num"
-                      style={{ width: '100%', paddingRight: 32, fontFamily: 'monospace', fontSize: 12, textAlign: 'left' }}
-                      placeholder={tokenConfigured
-                        ? t('tft_key.placeholder_replace', 'Enter new key to replace…')
-                        : t('tft_key.placeholder_enter', 'Paste your API key here…')}
-                      value={inputValue}
-                      onChange={e => { setInputValue(e.target.value); setSaveResult(null); }}
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowToken(v => !v)}
-                      title={showToken ? t('tft_key.hide', 'Hide') : t('tft_key.show', 'Show')}
-                      style={{
-                        position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
-                        background: 'none', border: 'none', cursor: 'pointer',
-                        color: 'var(--tft-ink-3)', fontSize: 14, padding: '0 2px',
-                      }}
-                    >
-                      {showToken ? '🙈' : '👁'}
-                    </button>
-                  </div>
+            {/* Token input */}
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ position: 'relative', flex: '1 1 200px' }}>
+                <input
+                  type={showToken ? 'text' : 'password'}
+                  className="app-pref-num"
+                  style={{ width: '100%', paddingRight: 32, fontFamily: 'monospace', fontSize: 12, textAlign: 'left' }}
+                  placeholder={tokenConfigured
+                    ? t('tft_key.placeholder_replace', 'Enter new key to replace…')
+                    : t('tft_key.placeholder_enter', 'Paste your API key here…')}
+                  value={inputValue}
+                  onChange={e => { setInputValue(e.target.value); setSaveResult(null); }}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowToken(v => !v)}
+                  title={showToken ? t('tft_key.hide', 'Hide') : t('tft_key.show', 'Show')}
+                  style={{
+                    position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--tft-ink-3)', fontSize: 14, padding: '0 2px',
+                  }}
+                >
+                  {showToken ? '🙈' : '👁'}
+                </button>
+              </div>
 
-                  <button
-                    className="tft-round-btn"
-                    style={{ height: 30, padding: '0 14px', fontSize: 12, borderRadius: 6, whiteSpace: 'nowrap' }}
-                    disabled={saving || !inputValue.trim()}
-                    onClick={handleSave}
-                  >
-                    {saving ? t('tft_key.saving', 'Saving…') : t('tft_key.save', 'Save')}
-                  </button>
+              <button
+                className="tft-round-btn"
+                style={{ height: 30, padding: '0 14px', fontSize: 12, borderRadius: 6, whiteSpace: 'nowrap' }}
+                disabled={saving || !inputValue.trim()}
+                onClick={handleSave}
+              >
+                {saving ? t('tft_key.saving', 'Saving…') : t('tft_key.save', 'Save')}
+              </button>
 
-                  {tokenConfigured && (
-                    <button
-                      className="tft-round-btn"
-                      style={{ height: 30, padding: '0 14px', fontSize: 12, borderRadius: 6, whiteSpace: 'nowrap', color: 'var(--tft-red, #e55)' }}
-                      disabled={saving}
-                      onClick={() => { setInputValue(''); handleSave(); }}
-                      title={t('tft_key.clear_title', 'Remove the saved API key')}
-                    >
-                      {t('tft_key.clear', 'Remove key')}
-                    </button>
-                  )}
-                </div>
+              {tokenSource === 'user_settings' && (
+                <button
+                  className="tft-round-btn"
+                  style={{ height: 30, padding: '0 14px', fontSize: 12, borderRadius: 6, whiteSpace: 'nowrap', color: 'var(--tft-red, #e55)' }}
+                  disabled={saving}
+                  onClick={() => { setInputValue(''); handleSave(); }}
+                  title={t('tft_key.clear_title', 'Remove the saved API key')}
+                >
+                  {t('tft_key.clear', 'Remove key')}
+                </button>
+              )}
+            </div>
 
-                {/* Feedback */}
-                {saveResult === 'ok' && (
-                  <p style={{ fontSize: 12, color: 'var(--tft-green, #4caf50)', marginTop: 6 }}>
-                    ✓ {t('tft_key.saved_ok', 'Key saved successfully')}
-                  </p>
-                )}
-                {saveResult === 'error' && error && (
-                  <p style={{ fontSize: 12, color: 'var(--tft-red, #e55)', marginTop: 6 }}>{error}</p>
-                )}
-              </>
+            {/* Feedback */}
+            {saveResult === 'ok' && (
+              <p style={{ fontSize: 12, color: 'var(--tft-green, #4caf50)', marginTop: 6 }}>
+                ✓ {t('tft_key.saved_ok', 'Key saved successfully')}
+              </p>
+            )}
+            {saveResult === 'error' && error && (
+              <p style={{ fontSize: 12, color: 'var(--tft-red, #e55)', marginTop: 6 }}>{error}</p>
             )}
 
           </div>

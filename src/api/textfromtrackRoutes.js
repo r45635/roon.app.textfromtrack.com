@@ -23,13 +23,13 @@ const webhookService = require('../textfromtrack/webhookService');
 const router = Router();
 
 /**
- * Returns the effective TFT token: env var takes priority, then user settings.
- * This allows the token to be set via the UI without restarting the server.
+ * Returns the effective TFT token: user settings takes priority, env var is the fallback.
+ * This allows the UI to always override the env var without restarting the server.
  */
 function getEffectiveToken() {
-  if (config.tftToken) return config.tftToken;
   const settings = userSettings.get();
-  return settings.tft_token || '';
+  if (settings.tft_token) return settings.tft_token;
+  return config.tftToken || '';
 }
 
 /**
@@ -37,11 +37,13 @@ function getEffectiveToken() {
  * Returns whether an API token is currently configured (never returns the raw token).
  */
 router.get('/config', (req, res) => {
+  const settings = userSettings.get();
   const token = getEffectiveToken();
+  const source = settings.tft_token ? 'user_settings' : (config.tftToken ? 'env' : 'none');
   res.json({
     success: true,
     token_configured: !!token,
-    token_source: config.tftToken ? 'env' : (token ? 'user_settings' : 'none'),
+    token_source: source,
   });
 });
 
@@ -95,10 +97,21 @@ router.get('/me', async (req, res) => {
       top_up_url: me.top_up_url || null,
     });
   } catch (err) {
+    if (err.code === E.TFT_UNAUTHORIZED) {
+      // Return 200 so the browser does not log a 4xx console error.
+      return res.json({
+        success: true,
+        token_configured: true,
+        token_valid: false,
+        email: null,
+        credit_balance: null,
+        credit_reserved: null,
+        credit_available: null,
+        top_up_url: null,
+      });
+    }
     logger.error({ err: err.message }, '/api/tft/me error');
-    res.status(err.code === E.TFT_UNAUTHORIZED ? 401 : 502).json(
-      buildError(err.code || E.UNKNOWN_ERROR, err.message)
-    );
+    res.status(502).json(buildError(err.code || E.UNKNOWN_ERROR, err.message));
   }
 });
 

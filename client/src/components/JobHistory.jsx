@@ -164,8 +164,12 @@ export default function JobHistory({ jobs, onJobRetried }) {
       const data = await res.json();
       if (data.success && data.content) {
         setLyricsModal({ title: job.title, artist: job.artist, content: data.content });
+      } else {
+        setLyricsModal({ title: job.title, artist: job.artist, content: null });
       }
-    } catch { /* silently ignore */ }
+    } catch {
+      setLyricsModal({ title: job.title, artist: job.artist, content: null });
+    }
   }
 
   async function handleRetry(jobId) {
@@ -417,14 +421,16 @@ export default function JobHistory({ jobs, onJobRetried }) {
             {lyricsModal.title && (
               <p className="muted small">{lyricsModal.artist ? `${lyricsModal.artist} — ` : ''}{lyricsModal.title}</p>
             )}
-            <pre className="lyrics-modal-pre">{lyricsModal.content}</pre>
+            <pre className="lyrics-modal-pre">{lyricsModal.content || t('jobs.lyrics_not_available')}</pre>
             <div className="modal-actions">
+              {lyricsModal.content && (
               <button className="btn btn-secondary" onClick={async () => {
                 await navigator.clipboard.writeText(lyricsModal.content);
                 setLyricsModal(null);
               }}>
                 {t('jobs.copy_lyrics')}
               </button>
+              )}
               <button className="btn btn-ghost" onClick={() => setLyricsModal(null)}>
                 {t('common.close')}
               </button>

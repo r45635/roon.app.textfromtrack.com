@@ -7,6 +7,10 @@
     "lang_en": "EN",
     "lang_fr": "FR"
   },
+  "status": {
+    "backend_offline": "Backend hors ligne",
+    "backend_offline_hint": "Impossible de joindre le serveur local — vérifiez que le backend est démarré"
+  },
   "section": {
     "roon_connection": "Connexion Roon",
     "now_playing": "En cours de lecture",
@@ -157,10 +161,11 @@
     "top_up": "Recharger les crédits",
     "generate_button": "Générer les paroles avec TextFromTrack",
     "generating": "Génération en cours…",
-    "no_token": "Définir TFT_TOKEN dans .env pour activer",
-    "no_credits": "Crédits insuffisants",
-    "lyrics_exist": "Les paroles existent déjà",
-    "no_match": "Aucune correspondance fichier fiable",
+    "no_token": "Clé API non configurée — ajoutez votre clé TextFromTrack dans ⚙ Paramètres",
+    "invalid_token": "Clé API rejetée (401) — régénérez votre token sur textfromtrack.com et mettez-le à jour dans ⚙ Paramètres",
+    "no_credits": "Plus de crédits — rechargez votre compte sur textfromtrack.com",
+    "lyrics_exist": "Des paroles existent déjà — cochez \"Re-transcrire\" ci-dessus pour écraser",
+    "no_match": "Aucun fichier local trouvé pour ce morceau — le fichier est requis pour générer les paroles",
     "low_confidence_warning": "La confiance dans la correspondance est faible — le fichier associé pourrait être incorrect.",
     "low_confidence_confirm": "Je comprends — continuer quand même avec ce fichier",
     "low_confidence_confirm_required": "Veuillez confirmer la correspondance faible pour continuer",
@@ -306,7 +311,7 @@
     "status": "Clé API",
     "configured": "✓ Configurée",
     "not_configured": "✗ Non renseignée",
-    "env_lock": "(définie via .env — non modifiable ici)",
+    "env_fallback": "(depuis .env — entrez une clé ci-dessous pour remplacer)",
     "hint": "Obtenez votre clé sur",
     "placeholder_enter": "Collez votre clé API ici…",
     "placeholder_replace": "Entrez une nouvelle clé pour remplacer…",
@@ -366,6 +371,7 @@
     "found_plain": "Paroles (sans timestamps)",
     "instrumental": "🎵 Instrumental",
     "not_found": "Introuvable sur LRCLIB",
+    "lrclib_error": "LRCLIB inaccessible",
     "source_get": "correspondance exacte",
     "source_search": "via recherche",
     "tft_button": "Générer les paroles avec TextFromTrack",
