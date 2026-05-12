@@ -191,7 +191,7 @@
     "phase_separating_detail": "{{pct}}%",
     "phase_transcribing": "Transcribing…",
     "phase_retrying": "Quality too low — retrying with vocal isolation…",
-    "options_title": "Advanced options",
+    "options_title": "Advanced options for TextFromTrack",
     "options_help_label": "Help",
     "audio_type_label": "Audio type",
     "audio_type_auto": "Auto",
@@ -244,7 +244,12 @@
     "backup_conflict_body": "A backup already exists at the path below. What should we do?",
     "backup_conflict_keep": "Keep existing backup",
     "backup_conflict_overwrite": "Overwrite with current file",
-    "backup_conflict_no_backup": "Embed without backup"
+    "backup_conflict_no_backup": "Embed without backup",
+    "copy_lyrics": "Copy lyrics to clipboard",
+    "copied": "Copied!",
+    "view_lyrics": "View lyrics",
+    "lyrics_modal_title": "Lyrics",
+    "lyrics_not_available": "Lyrics not available for this job"
   },
   "common": {
     "yes": "Yes",

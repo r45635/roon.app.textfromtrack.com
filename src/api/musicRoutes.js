@@ -143,48 +143,11 @@ router.get('/match-current', async (req, res) => {
   const index = scanner.loadIndex();
   const result = matcher.match(nowPlaying, index.tracks);
 
-  // Live-detect lyrics status for the matched track AND every alternative we
-  // surface. The cached value in the music-index reflects the state at the
-  // last full scan (or at the moment of an embed/retry); it can be stale if
-  // the user has edited / restored / moved tags since. Re-detecting is cheap
-  // (one stat for the .lrc sidecar; one music-metadata parse only when no
-  // sidecar is present) and ensures every path we display tells the truth.
-  async function refreshTrackLyrics(track) {
-    if (!track || !track.path) return;
-    try {
-      const liveStatus = await lyricsDetector.detect(track.path);
-      // If no disk-based lyrics, check the LRC cache before reporting NO_LOCAL_LYRICS
-      let finalStatus = liveStatus;
-      if (liveStatus === lyricsDetector.STATUS.NO_LOCAL_LYRICS) {
-        if (lrcCache.get(track.path)) {
-          finalStatus = lyricsDetector.STATUS.HAS_CACHED_LYRICS;
-        }
-      }
-      if (finalStatus !== track.lyrics_status) {
-        logger.info(
-          { path: track.path, cached: track.lyrics_status, live: finalStatus },
-          'Lyrics status drift detected — refreshing index'
-        );
-        // Write-through: keep the index aligned for subsequent calls.
-        // Only persist disk-based statuses to the index (cache status is dynamic).
-        if (finalStatus !== lyricsDetector.STATUS.HAS_CACHED_LYRICS) {
-          try {
-            scanner.updateTrackLyricsStatus(track.path, finalStatus);
-          } catch (err) {
-            logger.warn({ err: err.message }, 'Could not write-through live lyrics status to index');
-          }
-        }
-      }
-      track.lyrics_status = finalStatus;
-    } catch (err) {
-      logger.warn({ err: err.message, path: track.path }, 'Live lyrics detection failed — keeping cached value');
-    }
-  }
-
   if (result) {
     if (result.matched && result.track) {
-      await refreshTrackLyrics(result.track);
-      // Inject audio format fields (lightweight parse, covers skipped)
+      // Single parseFile call: covers both lyrics detection AND audio format fields.
+      // This avoids the duplicate parse that previously happened (detect → parseFile,
+      // then a second parseFile for sample_rate/bits_per_sample).
       try {
         const { parseFile } = await import('music-metadata');
         const meta = await parseFile(result.track.path, { skipCovers: true, duration: false });
@@ -192,11 +155,43 @@ router.get('/match-current', async (req, res) => {
         result.track.sample_rate_hz  = f.sampleRate      || null;
         result.track.bits_per_sample = f.bitsPerSample   || null;
         result.track.lossless        = f.lossless        ?? null;
-      } catch { /* non-fatal */ }
+
+        // Derive live lyrics status from the already-parsed metadata
+        const liveStatus = lyricsDetector.detectFromMetadata(result.track.path, meta.common);
+        let finalStatus = liveStatus;
+        if (liveStatus === lyricsDetector.STATUS.NO_LOCAL_LYRICS) {
+          if (lrcCache.get(result.track.path)) finalStatus = lyricsDetector.STATUS.HAS_CACHED_LYRICS;
+        }
+        if (finalStatus !== result.track.lyrics_status) {
+          logger.info(
+            { path: result.track.path, cached: result.track.lyrics_status, live: finalStatus },
+            'Lyrics status drift detected — refreshing index'
+          );
+          if (finalStatus !== lyricsDetector.STATUS.HAS_CACHED_LYRICS) {
+            try { scanner.updateTrackLyricsStatus(result.track.path, finalStatus); } catch { /* non-fatal */ }
+          }
+        }
+        result.track.lyrics_status = finalStatus;
+      } catch (err) {
+        logger.warn({ err: err.message, path: result.track.path }, 'match-current: parseFile failed — keeping cached values');
+      }
     }
     if (Array.isArray(result.alternatives)) {
-      // Run alternatives in parallel — they're independent and stat-bound.
-      await Promise.all(result.alternatives.map(alt => refreshTrackLyrics(alt.track || alt)));
+      // For alternatives: only do the cheap sidecar check (no parseFile).
+      // Embedded-lyrics detection on N alternative FLAC files is the main perf killer.
+      for (const alt of result.alternatives) {
+        const track = alt.track || alt;
+        if (!track?.path) continue;
+        try {
+          if (lyricsDetector.hasLrcFile(track.path)) {
+            track.lyrics_status = lyricsDetector.STATUS.HAS_LRC_FILE;
+          } else if (lrcCache.get(track.path)) {
+            track.lyrics_status = lyricsDetector.STATUS.HAS_CACHED_LYRICS;
+          } else {
+            // Keep index value — may be slightly stale but acceptable for alternatives
+          }
+        } catch { /* non-fatal */ }
+      }
     }
   }
 
@@ -230,6 +225,30 @@ function resolveAndValidatePath(req, res) {
   }
   return resolved;
 }
+
+/**
+ * GET /api/music/file-format?path=<encoded>
+ * Returns audio format metadata (sample rate, bit depth, lossless) for a file.
+ * Used for lazy-loading format fields on alternative matches without slowing match-current.
+ */
+router.get('/file-format', async (req, res) => {
+  const resolved = resolveAndValidatePath(req, res);
+  if (!resolved) return;
+  try {
+    const { parseFile } = await import('music-metadata');
+    const meta = await parseFile(resolved, { skipCovers: true, duration: false, signal: AbortSignal.timeout(5000) });
+    const f = meta.format;
+    res.json({
+      success: true,
+      sample_rate_hz:  f.sampleRate    || null,
+      bits_per_sample: f.bitsPerSample || null,
+      lossless:        f.lossless      ?? null,
+    });
+  } catch (err) {
+    logger.warn({ err: err.message, path: resolved }, 'file-format: parse failed');
+    res.status(500).json(buildError('PARSE_ERROR', err.message));
+  }
+});
 
 /**
  * GET /api/music/file-cover?path=<encoded>
@@ -284,7 +303,7 @@ router.get('/file-lyrics', async (req, res) => {
     const { parseFile } = await import('music-metadata');
     const metadata = await parseFile(resolved, { skipCovers: true, duration: false });
     const lyricsArr = metadata.common.lyrics || [];
-    const text = lyricsArr
+    let text = lyricsArr
       .map(l => {
         if (typeof l === 'string') return l;
         if (l?.text) return l.text;
@@ -303,6 +322,14 @@ router.get('/file-lyrics', async (req, res) => {
       })
       .filter(Boolean)
       .join('\n');
+    // Fallback: music-metadata wraps FLAC LYRICS vorbis comments in a
+    // syncText object with an empty syncText array (no timestamps parsed),
+    // losing the raw text. Read directly from native vorbis tags instead.
+    if (!text) {
+      const vorbis = (metadata.native || {})['vorbis'] || [];
+      const lyricsNative = vorbis.find(t => t.id && t.id.toUpperCase() === 'LYRICS');
+      if (lyricsNative?.value) text = lyricsNative.value;
+    }
     if (text) return res.json({ success: true, source: 'embedded', text });
 
     // 3. LRC cache (only when include_cache param is set)

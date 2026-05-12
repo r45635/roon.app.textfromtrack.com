@@ -242,6 +242,11 @@ function match(roonTrack, indexTracks) {
       score: c.score,
       confidence: scoreToConfidence(c.score),
       lyrics_status: c.track.lyrics_status,
+      sample_rate_hz: c.track.sample_rate_hz,
+      bits_per_sample: c.track.bits_per_sample,
+      lossless: c.track.lossless,
+      duration_seconds: c.track.duration_seconds,
+      size_bytes: c.track.size_bytes,
     }));
 
   return {

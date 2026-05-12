@@ -588,14 +588,20 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
   display: flex; flex-direction: column; gap: 2px;
 }
 .tft-alt-item {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  padding: 6px 8px; border-radius: 6px; cursor: pointer;
+  display: grid;
+  grid-template-columns: auto 56px 1fr minmax(0, 42%);
+  align-items: center; column-gap: 8px; row-gap: 1px;
+  padding: 5px 8px; border-radius: 6px; cursor: pointer;
   border: 1px solid transparent; transition: background 0.1s;
+  overflow: hidden;
 }
 .tft-alt-item:hover { background: var(--tft-paper-3, #e8e5df); }
 .tft-alt-item.selected { background: var(--tft-signal-soft); border-color: var(--tft-signal); }
-.tft-alt-name { font-size: 12px; color: var(--tft-ink-1); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tft-alt-path { font-family: var(--tft-mono); font-size: 10px; color: var(--tft-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+.tft-alt-score { font-family: var(--tft-mono); font-size: 11px; color: var(--tft-ink-3); white-space: nowrap; text-align: right; }
+.tft-alt-name { font-size: 12px; color: var(--tft-ink-1); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tft-alt-path { font-family: var(--tft-mono); font-size: 10px; color: var(--tft-ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.tft-alt-meta { grid-column: 3 / 5; grid-row: 2; display: flex; gap: 8px; font-family: var(--tft-mono); font-size: 10px; color: var(--tft-ink-4, var(--tft-ink-3)); }
+.tft-alt-meta span { white-space: nowrap; }
 
 /* Generate strip */
 .tft-generate-strip {
@@ -863,11 +869,28 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
   overflow-y: auto;
 }
 .file-tabs-artwork {
-  display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; height: 100%;
 }
 .file-tabs-artwork-img {
+  flex: 1; min-height: 0;
   max-width: 100%; max-height: 100%;
   border-radius: 4px; object-fit: contain;
+}
+.file-tabs-artwork-nav {
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0; padding-bottom: 2px;
+}
+.file-tabs-artwork-nav-btn {
+  background: var(--tft-paper-2); border: 1px solid var(--tft-line);
+  border-radius: 4px; width: 24px; height: 24px;
+  font-size: 16px; line-height: 1; cursor: pointer;
+  color: var(--tft-ink-1); display: flex; align-items: center; justify-content: center;
+  padding: 0;
+}
+.file-tabs-artwork-nav-btn:hover { background: var(--tft-paper-3, #e0e0e0); }
+.file-tabs-artwork-nav-count {
+  font-size: 11px; color: var(--tft-ink-2); min-width: 32px; text-align: center;
 }
 .file-tabs-lyrics-container {
   display: flex; flex-direction: column; gap: 8px;
@@ -1439,6 +1462,17 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
   width: 80px;
 }
 .tft-options-text-input:focus { outline: none; border-color: var(--tft-ink-3); }
+.tft-options-select {
+  font-size: 12px;
+  padding: 2px 6px;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  background: var(--tft-paper);
+  color: var(--tft-ink);
+  width: 110px;
+  cursor: pointer;
+}
+.tft-options-select:focus { outline: none; border-color: var(--tft-ink-3); }
 
 /* ── TFT options help modal ──────────────────────────────────────────────────── */
 .tft-help-backdrop {
@@ -1634,6 +1668,34 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
   background: var(--tft-amber-soft);
   color: var(--tft-amber-ink);
   border-color: var(--tft-amber-ink);
+}
+.lrc-folder-btn.lrc-copied {
+  background: var(--badge-success-bg);
+  color: var(--badge-success-ink);
+  border-color: var(--badge-success-ink);
+}
+.lyrics-modal-card {
+  max-width: 600px;
+  width: 92vw;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+.lyrics-modal-pre {
+  flex: 1;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 12px;
+  font-family: var(--tft-font-mono, monospace);
+  background: var(--tft-paper-2, var(--tft-paper));
+  border: 1px solid var(--card-border);
+  border-radius: var(--tft-r-xs);
+  padding: 10px 12px;
+  margin: 8px 0;
+  max-height: 55vh;
+  color: var(--tft-ink);
+  line-height: 1.6;
 }
 .td-status {
   width: 6rem;

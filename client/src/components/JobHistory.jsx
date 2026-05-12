@@ -37,6 +37,8 @@ function SvgXCircle()     { return <svg width="13" height="13" viewBox="0 0 24 2
 function SvgMinus()       { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/></svg>; }
 function SvgWarning()     { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>; }
 function SvgTag()         { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>; }
+function SvgClipboard()   { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>; }
+function SvgEye()         { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>; }
 
 const STATUS_SVG = {
   done:        <SvgCheck />,
@@ -67,6 +69,8 @@ export default function JobHistory({ jobs, onJobRetried }) {
   const [backupDefault, setBackupDefault] = useState(true);
   const [conflictDialog, setConflictDialog] = useState(null);
   const [page, setPage] = useState(0);
+  const [copiedJob, setCopiedJob] = useState(null);
+  const [lyricsModal, setLyricsModal] = useState(null); // { title, artist, content }
 
   const PAGE_SIZE = 10;
 
@@ -140,6 +144,28 @@ export default function JobHistory({ jobs, onJobRetried }) {
     setConflictDialog(null);
     if (choice === 'cancel') return;
     handleEmbed(jobId, choice);
+  }
+
+  async function handleCopyLyrics(job) {
+    try {
+      const res = await fetch(`/api/tft/job-lyrics?job_id=${encodeURIComponent(job.job_id)}`);
+      const data = await res.json();
+      if (data.success && data.content) {
+        await navigator.clipboard.writeText(data.content);
+        setCopiedJob(job.job_id);
+        setTimeout(() => setCopiedJob(prev => prev === job.job_id ? null : prev), 2000);
+      }
+    } catch { /* silently ignore */ }
+  }
+
+  async function handleViewLyrics(job) {
+    try {
+      const res = await fetch(`/api/tft/job-lyrics?job_id=${encodeURIComponent(job.job_id)}`);
+      const data = await res.json();
+      if (data.success && data.content) {
+        setLyricsModal({ title: job.title, artist: job.artist, content: data.content });
+      }
+    } catch { /* silently ignore */ }
   }
 
   async function handleRetry(jobId) {
@@ -289,6 +315,28 @@ export default function JobHistory({ jobs, onJobRetried }) {
                           <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
                         </svg>
                       </button>
+                      {job.status === 'done' && (
+                        <>
+                          <button
+                            className={`lrc-folder-btn${copiedJob === job.job_id ? ' lrc-copied' : ''}`}
+                            title={copiedJob === job.job_id ? t('jobs.copied') : t('jobs.copy_lyrics')}
+                            onClick={() => handleCopyLyrics(job)}
+                            aria-label={t('jobs.copy_lyrics')}
+                          >
+                            {copiedJob === job.job_id
+                              ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                              : <SvgClipboard />}
+                          </button>
+                          <button
+                            className="lrc-folder-btn"
+                            title={t('jobs.view_lyrics')}
+                            onClick={() => handleViewLyrics(job)}
+                            aria-label={t('jobs.view_lyrics')}
+                          >
+                            <SvgEye />
+                          </button>
+                        </>
+                      )}
                       <span className="path small">{job.source_file.split('/').pop()}</span>
                     </span>
                   ) : (
@@ -356,6 +404,29 @@ export default function JobHistory({ jobs, onJobRetried }) {
               </button>
               <button className="btn btn-ghost" onClick={() => resolveConflict('cancel')}>
                 {t('common.cancel')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {lyricsModal && (
+        <div className="modal-backdrop" onClick={() => setLyricsModal(null)}>
+          <div className="modal-card lyrics-modal-card" onClick={e => e.stopPropagation()}>
+            <h3>{t('jobs.lyrics_modal_title')}</h3>
+            {lyricsModal.title && (
+              <p className="muted small">{lyricsModal.artist ? `${lyricsModal.artist} — ` : ''}{lyricsModal.title}</p>
+            )}
+            <pre className="lyrics-modal-pre">{lyricsModal.content}</pre>
+            <div className="modal-actions">
+              <button className="btn btn-secondary" onClick={async () => {
+                await navigator.clipboard.writeText(lyricsModal.content);
+                setLyricsModal(null);
+              }}>
+                {t('jobs.copy_lyrics')}
+              </button>
+              <button className="btn btn-ghost" onClick={() => setLyricsModal(null)}>
+                {t('common.close')}
               </button>
             </div>
           </div>

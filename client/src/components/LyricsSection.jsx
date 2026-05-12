@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import SyncedLyrics from './SyncedLyrics.jsx';
+import { useCollapsed } from '../hooks/useCollapsed.js';
 
 // 6-second countdown before silently discarding unsaved lyrics on track change.
 // User can short-circuit via "Save" (transfers + then applies) or "Discard"
@@ -47,6 +48,7 @@ export default function LyricsSection({
   // ── TFT state ───────────────────────────────────────────────────────────────
   const [force, setForce] = useState(false);
   const [tftOptions, setTftOptions] = useState({ audioType: 'auto', timestamps: 'auto', language: '', vintage: false });
+  const [optionsCollapsed, toggleOptionsCollapsed] = useCollapsed('tft-options', true);
   const [showTftHelp, setShowTftHelp] = useState(false);
   const [tftGenerating, setTftGenerating] = useState(false);
   const [tftJob, setTftJob] = useState(null);   // { job_id, status, lrc_file, lyrics_embedded, error }
@@ -55,6 +57,40 @@ export default function LyricsSection({
   const [tftTransfer, setTftTransfer] = useState('idle'); // idle|checking|confirm|saving|saved|error
   const [tftGenError, setTftGenError] = useState(null);
   const pollingRef = useRef(null);
+
+  // ── File metadata for search (decoupled from Roon nowPlaying) ──────────────
+  // When Auto Sync is OFF and the player moves to another track, nowPlaying
+  // updates live but effectivePath stays frozen on the matched file.
+  // We fetch the matched file's own tags so that LRCLIB/TFT searches always
+  // target the right track, not whatever is currently playing in Roon.
+  const [fileSearchMeta, setFileSearchMeta] = useState(null);
+  useEffect(() => {
+    if (!effectivePath) { setFileSearchMeta(null); return; }
+    let cancelled = false;
+    fetch(`/api/music/file-tags?path=${encodeURIComponent(effectivePath)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (cancelled) return;
+        if (d?.success) {
+          setFileSearchMeta({
+            title:            d.tags.title            || null,
+            artist:           d.tags.artist           || null,
+            album:            d.tags.album            || null,
+            duration_seconds: d.format.duration_seconds || null,
+          });
+        } else {
+          setFileSearchMeta(null);
+        }
+      })
+      .catch(() => { if (!cancelled) setFileSearchMeta(null); });
+    return () => { cancelled = true; };
+  }, [effectivePath]);
+
+  // Prefer file tags over Roon nowPlaying for search queries
+  const searchTitle    = fileSearchMeta?.title            || np?.title;
+  const searchArtist   = fileSearchMeta?.artist           || np?.artist;
+  const searchAlbum    = fileSearchMeta?.album            || np?.album;
+  const searchDuration = fileSearchMeta?.duration_seconds || np?.duration_seconds;
 
   // ── Track-change / Auto Sync handling ────────────────────────────────────────
   //
@@ -175,17 +211,17 @@ export default function LyricsSection({
   // ── LRCLIB: check ──────────────────────────────────────────────────────────
   async function handleLrclibCheck() {
     onAutoSyncChange?.(false);
-    if (!np?.title || !np?.artist) return;
+    if (!searchTitle || !searchArtist) return;
     setLrclibStatus('checking');
     setLrclibResult(null);
     setLrclibError(null);
     setLrclibTransfer('idle');
     setLrclibOpen(true);
     try {
-      const params = new URLSearchParams({ title: np.title, artist: np.artist });
-      if (np.album)            params.set('album', np.album);
-      if (np.duration_seconds) params.set('duration', String(Math.round(np.duration_seconds)));
-      if (effectivePath)       params.set('path', effectivePath);
+      const params = new URLSearchParams({ title: searchTitle, artist: searchArtist });
+      if (searchAlbum)    params.set('album', searchAlbum);
+      if (searchDuration) params.set('duration', String(Math.round(searchDuration)));
+      if (effectivePath)  params.set('path', effectivePath);
       const res = await fetch(`/api/lrclib/lookup?${params.toString()}`);
       const data = await res.json();
       if (!data.success && data.error) { setLrclibStatus('error'); setLrclibError(data.error); return; }
@@ -237,9 +273,9 @@ export default function LyricsSection({
     setTftOpen(true);
     try {
       const body = { force };
-      if (confirmedPath) body.confirmed_path = confirmedPath;
-      // Low-confidence override: pass confirmed_path so server skips the confidence gate
-      else if (isLowConfidence && lowConfirmOverride && effectivePath) body.confirmed_path = effectivePath;
+      // Always pass the matched file path so the server targets the frozen/selected file,
+      // not whatever Roon is currently playing (important when Auto Sync is OFF).
+      if (effectivePath) body.confirmed_path = effectivePath;
       if (tftOptions.language.trim()) body.language = tftOptions.language.trim();
       if (tftOptions.audioType && tftOptions.audioType !== 'auto') body.audio_type = tftOptions.audioType;
       if (tftOptions.timestamps) body.timestamps = tftOptions.timestamps;
@@ -310,9 +346,9 @@ export default function LyricsSection({
           path: effectivePath,
           lrc_content: lrcContent,
           embed: true,
-          title: np?.title || undefined,
-          artist: np?.artist || undefined,
-          album: np?.album || undefined,
+          title: searchTitle || undefined,
+          artist: searchArtist || undefined,
+          album: searchAlbum || undefined,
         }),
       });
       const data = await res.json();
@@ -504,62 +540,72 @@ export default function LyricsSection({
       {/* ── TFT advanced options (compact) ───────────────────────────────────── */}
       {!tftGenerating && !tftJob && (
         <div className="tft-options-block" style={{ marginTop: 6 }}>
-          <div className="tft-options-header">
+          <div className="tft-options-header tft-options-header--collapsible" onClick={toggleOptionsCollapsed}>
+            <span className="tft-options-chevron">{optionsCollapsed ? '▶' : '▼'}</span>
             {t('tft.options_title')}
             <button
               className="tft-options-help-btn"
               type="button"
-              onClick={() => setShowTftHelp(true)}
+              onClick={e => { e.stopPropagation(); setShowTftHelp(true); }}
               title={t('tft.options_help_label')}
             >ⓘ</button>
           </div>
-          <div className="tft-options-row">
-            <span className="tft-options-label">{t('tft.audio_type_label')}</span>
-            <div className="tft-options-radios">
-              {['auto', 'speech', 'music'].map(v => (
-                <button key={v} type="button"
-                  className={`tft-radio-btn${tftOptions.audioType === v ? ' tft-radio-btn-active' : ''}`}
-                  onClick={() => setTftOptions(o => ({ ...o, audioType: v }))}
-                >{t(`tft.audio_type_${v}`)}</button>
-              ))}
-            </div>
-          </div>
-          <div className="tft-options-row">
-            <span className="tft-options-label">{t('tft.timestamps_label')}</span>
-            <div className="tft-options-radios">
-              {['auto', 'required', 'none'].map(v => (
-                <button key={v} type="button"
-                  className={`tft-radio-btn${tftOptions.timestamps === v ? ' tft-radio-btn-active' : ''}`}
-                  onClick={() => setTftOptions(o => ({ ...o, timestamps: v }))}
-                >{t(`tft.timestamps_${v}`)}</button>
-              ))}
-            </div>
-          </div>
-          <div className="tft-options-row">
-            <label htmlFor="ls-tft-language" className="tft-options-label">{t('tft.language_label')}</label>
-            <input
-              id="ls-tft-language"
-              list="ls-tft-language-list"
-              className="tft-options-text-input"
-              value={tftOptions.language}
-              onChange={e => setTftOptions(o => ({ ...o, language: e.target.value }))}
-              placeholder={t('tft.language_auto')}
-            />
-            <datalist id="ls-tft-language-list">
-              <option value="fr" /><option value="en" /><option value="es" />
-              <option value="de" /><option value="it" /><option value="pt" />
-              <option value="ja" /><option value="ko" /><option value="zh" />
-              <option value="ar" /><option value="ru" />
-            </datalist>
-          </div>
-          <label className="tft-toggle-label" style={{ fontSize: 12 }}>
-            <input
-              type="checkbox"
-              checked={tftOptions.vintage}
-              onChange={e => setTftOptions(o => ({ ...o, vintage: e.target.checked }))}
-            />
-            {t('tft.vintage_label')}
-          </label>
+          {!optionsCollapsed && (
+            <>
+              <div className="tft-options-row">
+                <span className="tft-options-label">{t('tft.audio_type_label')}</span>
+                <div className="tft-options-radios">
+                  {['auto', 'speech', 'music'].map(v => (
+                    <button key={v} type="button"
+                      className={`tft-radio-btn${tftOptions.audioType === v ? ' tft-radio-btn-active' : ''}`}
+                      onClick={() => setTftOptions(o => ({ ...o, audioType: v }))}
+                    >{t(`tft.audio_type_${v}`)}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="tft-options-row">
+                <span className="tft-options-label">{t('tft.timestamps_label')}</span>
+                <div className="tft-options-radios">
+                  {['auto', 'required', 'none'].map(v => (
+                    <button key={v} type="button"
+                      className={`tft-radio-btn${tftOptions.timestamps === v ? ' tft-radio-btn-active' : ''}`}
+                      onClick={() => setTftOptions(o => ({ ...o, timestamps: v }))}
+                    >{t(`tft.timestamps_${v}`)}</button>
+                  ))}
+                </div>
+              </div>
+              <div className="tft-options-row">
+                <label htmlFor="ls-tft-language" className="tft-options-label">{t('tft.language_label')}</label>
+                <select
+                  id="ls-tft-language"
+                  className="tft-options-select"
+                  value={tftOptions.language}
+                  onChange={e => setTftOptions(o => ({ ...o, language: e.target.value }))}
+                >
+                  <option value="">{t('tft.language_auto')}</option>
+                  <option value="en">en</option>
+                  <option value="fr">fr</option>
+                  <option value="es">es</option>
+                  <option value="de">de</option>
+                  <option value="it">it</option>
+                  <option value="pt">pt</option>
+                  <option value="ja">ja</option>
+                  <option value="ko">ko</option>
+                  <option value="zh">zh</option>
+                  <option value="ar">ar</option>
+                  <option value="ru">ru</option>
+                </select>
+              </div>
+              <label className="tft-toggle-label" style={{ fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={tftOptions.vintage}
+                  onChange={e => setTftOptions(o => ({ ...o, vintage: e.target.checked }))}
+                />
+                {t('tft.vintage_label')}
+              </label>
+            </>
+          )}
         </div>
       )}
 

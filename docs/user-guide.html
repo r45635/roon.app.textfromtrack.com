@@ -990,12 +990,12 @@
         <div class="section-icon yellow">📋</div>
         <h2 class="section-title">Job History</h2>
       </div>
-      <p class="section-subtitle">Every TextFromTrack transcription request creates a job. The job history table tracks all past requests with their status, credit cost, and the resulting LRC file path.</p>
+      <p class="section-subtitle">Every lyrics request — whether via TextFromTrack AI transcription or LRCLIB — creates a job. The history table tracks all past requests with their status, credit cost, and actions.</p>
 
       <div class="screenshot-container">
         <img src="screenshots/jobs.jpg" alt="Job history table" loading="lazy">
       </div>
-      <p class="screenshot-caption">Job history — per-job status, credits charged, and LRC file path</p>
+      <p class="screenshot-caption">Job history — per-job status, credits charged, and per-row lyrics actions</p>
 
       <table class="doc-table">
         <thead><tr><th>Column</th><th>Description</th></tr></thead>
@@ -1003,11 +1003,20 @@
           <tr><td>Date</td><td>When the job was submitted.</td></tr>
           <tr><td>Track / Artist</td><td>The track metadata at submission time.</td></tr>
           <tr><td>Status</td><td><span class="badge green">Done</span> <span class="badge yellow">Processing</span> <span class="badge red">Error</span> — live status updates while jobs run.</td></tr>
-          <tr><td>Credits</td><td>Number of credits deducted for this transcription.</td></tr>
-          <tr><td>LRC path</td><td>Path to the saved <code>.lrc</code> file. Includes a "Reveal in Finder" shortcut.</td></tr>
+          <tr><td>Credits</td><td>Credits charged for TFT jobs. Shows <strong>LRCLIB</strong> badge for free LRCLIB results, or <strong>Cache</strong> for cached hits (0 credits).</td></tr>
+          <tr><td>Track path</td><td>Filename of the source audio file. Includes action buttons for done jobs:<br>
+            <strong>📁 Reveal in Finder</strong> — opens the enclosing folder.<br>
+            <strong>📋 Copy lyrics</strong> — copies the full LRC text to the clipboard.<br>
+            <strong>👁 View lyrics</strong> — opens a scrollable lyrics preview modal with a copy button.
+          </td></tr>
           <tr><td>🔄 Retry</td><td>Deletes the existing LRC and re-submits the job. Useful when timestamps were unavailable (fallback model was used).</td></tr>
         </tbody>
       </table>
+
+      <div class="info-block tip">
+        <span class="info-block-icon">💡</span>
+        <div class="info-block-text"><strong>Copy or view any result:</strong> Click the clipboard icon to copy the LRC text directly to your clipboard, or the eye icon to read it in a preview modal. Works for both TFT and LRCLIB jobs.</div>
+      </div>
 
       <div class="info-block warning">
         <span class="info-block-icon">⚠️</span>

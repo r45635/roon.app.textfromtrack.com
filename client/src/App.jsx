@@ -27,6 +27,7 @@ export default function App() {
   const [tftAccount, setTftAccount] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [confirmedPath, setConfirmedPath] = useState(null);
+  const prevTrackKeyRef = useRef(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [roonModalOpen, setRoonModalOpen] = useState(false);
   const [searchTrigger, setSearchTrigger] = useState(null);
@@ -120,13 +121,17 @@ export default function App() {
     };
   }, [fetchRoonStatus, fetchNowPlaying, fetchZones, fetchJobs]);
 
-  // Re-run match whenever now-playing changes
+  // Re-run match only when the track identity changes (not on position/state updates)
   useEffect(() => {
-    if (nowPlaying) {
-      fetchMatch();
-    } else {
+    if (!nowPlaying) {
+      prevTrackKeyRef.current = null;
       setMatchData(null);
+      return;
     }
+    const key = `${nowPlaying.zone_id}||${nowPlaying.title}||${nowPlaying.artist}||${nowPlaying.album}`;
+    if (key === prevTrackKeyRef.current) return;
+    prevTrackKeyRef.current = key;
+    fetchMatch();
   }, [nowPlaying, fetchMatch]);
 
   // ── After LRC generated: refresh everything ─────────────────────────────────

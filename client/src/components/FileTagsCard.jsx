@@ -24,11 +24,13 @@ function TagRow({ label, value, mono = false }) {
 function ArtworkPanel({ filePath, active }) {
   const { t } = useTranslation();
   const [state, setState] = useState({ covers: null, loading: false, error: null });
+  const [index, setIndex] = useState(0);
 
   useEffect(() => {
     if (!active || !filePath) return;
     if (state.covers !== null) return; // already loaded
     setState({ covers: null, loading: true, error: null });
+    setIndex(0);
     fetch(`/api/music/file-cover?path=${encodeURIComponent(filePath)}`)
       .then(r => r.json())
       .then(d => {
@@ -46,11 +48,27 @@ function ArtworkPanel({ filePath, active }) {
     return <p className="file-tabs-muted">{t('file_tags.no_cover', 'Aucune vignette')}</p>;
   }
 
+  const cover = state.covers[index];
+  const total = state.covers.length;
+
   return (
     <div className="file-tabs-artwork">
-      {state.covers.map((c, i) => (
-        <img key={i} src={c.data} alt={c.type || 'cover'} className="file-tabs-artwork-img" />
-      ))}
+      <img src={cover.data} alt={cover.type || 'cover'} className="file-tabs-artwork-img" />
+      {total > 1 && (
+        <div className="file-tabs-artwork-nav">
+          <button
+            className="file-tabs-artwork-nav-btn"
+            onClick={() => setIndex(i => (i - 1 + total) % total)}
+            aria-label="Previous cover"
+          >‹</button>
+          <span className="file-tabs-artwork-nav-count">{index + 1} / {total}</span>
+          <button
+            className="file-tabs-artwork-nav-btn"
+            onClick={() => setIndex(i => (i + 1) % total)}
+            aria-label="Next cover"
+          >›</button>
+        </div>
+      )}
     </div>
   );
 }

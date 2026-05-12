@@ -191,7 +191,7 @@
     "phase_separating_detail": "{{pct}}%",
     "phase_transcribing": "Transcription en cours…",
     "phase_retrying": "Qualité insuffisante — nouvelle tentative avec isolation vocale…",
-    "options_title": "Options avancées",
+    "options_title": "Options avancées pour TextFromTrack",
     "options_help_label": "Aide",
     "audio_type_label": "Type audio",
     "audio_type_auto": "Auto",
@@ -244,6 +244,11 @@
     "backup_conflict_body": "Une sauvegarde existe déjà à l'emplacement ci-dessous. Que faire ?",
     "backup_conflict_keep": "Conserver la sauvegarde existante",
     "backup_conflict_overwrite": "Écraser avec le fichier actuel",
+    "copy_lyrics": "Copier les paroles",
+    "copied": "Copié !",
+    "view_lyrics": "Voir les paroles",
+    "lyrics_modal_title": "Paroles",
+    "lyrics_not_available": "Paroles non disponibles pour ce job",
     "backup_conflict_no_backup": "Intégrer sans sauvegarde"
   },
   "common": {

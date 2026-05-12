@@ -269,6 +269,56 @@ router.get('/jobs/:jobId', (req, res) => {
 });
 
 /**
+ * GET /api/tft/job-lyrics?job_id=X
+ * Returns the LRC text for a completed job.
+ * Resolution order: lrc_file on disk → local LRC cache → embedded LYRICS tag.
+ */
+router.get('/job-lyrics', async (req, res) => {
+  const jobId = req.query.job_id;
+  if (!jobId) return res.status(400).json(buildError(E.UNKNOWN_ERROR, 'job_id is required'));
+
+  const job = jobStore.findById(jobId);
+  if (!job) return res.status(404).json(buildError(E.TFT_NOT_FOUND, 'Job not found'));
+
+  // 1. LRC sidecar file
+  if (job.lrc_file && fs.existsSync(job.lrc_file)) {
+    const content = fs.readFileSync(job.lrc_file, 'utf8');
+    return res.json({ success: true, content, source: 'lrc_file' });
+  }
+
+  // 2. Local LRC cache (keyed by path or metadata)
+  const lrcCache = require('../utils/lrcCache');
+  const cached = (job.source_file && lrcCache.get(job.source_file))
+    || lrcCache.getByMeta(job.artist, job.title, job.album);
+  if (cached) {
+    return res.json({ success: true, content: cached, source: 'cache' });
+  }
+
+  // 3. Embedded LYRICS tag in the audio file
+  if (job.source_file && fs.existsSync(job.source_file)) {
+    try {
+      const mm = require('music-metadata');
+      const metadata = await mm.parseFile(job.source_file, { native: true });
+      let lyrics = null;
+      if (metadata.common.lyrics && metadata.common.lyrics.length > 0) {
+        const first = metadata.common.lyrics[0];
+        if (typeof first === 'string' && first.trim()) lyrics = first;
+      }
+      if (!lyrics && metadata.native) {
+        const vorbis = metadata.native['vorbis'] || metadata.native['VORBIS'];
+        if (vorbis) {
+          const tag = vorbis.find(t => t.id && t.id.toUpperCase() === 'LYRICS');
+          if (tag && tag.value) lyrics = tag.value;
+        }
+      }
+      if (lyrics) return res.json({ success: true, content: lyrics, source: 'embedded' });
+    } catch { /* non-fatal */ }
+  }
+
+  return res.status(404).json(buildError(E.TFT_NOT_FOUND, 'Lyrics not found for this job'));
+});
+
+/**
  * POST /api/tft/retry
  * Retry a completed job that has no real timestamps.
  * Deletes the existing LRC, marks old job superseded, re-submits.

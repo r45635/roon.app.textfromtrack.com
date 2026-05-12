@@ -38,6 +38,19 @@ function LyricsPill({ status }) {
   );
 }
 
+function AltMeta({ duration_seconds, sample_rate_hz, bits_per_sample, lossless }) {
+  const parts = [];
+  if (duration_seconds != null) parts.push(fmt(duration_seconds));
+  if (sample_rate_hz != null) {
+    const k = sample_rate_hz / 1000;
+    parts.push((Number.isInteger(k) ? k : k.toFixed(1)) + 'kHz');
+  }
+  if (bits_per_sample != null) parts.push(bits_per_sample + 'bit');
+  if (lossless) parts.push('Lossless');
+  if (!parts.length) return null;
+  return <div className="tft-alt-meta">{parts.map((p, i) => <span key={i}>{p}</span>)}</div>;
+}
+
 function ScoreChip({ label, points, max, hint }) {
   let cls = 'badge badge-sm badge-neutral';
   if (points > 0 && points >= max) cls = 'badge badge-sm badge-success';
@@ -68,6 +81,7 @@ export default function HeroCard({
   // ── UI state ────────────────────────────────────────────────────────────────
   const [altOpen, setAltOpen] = useState(false);
   const [confirmedPath, setConfirmedPath] = useState(null);
+  const [altFormatCache, setAltFormatCache] = useState({});
   const [tagsRefreshKey, setTagsRefreshKey] = useState(0);
   const [volDetailOpen, setVolDetailOpen] = useState(false);
   const [autoSync, setAutoSync] = useState(true);
@@ -106,6 +120,7 @@ export default function HeroCard({
   useEffect(() => {
     setAltOpen(false);
     setConfirmedPath(null);
+    setAltFormatCache({});
   }, [trackKey]);
 
   // ── Derived values ───────────────────────────────────────────────────────────
@@ -117,10 +132,33 @@ export default function HeroCard({
   const artKey = np?.image_key || (np?.artist_image_keys?.[0] ?? null);
 
   const match = frozenMatchData?.match;
-  const lyricsStatus = match?.track?.lyrics_status;
-  const lyricsExist = lyricsStatus === 'HAS_LRC_FILE' || lyricsStatus === 'HAS_EMBEDDED_LYRICS' || lyricsStatus === 'HAS_CACHED_LYRICS';
   const matchedPath = match?.track?.path || '';
   const effectivePath = confirmedPath || matchedPath;
+
+  // When the user picks an alternative, use its data for the strip display
+  const selectedAlt = confirmedPath && confirmedPath !== matchedPath
+    ? match?.alternatives?.find(a => a.path === confirmedPath)
+    : null;
+  const displayConfidence = selectedAlt ? selectedAlt.confidence : match?.confidence;
+  const displayScore = selectedAlt ? selectedAlt.score : match?.score;
+  // Merge lazy-loaded format data on top of the alt (fields may be null in the index)
+  const displayTrack = selectedAlt
+    ? { ...selectedAlt, ...(altFormatCache[selectedAlt.path] ?? {}) }
+    : match?.track;
+
+  // Lazy-fetch format fields for the selected alt when they're missing
+  useEffect(() => {
+    if (!selectedAlt) return;
+    if (selectedAlt.sample_rate_hz != null) return; // already in index
+    if (altFormatCache[selectedAlt.path]) return;   // already fetched
+    fetch(`/api/music/file-format?path=${encodeURIComponent(selectedAlt.path)}`)
+      .then(r => r.json())
+      .then(d => { if (d.success) setAltFormatCache(prev => ({ ...prev, [selectedAlt.path]: d })); })
+      .catch(() => {});
+  }, [selectedAlt, altFormatCache]);
+
+  const lyricsStatus = displayTrack?.lyrics_status;
+  const lyricsExist = lyricsStatus === 'HAS_LRC_FILE' || lyricsStatus === 'HAS_EMBEDDED_LYRICS' || lyricsStatus === 'HAS_CACHED_LYRICS';
   const effectiveFilename = effectivePath ? effectivePath.split('/').pop() : '';
   const effectiveDir = effectivePath ? effectivePath.slice(0, effectivePath.lastIndexOf('/') + 1) : '';
   const matchedExt = matchedPath ? matchedPath.slice(matchedPath.lastIndexOf('.')).toLowerCase() : '';
@@ -384,13 +422,13 @@ export default function HeroCard({
           <div className="tft-match-meta">
             <div className="tft-np-pills">
               <span className="tft-eyebrow" style={{ marginRight: 8 }}>{t('section.local_match', 'Local match')}</span>
-              <ConfidencePill confidence={match.confidence} />
+              <ConfidencePill confidence={displayConfidence} />
               {lyricsStatus && <LyricsPill status={lyricsStatus} />}
-              {match.score != null && (
-                <span className="tft-pill tft-mono">{match.score} pts</span>
+              {displayScore != null && (
+                <span className="tft-pill tft-mono">{displayScore} pts</span>
               )}
-              {match.track && (() => {
-                const tr = match.track;
+              {displayTrack && (() => {
+                const tr = displayTrack;
                 const fmtParts = [];
                 if (tr.sample_rate_hz  != null) fmtParts.push(`${Math.round(tr.sample_rate_hz / 1000)}kHz`);
                 if (tr.bits_per_sample != null) fmtParts.push(`${tr.bits_per_sample}bits`);
@@ -447,9 +485,10 @@ export default function HeroCard({
                       onClick={() => setConfirmedPath(null)}
                     >
                       <ConfidencePill confidence={match.confidence} />
-                      <span className="tft-mono" style={{ fontSize: 11 }}>{match.score} pts</span>
+                      <span className="tft-alt-score">{match.score} pts</span>
                       <span className="tft-alt-name">{match.track?.title} — {match.track?.artist}</span>
                       <span className="tft-alt-path">{matchedPath.split('/').pop()}</span>
+                      <AltMeta {...match.track} />
                     </li>
                     {match.alternatives.map(alt => (
                       <li
@@ -458,9 +497,10 @@ export default function HeroCard({
                         onClick={() => setConfirmedPath(alt.path)}
                       >
                         <ConfidencePill confidence={alt.confidence} />
-                        <span className="tft-mono" style={{ fontSize: 11 }}>{alt.score} pts</span>
+                        <span className="tft-alt-score">{alt.score} pts</span>
                         <span className="tft-alt-name">{alt.title} — {alt.artist}</span>
                         <span className="tft-alt-path">{alt.path.split('/').pop()}</span>
+                        <AltMeta {...alt} />
                       </li>
                     ))}
                   </ul>

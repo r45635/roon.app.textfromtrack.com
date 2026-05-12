@@ -10,6 +10,7 @@ const lyricsEmbedder = require('../music/lyricsEmbedder');
 const lyricsDetector = require('../music/lyricsDetector');
 const scanner = require('../music/scanner');
 const userSettings = require('../storage/userSettings');
+const config = require('../config');
 const lrcCache = require('../utils/lrcCache');
 const jobStore = require('../textfromtrack/jobStore');
 
@@ -151,9 +152,11 @@ router.post('/save', async (req, res) => {
 
   // Validate path is within a configured music root (security)
   const settings = userSettings.get();
-  const roots = settings.music_roots || [];
+  const roots = settings.music_roots && settings.music_roots.length
+    ? settings.music_roots
+    : config.musicRoots;
   const resolved = path.resolve(audioPath);
-  const inRoot = roots.some(r => resolved.startsWith(path.resolve(r)));
+  const inRoot = roots.some(r => resolved.startsWith(path.resolve(r) + path.sep) || resolved === path.resolve(r));
   if (!inRoot) {
     logger.warn({ audioPath: resolved }, 'LRCLIB save: path outside music roots');
     return res.status(403).json(buildError('OUTSIDE_MUSIC_ROOT', 'Path is not within a configured music root'));
