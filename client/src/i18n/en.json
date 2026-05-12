@@ -43,6 +43,7 @@
     "refresh": "Refresh",
     "shuffle": "Shuffle",
     "auto_radio": "Auto Radio",
+    "auto_sync": "Auto Sync",
     "loop_all": "Loop",
     "loop_one": "Loop ×1",
     "loop_off": "Loop off",
@@ -180,7 +181,16 @@
     "backup_before_embed": "Save a .org backup of the original file first",
     "save_lrc_beside_source": "Save LRC file next to audio source",
     "lyrics_embedded_ok": "Lyrics embedded into the audio file",
-    "lyrics_embed_failed": "Lyrics embed failed"
+    "lyrics_embed_failed": "Lyrics embed failed",
+    "language_label": "Language",
+    "language_auto": "auto-detect",
+    "quality_degraded": "Low quality — some segments may have been removed",
+    "quality_hallucinations_count": "hallucinations filtered",
+    "quality_avg_score": "Avg. confidence score",
+    "phase_separating": "Isolating vocals…",
+    "phase_separating_detail": "{{pct}}%",
+    "phase_transcribing": "Transcribing…",
+    "phase_retrying": "Quality too low — retrying with vocal isolation…"
   },
   "jobs": {
     "empty": "No jobs yet",

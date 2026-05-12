@@ -43,6 +43,7 @@
     "refresh": "Actualiser",
     "shuffle": "Aléatoire",
     "auto_radio": "Radio auto",
+    "auto_sync": "Sync auto",
     "loop_all": "Boucle",
     "loop_one": "Boucle ×1",
     "loop_off": "Boucle désactivée",
@@ -180,7 +181,16 @@
     "embed_unsupported": "Intégration impossible pour les fichiers {{ext}} (MP3 / FLAC uniquement)",
     "backup_before_embed": "Sauvegarder le fichier original en .org avant",
     "lyrics_embedded_ok": "Paroles intégrées dans le fichier audio",
-    "lyrics_embed_failed": "Échec de l'intégration des paroles"
+    "lyrics_embed_failed": "Échec de l'intégration des paroles",
+    "language_label": "Langue",
+    "language_auto": "détection auto",
+    "quality_degraded": "Qualité faible — certains segments ont pu être supprimés",
+    "quality_hallucinations_count": "hallucinations filtrées",
+    "quality_avg_score": "Score de confiance moyen",
+    "phase_separating": "Isolation des voix…",
+    "phase_separating_detail": "{{pct}}%",
+    "phase_transcribing": "Transcription en cours…",
+    "phase_retrying": "Qualité insuffisante — nouvelle tentative avec isolation vocale…"
   },
   "jobs": {
     "empty": "Aucune tâche pour l'instant",

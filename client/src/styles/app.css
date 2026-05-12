@@ -610,6 +610,30 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
 .tft-toggle-label input[type="checkbox"] { cursor: pointer; accent-color: var(--tft-signal); }
 .tft-toggle-label.warning { color: var(--tft-amber-ink); font-weight: 500; }
 
+/* Auto Sync toggle in the Now Playing pills row */
+.tft-autosync-label {
+  display: inline-flex; align-items: center; gap: 5px;
+  margin-left: auto;
+  font-size: 12px; color: var(--tft-ink-3); cursor: pointer; user-select: none;
+  white-space: nowrap;
+}
+.tft-autosync-label input[type="checkbox"] { cursor: pointer; accent-color: var(--tft-signal); }
+
+/* Demucs phase progress bar */
+.tft-phase-detail-block { display: flex; flex-direction: column; gap: 6px; padding: 4px 0; }
+.tft-phase-detail { font-size: 11px; color: var(--tft-ink-3); }
+.tft-phase-bar-track {
+  height: 4px; border-radius: 2px;
+  background: var(--tft-surface-2, rgba(0,0,0,0.08));
+  overflow: hidden;
+}
+.tft-phase-bar {
+  height: 100%;
+  background: var(--tft-signal);
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
 /* ── Zones rail ──────────────────────────────────────────────────────────────── */
 .tft-zone-list { display: flex; flex-direction: column; }
 .tft-zone-row {
