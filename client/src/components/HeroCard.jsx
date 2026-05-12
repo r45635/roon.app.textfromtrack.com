@@ -70,6 +70,14 @@ export default function HeroCard({
   const [confirmedPath, setConfirmedPath] = useState(null);
   const [tagsRefreshKey, setTagsRefreshKey] = useState(0);
   const [volDetailOpen, setVolDetailOpen] = useState(false);
+  const [autoSync, setAutoSync] = useState(true);
+
+  // Freeze matchData when Auto Sync is off so the Local File Match strip
+  // doesn't jump to the new track while the user is editing lyrics.
+  const [frozenMatchData, setFrozenMatchData] = useState(matchData);
+  useEffect(() => {
+    if (autoSync) setFrozenMatchData(matchData);
+  }, [matchData, autoSync]);
 
   // ── Volume drag helper ───────────────────────────────────────────────────────
   function startVolumeDrag(e, outputIds, vMax) {
@@ -108,7 +116,7 @@ export default function HeroCard({
     : 0;
   const artKey = np?.image_key || (np?.artist_image_keys?.[0] ?? null);
 
-  const match = matchData?.match;
+  const match = frozenMatchData?.match;
   const lyricsStatus = match?.track?.lyrics_status;
   const lyricsExist = lyricsStatus === 'HAS_LRC_FILE' || lyricsStatus === 'HAS_EMBEDDED_LYRICS' || lyricsStatus === 'HAS_CACHED_LYRICS';
   const matchedPath = match?.track?.path || '';
@@ -171,6 +179,14 @@ export default function HeroCard({
             {np?.auto_radio && <span className="tft-pill">{t('now_playing.auto_radio')}</span>}
             {loopLabel && <span className="tft-pill">↺ {loopLabel}</span>}
             {np?.shuffle && <span className="tft-pill">🔀</span>}
+            <label className="tft-autosync-label">
+              <input
+                type="checkbox"
+                checked={autoSync}
+                onChange={e => setAutoSync(e.target.checked)}
+              />
+              {t('now_playing.auto_sync', 'Auto Sync')}
+            </label>
           </div>
 
           <h1 className="tft-np-title">{np?.title || t('now_playing.no_track')}</h1>
@@ -471,6 +487,8 @@ export default function HeroCard({
         tftAccount={tftAccount}
         matchConfidence={match?.confidence ?? null}
         onTagsRefresh={() => setTagsRefreshKey(k => k + 1)}
+        autoSync={autoSync}
+        onAutoSyncChange={setAutoSync}
       />
     </section>
   );

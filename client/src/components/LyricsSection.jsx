@@ -31,6 +31,8 @@ export default function LyricsSection({
   tftAccount,
   matchConfidence,
   onTagsRefresh,
+  autoSync = true,
+  onAutoSyncChange,
 }) {
   const { t } = useTranslation();
   const np = nowPlaying;
@@ -52,21 +54,21 @@ export default function LyricsSection({
   const [tftGenError, setTftGenError] = useState(null);
   const pollingRef = useRef(null);
 
-  // ── Track-change handling with unsaved-lyrics countdown ─────────────────────
+  // ── Track-change / Auto Sync handling ────────────────────────────────────────
   //
-  // When the Roon track changes, we DON'T immediately wipe the LRCLIB / TFT
-  // panels — first we look at whether either source has lyrics displayed that
-  // have NOT been transferred to File Tags yet. If so, we hold the current
-  // panel state, show a modal with a {{UNSAVED_COUNTDOWN_SECONDS}}-second
-  // countdown, and only apply the reset when:
-  //   • the user clicks Save  → transfer first, then reset
-  //   • the user clicks Discard → reset immediately, no save
-  //   • the countdown expires → reset without saving (default = No)
+  // Auto Sync (controlled by a checkbox in HeroCard, passed as `autoSync` prop):
   //
-  // The countdown only controls the lyrics display state; it never touches
-  // Roon playback or other panels.
+  //   ON  — panels reset immediately on every track change (no dialog).
+  //         Entering edit mode (LRCLIB check or TFT generate) automatically
+  //         turns Auto Sync OFF so the user can work undisturbed.
+  //
+  //   OFF — panels are frozen; track changes are ignored.
+  //         When the user manually re-enables Auto Sync:
+  //           • unsaved lyrics present → show the save/discard dialog with countdown
+  //           • no unsaved lyrics      → reset panels immediately if track changed
   const trackKey = (np?.title ?? '') + '|' + (np?.duration_seconds ?? '');
   const lastAppliedTrackKey = useRef(trackKey);
+  const prevAutoSyncRef = useRef(autoSync);
   const [pendingTrackKey, setPendingTrackKey] = useState(null);
   const [countdown, setCountdown] = useState(0);
   const [savingOnSwitch, setSavingOnSwitch] = useState(false);
@@ -89,32 +91,35 @@ export default function LyricsSection({
     lastAppliedTrackKey.current = trackKey;
   }
 
-  // Detect track change
+  // Detect track change — only act when Auto Sync is on
   useEffect(() => {
     if (trackKey === lastAppliedTrackKey.current) return;
-    // Ignore transient null/empty states (e.g. polling error momentarily clears nowPlaying)
     if (!np?.title) return;
-    // Already in countdown? Update the pending target (latest wins).
-    if (pendingTrackKey != null) {
-      setPendingTrackKey(trackKey);
-      return;
-    }
+    if (!autoSync) return; // Auto Sync off — keep panels as-is
+    applyReset();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackKey]);
 
-    // Anything potentially unsaved? A source is "unsaved" when it has lyrics
-    // content displayed AND was not transferred to File Tags this session.
+  // When Auto Sync is re-enabled: check for unsaved lyrics before syncing
+  useEffect(() => {
+    const wasOff = !prevAutoSyncRef.current;
+    prevAutoSyncRef.current = autoSync;
+    if (!autoSync || !wasOff) return;
+    // Just toggled ON
     const lrclibContent = lrclibResult?.synced || lrclibResult?.plain || '';
     const tftContent = tftLyrics || '';
     const lrclibUnsaved = lrclibStatus === 'found' && !!lrclibContent && lrclibTransfer !== 'saved';
     const tftUnsaved   = tftJob?.status === 'done' && !!tftContent   && tftTransfer   !== 'saved';
-
-    if (!lrclibUnsaved && !tftUnsaved) {
+    if (lrclibUnsaved || tftUnsaved) {
+      // Show save/discard dialog
+      setPendingTrackKey(trackKey);
+      setCountdown(UNSAVED_COUNTDOWN_SECONDS);
+    } else if (trackKey !== lastAppliedTrackKey.current) {
+      // Track changed while auto sync was off — reset now
       applyReset();
-      return;
     }
-    setPendingTrackKey(trackKey);
-    setCountdown(UNSAVED_COUNTDOWN_SECONDS);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [trackKey]);
+  }, [autoSync]);
 
   // Countdown ticker
   useEffect(() => {
@@ -167,6 +172,7 @@ export default function LyricsSection({
 
   // ── LRCLIB: check ──────────────────────────────────────────────────────────
   async function handleLrclibCheck() {
+    onAutoSyncChange?.(false);
     if (!np?.title || !np?.artist) return;
     setLrclibStatus('checking');
     setLrclibResult(null);
@@ -220,6 +226,7 @@ export default function LyricsSection({
   }
 
   async function handleTftGenerate() {
+    onAutoSyncChange?.(false);
     setTftGenError(null);
     setTftJob(null);
     setTftLyrics(null);
@@ -375,14 +382,43 @@ export default function LyricsSection({
 
   function TftBadge() {
     if (!tftJob && tftGenerating)
-      return <span className="tft-lyrics-badge tft-lyrics-badge--info">{t('lyrics.tft_processing')}</span>;
+      return <span className="tft-lyrics-badge tft-lyrics-badge--info">{t('tft.progress_processing')}</span>;
     if (tftJob?.status === 'done')
       return <span className="tft-lyrics-badge tft-lyrics-badge--ok">{t('lyrics.tft_done')}</span>;
     if (tftJob?.status === 'error')
       return <span className="tft-lyrics-badge tft-lyrics-badge--err">{t('lyrics.tft_error')}</span>;
-    if (tftJob && tftGenerating)
-      return <span className="tft-lyrics-badge tft-lyrics-badge--info">{t('lyrics.tft_processing')}</span>;
+    if (tftJob && tftGenerating) {
+      const phase = tftJob.phase;
+      const label = phase === 'separating_vocals' ? t('tft.phase_separating')
+        : phase === 'transcribing'              ? t('tft.phase_transcribing')
+        : phase === 'retrying_with_separation'  ? t('tft.phase_retrying')
+        : t('tft.progress_processing');
+      return <span className="tft-lyrics-badge tft-lyrics-badge--info">{label}</span>;
+    }
     return null;
+  }
+
+  function TftProcessingDetail() {
+    if (!tftGenerating) return null;
+    const phase = tftJob?.phase;
+    const pct   = tftJob?.demucs_progress ?? 0;
+    if (phase === 'separating_vocals') {
+      return (
+        <div className="tft-phase-detail-block">
+          <span className="tft-phase-detail">
+            {t('tft.phase_separating')} {t('tft.phase_separating_detail', { pct })}
+          </span>
+          <div className="tft-phase-bar-track">
+            <div className="tft-phase-bar" style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+      );
+    }
+    if (phase === 'transcribing')
+      return <p className="tft-lyrics-no-preview">{t('tft.phase_transcribing')}</p>;
+    if (phase === 'retrying_with_separation')
+      return <p className="tft-lyrics-no-preview">{t('tft.phase_retrying')}</p>;
+    return <p className="tft-lyrics-no-preview">{t('tft.progress_processing')}</p>;
   }
 
   const lrclibLyrics = lrclibResult?.synced || lrclibResult?.plain || '';
@@ -540,9 +576,7 @@ export default function LyricsSection({
           </summary>
           <div className="tft-lyrics-result-body">
             {/* Job in progress */}
-            {tftGenerating && !tftJob?.status && (
-              <p className="tft-lyrics-no-preview">{t('lyrics.tft_processing')}</p>
-            )}
+            {tftGenerating && <TftProcessingDetail />}
             {/* Error detail */}
             {tftJob?.status === 'error' && tftJob.error && (
               <div className="tft-lyrics-job-error">
