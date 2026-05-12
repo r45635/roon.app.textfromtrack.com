@@ -203,18 +203,25 @@ router.post('/generate-current', async (req, res) => {
     const audioType = (req.body && typeof req.body.audio_type === 'string' && req.body.audio_type.trim())
       ? req.body.audio_type.trim()
       : undefined;
+    const timestamps = (req.body && typeof req.body.timestamps === 'string' && req.body.timestamps.trim())
+      ? req.body.timestamps.trim()
+      : undefined;
+    const vintage = (req.body && Object.prototype.hasOwnProperty.call(req.body, 'vintage'))
+      ? !!req.body.vintage
+      : config.tftDefaultVintage;
     const result = await transcriptionService.startTranscription(
       track.path,
       { title: track.title, artist: track.artist, album: track.album },
       {
         pinyin: config.tftDefaultPinyin,
-        vintage: config.tftDefaultVintage,
+        vintage,
         embed,
         backup: { enabled: backup, onConflict },
         force,
         saveBeside,
         language,
         audioType,
+        timestamps,
       }
     );
     res.status(202).json(result);

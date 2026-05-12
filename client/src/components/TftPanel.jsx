@@ -23,7 +23,8 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
   const [embed, setEmbed] = useState(false);
   const [backup, setBackup] = useState(true);
   const [force, setForce] = useState(false);
-  const [language, setLanguage] = useState('');
+  const [tftOptions, setTftOptions] = useState({ audioType: 'auto', timestamps: 'auto', language: '', vintage: false });
+  const [showHelp, setShowHelp] = useState(false);
   const [lowConfirmOverride, setLowConfirmOverride] = useState(false);
   const pollingRef = useRef(null);
   const sseRef = useRef(null);
@@ -108,7 +109,10 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
       if (hasLowMatch && lowConfirmOverride && match?.track?.path) {
         body.confirmed_path = match.track.path;
       }
-      if (language.trim()) body.language = language.trim();
+      if (tftOptions.language.trim()) body.language = tftOptions.language.trim();
+      if (tftOptions.audioType && tftOptions.audioType !== 'auto') body.audio_type = tftOptions.audioType;
+      if (tftOptions.timestamps) body.timestamps = tftOptions.timestamps;
+      if (tftOptions.vintage) body.vintage = true;
       const res = await fetch('/api/tft/generate-current', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -235,31 +239,103 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
           <p className="muted small force-warning">{t('tft.force_warning')}</p>
         )}
 
-        <div className="lang-row">
-          <label htmlFor="tft-language" className="lang-label">{t('tft.language_label')}</label>
-          <input
-            id="tft-language"
-            list="tft-language-list"
-            className="lang-input"
-            value={language}
-            onChange={e => setLanguage(e.target.value)}
-            placeholder={t('tft.language_auto')}
-            disabled={isGenerating}
-          />
-          <datalist id="tft-language-list">
-            <option value="fr" />
-            <option value="en" />
-            <option value="es" />
-            <option value="de" />
-            <option value="it" />
-            <option value="pt" />
-            <option value="ja" />
-            <option value="ko" />
-            <option value="zh" />
-            <option value="ar" />
-            <option value="ru" />
-          </datalist>
+        {/* Advanced options block */}
+        <div className="tft-options-block">
+          <div className="tft-options-header">
+            {t('tft.options_title')}
+            <button
+              className="tft-options-help-btn"
+              onClick={() => setShowHelp(true)}
+              title={t('tft.options_help_label')}
+              type="button"
+            >ⓘ</button>
+          </div>
+
+          {/* Audio type */}
+          <div className="tft-options-row">
+            <span className="tft-options-label">{t('tft.audio_type_label')}</span>
+            <div className="tft-options-radios">
+              {['auto', 'speech', 'music'].map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  className={`tft-radio-btn${tftOptions.audioType === v ? ' tft-radio-btn-active' : ''}`}
+                  disabled={isGenerating}
+                  onClick={() => setTftOptions(o => ({ ...o, audioType: v }))}
+                >
+                  {t(`tft.audio_type_${v}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Timestamps */}
+          <div className="tft-options-row">
+            <span className="tft-options-label">{t('tft.timestamps_label')}</span>
+            <div className="tft-options-radios">
+              {['auto', 'required', 'none'].map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  className={`tft-radio-btn${tftOptions.timestamps === v ? ' tft-radio-btn-active' : ''}`}
+                  disabled={isGenerating}
+                  onClick={() => setTftOptions(o => ({ ...o, timestamps: v }))}
+                >
+                  {t(`tft.timestamps_${v}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Language */}
+          <div className="tft-options-row">
+            <label htmlFor="tft-language" className="tft-options-label">{t('tft.language_label')}</label>
+            <input
+              id="tft-language"
+              list="tft-language-list"
+              className="tft-options-text-input"
+              value={tftOptions.language}
+              onChange={e => setTftOptions(o => ({ ...o, language: e.target.value }))}
+              placeholder={t('tft.language_auto')}
+              disabled={isGenerating}
+            />
+            <datalist id="tft-language-list">
+              <option value="fr" /><option value="en" /><option value="es" />
+              <option value="de" /><option value="it" /><option value="pt" />
+              <option value="ja" /><option value="ko" /><option value="zh" />
+              <option value="ar" /><option value="ru" />
+            </datalist>
+          </div>
+
+          {/* Vintage */}
+          <label className="embed-toggle">
+            <input
+              type="checkbox"
+              checked={tftOptions.vintage}
+              disabled={isGenerating}
+              onChange={e => setTftOptions(o => ({ ...o, vintage: e.target.checked }))}
+            />
+            <span>{t('tft.vintage_label')}</span>
+          </label>
         </div>
+
+        {/* Help modal */}
+        {showHelp && (
+          <div className="tft-help-backdrop" onClick={() => setShowHelp(false)}>
+            <div className="tft-help-modal" onClick={e => e.stopPropagation()}>
+              <h3>{t('tft.help_modal_title')}</h3>
+              <dl>
+                <div><dt>{t('tft.help_audio_type_title')}</dt><dd>{t('tft.help_audio_type')}</dd></div>
+                <div><dt>{t('tft.help_timestamps_title')}</dt><dd>{t('tft.help_timestamps')}</dd></div>
+                <div><dt>{t('tft.help_language_title')}</dt><dd>{t('tft.help_language')}</dd></div>
+                <div><dt>{t('tft.help_vintage_title')}</dt><dd>{t('tft.help_vintage')}</dd></div>
+              </dl>
+              <button className="btn btn-secondary tft-help-close" onClick={() => setShowHelp(false)}>
+                {t('common.close') || 'Close'}
+              </button>
+            </div>
+          </div>
+        )}
 
         <label className="embed-toggle">
           <input

@@ -46,6 +46,8 @@ export default function LyricsSection({
 
   // ── TFT state ───────────────────────────────────────────────────────────────
   const [force, setForce] = useState(false);
+  const [tftOptions, setTftOptions] = useState({ audioType: 'auto', timestamps: 'auto', language: '', vintage: false });
+  const [showTftHelp, setShowTftHelp] = useState(false);
   const [tftGenerating, setTftGenerating] = useState(false);
   const [tftJob, setTftJob] = useState(null);   // { job_id, status, lrc_file, lyrics_embedded, error }
   const [tftOpen, setTftOpen] = useState(true);
@@ -238,6 +240,10 @@ export default function LyricsSection({
       if (confirmedPath) body.confirmed_path = confirmedPath;
       // Low-confidence override: pass confirmed_path so server skips the confidence gate
       else if (isLowConfidence && lowConfirmOverride && effectivePath) body.confirmed_path = effectivePath;
+      if (tftOptions.language.trim()) body.language = tftOptions.language.trim();
+      if (tftOptions.audioType && tftOptions.audioType !== 'auto') body.audio_type = tftOptions.audioType;
+      if (tftOptions.timestamps) body.timestamps = tftOptions.timestamps;
+      if (tftOptions.vintage) body.vintage = true;
       const res = await fetch('/api/tft/generate-current', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -402,6 +408,25 @@ export default function LyricsSection({
     if (!tftGenerating) return null;
     const phase = tftJob?.phase;
     const pct   = tftJob?.demucs_progress ?? 0;
+    const phaseStartedAt = tftJob?.phase_started_at;
+
+    // Elapsed timer for the current phase
+    const [elapsed, setElapsed] = useState(() => {
+      if (!phaseStartedAt) return 0;
+      return Math.floor((Date.now() - new Date(phaseStartedAt).getTime()) / 1000);
+    });
+    useEffect(() => {
+      if (!phaseStartedAt) return;
+      const id = setInterval(() => {
+        setElapsed(Math.floor((Date.now() - new Date(phaseStartedAt).getTime()) / 1000));
+      }, 1000);
+      return () => clearInterval(id);
+    }, [phaseStartedAt]);
+
+    const elapsedLabel = elapsed >= 60
+      ? `${Math.floor(elapsed / 60)} min ${elapsed % 60} s`
+      : t('tft.elapsed', { s: elapsed });
+
     if (phase === 'separating_vocals') {
       return (
         <div className="tft-phase-detail-block">
@@ -411,13 +436,24 @@ export default function LyricsSection({
           <div className="tft-phase-bar-track">
             <div className="tft-phase-bar" style={{ width: `${pct}%` }} />
           </div>
+          {phaseStartedAt && <span className="tft-elapsed">{elapsedLabel}</span>}
         </div>
       );
     }
     if (phase === 'transcribing')
-      return <p className="tft-lyrics-no-preview">{t('tft.phase_transcribing')}</p>;
+      return (
+        <div className="tft-phase-detail-block">
+          <p className="tft-lyrics-no-preview">{t('tft.phase_transcribing')}</p>
+          {phaseStartedAt && <span className="tft-elapsed">{elapsedLabel}</span>}
+        </div>
+      );
     if (phase === 'retrying_with_separation')
-      return <p className="tft-lyrics-no-preview">{t('tft.phase_retrying')}</p>;
+      return (
+        <div className="tft-phase-detail-block">
+          <p className="tft-lyrics-no-preview">{t('tft.phase_retrying')}</p>
+          {phaseStartedAt && <span className="tft-elapsed">{elapsedLabel}</span>}
+        </div>
+      );
     return <p className="tft-lyrics-no-preview">{t('tft.progress_processing')}</p>;
   }
 
@@ -464,6 +500,86 @@ export default function LyricsSection({
         <TftBadge />
 
       </div>
+
+      {/* ── TFT advanced options (compact) ───────────────────────────────────── */}
+      {!tftGenerating && !tftJob && (
+        <div className="tft-options-block" style={{ marginTop: 6 }}>
+          <div className="tft-options-header">
+            {t('tft.options_title')}
+            <button
+              className="tft-options-help-btn"
+              type="button"
+              onClick={() => setShowTftHelp(true)}
+              title={t('tft.options_help_label')}
+            >ⓘ</button>
+          </div>
+          <div className="tft-options-row">
+            <span className="tft-options-label">{t('tft.audio_type_label')}</span>
+            <div className="tft-options-radios">
+              {['auto', 'speech', 'music'].map(v => (
+                <button key={v} type="button"
+                  className={`tft-radio-btn${tftOptions.audioType === v ? ' tft-radio-btn-active' : ''}`}
+                  onClick={() => setTftOptions(o => ({ ...o, audioType: v }))}
+                >{t(`tft.audio_type_${v}`)}</button>
+              ))}
+            </div>
+          </div>
+          <div className="tft-options-row">
+            <span className="tft-options-label">{t('tft.timestamps_label')}</span>
+            <div className="tft-options-radios">
+              {['auto', 'required', 'none'].map(v => (
+                <button key={v} type="button"
+                  className={`tft-radio-btn${tftOptions.timestamps === v ? ' tft-radio-btn-active' : ''}`}
+                  onClick={() => setTftOptions(o => ({ ...o, timestamps: v }))}
+                >{t(`tft.timestamps_${v}`)}</button>
+              ))}
+            </div>
+          </div>
+          <div className="tft-options-row">
+            <label htmlFor="ls-tft-language" className="tft-options-label">{t('tft.language_label')}</label>
+            <input
+              id="ls-tft-language"
+              list="ls-tft-language-list"
+              className="tft-options-text-input"
+              value={tftOptions.language}
+              onChange={e => setTftOptions(o => ({ ...o, language: e.target.value }))}
+              placeholder={t('tft.language_auto')}
+            />
+            <datalist id="ls-tft-language-list">
+              <option value="fr" /><option value="en" /><option value="es" />
+              <option value="de" /><option value="it" /><option value="pt" />
+              <option value="ja" /><option value="ko" /><option value="zh" />
+              <option value="ar" /><option value="ru" />
+            </datalist>
+          </div>
+          <label className="tft-toggle-label" style={{ fontSize: 12 }}>
+            <input
+              type="checkbox"
+              checked={tftOptions.vintage}
+              onChange={e => setTftOptions(o => ({ ...o, vintage: e.target.checked }))}
+            />
+            {t('tft.vintage_label')}
+          </label>
+        </div>
+      )}
+
+      {/* TFT help modal */}
+      {showTftHelp && (
+        <div className="tft-help-backdrop" onClick={() => setShowTftHelp(false)}>
+          <div className="tft-help-modal" onClick={e => e.stopPropagation()}>
+            <h3>{t('tft.help_modal_title')}</h3>
+            <dl>
+              <div><dt>{t('tft.help_audio_type_title')}</dt><dd>{t('tft.help_audio_type')}</dd></div>
+              <div><dt>{t('tft.help_timestamps_title')}</dt><dd>{t('tft.help_timestamps')}</dd></div>
+              <div><dt>{t('tft.help_language_title')}</dt><dd>{t('tft.help_language')}</dd></div>
+              <div><dt>{t('tft.help_vintage_title')}</dt><dd>{t('tft.help_vintage')}</dd></div>
+            </dl>
+            <button className="btn btn-secondary tft-help-close" onClick={() => setShowTftHelp(false)}>
+              {t('common.close')}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── TFT low-confidence warning ───────────────────────────────────────── */}
       {isLowConfidence && !tftGenerating && !tftJob && (

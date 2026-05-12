@@ -1348,6 +1348,145 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
 /* ── Generate area ───────────────────────────────────────────────────────────── */
 .generate-area { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
 
+/* ── TFT advanced options block ──────────────────────────────────────────────── */
+.tft-options-block {
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tft-options-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--tft-ink-3);
+}
+.tft-options-help-btn {
+  background: none;
+  border: 1px solid var(--card-border);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--tft-ink-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  margin-left: auto;
+}
+.tft-options-help-btn:hover { background: var(--tft-paper-2); color: var(--tft-ink); }
+.tft-options-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tft-options-label {
+  font-size: 12px;
+  color: var(--tft-ink-2);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+.tft-options-radios {
+  display: flex;
+  gap: 4px;
+}
+.tft-radio-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  background: var(--tft-paper);
+  color: var(--tft-ink-2);
+  cursor: pointer;
+  line-height: 1.5;
+}
+.tft-radio-btn:hover { background: var(--tft-paper-2); }
+.tft-radio-btn-active {
+  background: var(--tft-ink);
+  color: var(--tft-paper);
+  border-color: var(--tft-ink);
+}
+.tft-options-text-input {
+  font-size: 12px;
+  padding: 2px 7px;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  background: var(--tft-paper);
+  color: var(--tft-ink);
+  width: 80px;
+}
+.tft-options-text-input:focus { outline: none; border-color: var(--tft-ink-3); }
+
+/* ── TFT options help modal ──────────────────────────────────────────────────── */
+.tft-help-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tft-help-modal {
+  background: var(--tft-paper);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  max-width: 420px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+.tft-help-modal h3 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  color: var(--tft-ink);
+}
+.tft-help-modal dl {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tft-help-modal dt {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tft-ink);
+  margin-bottom: 2px;
+}
+.tft-help-modal dd {
+  font-size: 12px;
+  color: var(--tft-ink-2);
+  margin: 0;
+  line-height: 1.5;
+}
+.tft-help-close {
+  display: block;
+  margin-top: 16px;
+  margin-left: auto;
+  font-size: 12px;
+  padding: 4px 12px;
+}
+
+/* ── Elapsed timer ───────────────────────────────────────────────────────────── */
+.tft-elapsed {
+  font-size: 11px;
+  color: var(--tft-ink-3);
+  margin-top: 4px;
+}
+
+
+
 /* ── Progress box ────────────────────────────────────────────────────────────── */
 .progress-box {
   margin-top: 14px;
