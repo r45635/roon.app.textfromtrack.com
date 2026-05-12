@@ -1,7 +1,11 @@
 {
   "name": "roon-companion-textfromtrack",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Local companion app connecting Roon to TextFromTrack for automated LRC generation",
+  "author": {
+    "name": "r45635",
+    "email": "contact@textfromtrack.com"
+  },
   "main": "electron/main.js",
   "scripts": {
     "dev": "node src/server.js",
