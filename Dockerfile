@@ -35,7 +35,8 @@ RUN npm ci --omit=dev
 
 # Copy application source
 COPY src/ src/
-COPY config.json ./
+# config.json (Roon pairing tokens) is gitignored — node-roon-api creates it on
+# first run. Do not COPY it here; mount a volume for persistence instead.
 
 # Copy built client from builder stage
 COPY --from=builder /build/client/dist client/dist/
