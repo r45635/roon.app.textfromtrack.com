@@ -154,6 +154,8 @@ jobs:
   build-docker:
     name: Build — Docker image
     runs-on: ubuntu-latest
+    env:
+      DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
       - uses: actions/checkout@v4
 
@@ -175,11 +177,27 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Log in to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        if: env.DOCKERHUB_USER != ''
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        run: |
+          TAGS="ghcr.io/r45635/roon-companion:latest
+          ghcr.io/r45635/roon-companion:${{ steps.version.outputs.version }}"
+          if [ -n "${DOCKERHUB_USER}" ]; then
+            TAGS="${TAGS}
+          ${DOCKERHUB_USER}/roon-companion:latest
+          ${DOCKERHUB_USER}/roon-companion:${{ steps.version.outputs.version }}"
+          fi
+          {
+            echo "tags<<EOF"
+            echo "$TAGS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -187,11 +205,7 @@ jobs:
           context: .
           push: true
           platforms: linux/amd64,linux/arm64
-          tags: |
-            ghcr.io/r45635/roon-companion:latest
-            ghcr.io/r45635/roon-companion:${{ steps.version.outputs.version }}
-            ${{ secrets.DOCKERHUB_USERNAME != '' && format('{0}/roon-companion:latest', secrets.DOCKERHUB_USERNAME) || '' }}
-            ${{ secrets.DOCKERHUB_USERNAME != '' && format('{0}/roon-companion:{1}', secrets.DOCKERHUB_USERNAME, steps.version.outputs.version) || '' }}
+          tags: ${{ steps.tags.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
