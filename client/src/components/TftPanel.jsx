@@ -23,11 +23,16 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
   const [embed, setEmbed] = useState(false);
   const [backup, setBackup] = useState(true);
   const [force, setForce] = useState(false);
+  const [language, setLanguage] = useState('');
   const [lowConfirmOverride, setLowConfirmOverride] = useState(false);
   const pollingRef = useRef(null);
+  const sseRef = useRef(null);
 
-  // Cleanup polling on unmount
-  useEffect(() => () => clearInterval(pollingRef.current), []);
+  // Cleanup polling + SSE on unmount
+  useEffect(() => () => {
+    clearInterval(pollingRef.current);
+    sseRef.current?.close();
+  }, []);
 
   // Load default embed + backup preferences once
   useEffect(() => {
@@ -48,23 +53,48 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
     setLowConfirmOverride(false);
   }, [_matchedPathForReset]);
 
-  function startPolling(jobId) {
-    pollingRef.current = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/tft/jobs/${jobId}`);
-        const data = await res.json();
-        if (!data.success) return;
-        const job = data.job;
-        setActiveJob(job);
-        if (job.status === 'done' || job.status === 'error') {
-          clearInterval(pollingRef.current);
-          setIsGenerating(false);
-          if (onGenerated) onGenerated();
-        }
-      } catch {
-        // silent — will retry next tick
+  async function fetchJobById(jobId) {
+    try {
+      const res = await fetch(`/api/tft/jobs/${jobId}`);
+      const data = await res.json();
+      if (!data.success) return;
+      const job = data.job;
+      setActiveJob(job);
+      if (job.status === 'done' || job.status === 'error') {
+        clearInterval(pollingRef.current);
+        sseRef.current?.close();
+        sseRef.current = null;
+        setIsGenerating(false);
+        if (onGenerated) onGenerated();
       }
-    }, 2000);
+    } catch {
+      // silent — will retry next tick
+    }
+  }
+
+  function startJobTracking(jobId) {
+    // Primary: SSE — backend pushes job_updated events immediately
+    let sseActive = false;
+    try {
+      const es = new EventSource('/api/tft/events');
+      sseRef.current = es;
+      sseActive = true;
+      es.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          if (msg.type === 'job_updated' && msg.job_id === jobId) {
+            fetchJobById(jobId);
+          }
+        } catch { /* ignore malformed */ }
+      };
+      es.onerror = () => {
+        es.close();
+        sseRef.current = null;
+      };
+    } catch { /* SSE not available — fall through to polling */ }
+
+    // Fallback polling: 2s when no SSE, 5s as belt-and-suspenders when SSE is active
+    pollingRef.current = setInterval(() => fetchJobById(jobId), sseActive ? 5000 : 2000);
   }
 
   async function handleGenerate() {
@@ -78,6 +108,7 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
       if (hasLowMatch && lowConfirmOverride && match?.track?.path) {
         body.confirmed_path = match.track.path;
       }
+      if (language.trim()) body.language = language.trim();
       const res = await fetch('/api/tft/generate-current', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -92,7 +123,7 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
       }
 
       setActiveJob({ job_id: data.job_id, status: data.status });
-      startPolling(data.job_id);
+      startJobTracking(data.job_id);
     } catch (err) {
       setGenError({ code: 'UNKNOWN_ERROR', message: err.message });
       setIsGenerating(false);
@@ -204,6 +235,32 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
           <p className="muted small force-warning">{t('tft.force_warning')}</p>
         )}
 
+        <div className="lang-row">
+          <label htmlFor="tft-language" className="lang-label">{t('tft.language_label')}</label>
+          <input
+            id="tft-language"
+            list="tft-language-list"
+            className="lang-input"
+            value={language}
+            onChange={e => setLanguage(e.target.value)}
+            placeholder={t('tft.language_auto')}
+            disabled={isGenerating}
+          />
+          <datalist id="tft-language-list">
+            <option value="fr" />
+            <option value="en" />
+            <option value="es" />
+            <option value="de" />
+            <option value="it" />
+            <option value="pt" />
+            <option value="ja" />
+            <option value="ko" />
+            <option value="zh" />
+            <option value="ar" />
+            <option value="ru" />
+          </datalist>
+        </div>
+
         <label className="embed-toggle">
           <input
             type="checkbox"
@@ -288,6 +345,21 @@ export default function TftPanel({ tftAccount, matchData, nowPlaying, onGenerate
             <div className="progress-detail text-error small">
               ⚠ {t('tft.lyrics_embed_failed')}
               {activeJob.embed_error ? `: ${activeJob.embed_error}` : ''}
+            </div>
+          )}
+          {activeJob.status === 'done' && activeJob.quality?.verdict === 'degraded' && (
+            <div className="progress-detail quality-warning">
+              <details>
+                <summary>
+                  ⚠️ {t('tft.quality_degraded')}
+                  {activeJob.quality.hallucinations_filtered > 0 && (
+                    <span> ({activeJob.quality.hallucinations_filtered} {t('tft.quality_hallucinations_count')})</span>
+                  )}
+                </summary>
+                {activeJob.quality.avg_confidence != null && (
+                  <p className="muted small">{t('tft.quality_avg_score')}: {activeJob.quality.avg_confidence.toFixed(2)}</p>
+                )}
+              </details>
             </div>
           )}
           {activeJob.status === 'done' && activeJob.credits_charged != null && (

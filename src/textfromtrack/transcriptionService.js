@@ -82,6 +82,7 @@ async function _pollAndComplete(jobId, sourcePath, lrcPath, embed = false, embed
 
     // Keep the local store's status in sync
     jobStore.update(jobId, { status: remote.status });
+    if (remote.quality) jobStore.update(jobId, { quality: remote.quality });
 
     if (remote.status === 'done') {
       jobStore.update(jobId, { status: 'downloading' });
@@ -173,6 +174,17 @@ async function _downloadAndSave(jobId, sourcePath, lrcPath, remoteJob, embed = f
     if (segmentsResp && typeof segmentsResp.has_timestamps === 'boolean') {
       segmentsHasTimestamps = segmentsResp.has_timestamps;
     }
+    if (segmentsResp && segmentsResp.quality) {
+      jobStore.update(jobId, { quality: segmentsResp.quality });
+    }
+    if (segmentsResp && Array.isArray(segmentsResp.segments) && segmentsResp.segments[0]?.confidence !== undefined) {
+      const segmentsConfidence = segmentsResp.segments.map(s => ({
+        index: s.index,
+        confidence: s.confidence,
+        no_speech_prob: s.no_speech_prob,
+      }));
+      jobStore.update(jobId, { segments_confidence: segmentsConfidence });
+    }
   } catch (err) {
     logger.warn({ jobId, err: err.message }, 'Could not fetch /segments — falling back to LRC sentinel for has_timestamps');
   }
@@ -263,6 +275,8 @@ async function startTranscription(sourcePath, trackMeta = {}, options = {}) {
   const backup = options.backup && options.backup.enabled
     ? { enabled: true, onConflict: options.backup.onConflict || 'keep' }
     : { enabled: false };
+  const audioType = options.audioType || config.tftDefaultAudioType;
+  const language = options.language || config.tftDefaultLanguage || undefined;
   // 1. Validate token
   if (!getEffectiveToken()) {
     throw new AppError(E.TFT_TOKEN_MISSING, 'TFT_TOKEN is not configured');
@@ -366,7 +380,7 @@ async function startTranscription(sourcePath, trackMeta = {}, options = {}) {
   }
 
   // 5. Submit file
-  const result = await tftClient.submitTranscription(sourcePath, options);
+  const result = await tftClient.submitTranscription(sourcePath, { ...options, audioType, language });
   const jobId = result.job_id;
 
   const lrcPath = lyricsDetector.getLrcPath(sourcePath);

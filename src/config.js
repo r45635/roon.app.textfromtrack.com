@@ -53,6 +53,10 @@ const config = {
   tftDefaultExportFormat: process.env.TFT_DEFAULT_EXPORT_FORMAT || 'lrc',
   tftDefaultPinyin: process.env.TFT_DEFAULT_PINYIN === 'true',
   tftDefaultVintage: process.env.TFT_DEFAULT_VINTAGE === 'true',
+  tftDefaultAudioType: process.env.TFT_DEFAULT_AUDIO_TYPE || 'music',
+  tftDefaultLanguage: process.env.TFT_DEFAULT_LANGUAGE || '',
+  // ── Webhooks ─────────────────────────────────────────────────────────────────
+  tftWebhookBaseUrl: process.env.WEBHOOK_BASE_URL || '',
 
   // ── Polling ─────────────────────────────────────────────────────────────────
   tftPollIntervalMs: parseInt(process.env.TFT_POLL_INTERVAL_MS || '2000', 10),

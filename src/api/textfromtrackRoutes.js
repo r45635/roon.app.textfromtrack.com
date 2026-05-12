@@ -3,6 +3,7 @@
 const fs = require('fs');
 const { execFile } = require('child_process');
 const { Router } = require('express');
+const express = require('express');
 const config = require('../config');
 const logger = require('../utils/logger');
 const { E, buildError, AppError } = require('../utils/normalize');
@@ -16,6 +17,8 @@ const matcher = require('../music/matcher');
 const scanner = require('../music/scanner');
 const lyricsDetector = require('../music/lyricsDetector');
 const userSettings = require('../storage/userSettings');
+const sseService = require('../utils/sseService');
+const webhookService = require('../textfromtrack/webhookService');
 
 const router = Router();
 
@@ -194,6 +197,12 @@ router.post('/generate-current', async (req, res) => {
 
   // 6. Start transcription (validates + submits + background polls)
   try {
+    const language = (req.body && typeof req.body.language === 'string' && req.body.language.trim())
+      ? req.body.language.trim()
+      : undefined;
+    const audioType = (req.body && typeof req.body.audio_type === 'string' && req.body.audio_type.trim())
+      ? req.body.audio_type.trim()
+      : undefined;
     const result = await transcriptionService.startTranscription(
       track.path,
       { title: track.title, artist: track.artist, album: track.album },
@@ -204,6 +213,8 @@ router.post('/generate-current', async (req, res) => {
         backup: { enabled: backup, onConflict },
         force,
         saveBeside,
+        language,
+        audioType,
       }
     );
     res.status(202).json(result);
@@ -330,6 +341,57 @@ router.post('/reveal', (req, res) => {
     }
     res.json({ success: true });
   });
+});
+
+/**
+ * GET /api/tft/events
+ * Server-Sent Events stream. The client subscribes here to receive real-time
+ * `job_updated` events instead of polling.
+ */
+router.get('/events', (req, res) => {
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Connection': 'keep-alive',
+  });
+  res.flushHeaders();
+
+  sseService.addClient(res);
+  const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 30000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    sseService.removeClient(res);
+  });
+});
+
+/**
+ * POST /api/tft/webhook
+ * Receives TFT job.done event deliveries. Requires raw body to verify HMAC.
+ */
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const header = req.headers['x-tft-signature'] || '';
+  const settings = userSettings.get();
+
+  if (!webhookService.verifySignature(settings.webhook_secret, req.body, header)) {
+    logger.warn({ ip: req.ip }, 'TFT webhook: invalid signature');
+    return res.status(401).json({ error: 'Invalid signature' });
+  }
+
+  let payload;
+  try {
+    payload = JSON.parse(req.body.toString());
+  } catch {
+    return res.status(400).json({ error: 'Invalid JSON' });
+  }
+
+  try {
+    await webhookService.handleDelivery(payload);
+  } catch (err) {
+    logger.error({ err: err.message }, 'webhookService.handleDelivery error');
+  }
+
+  res.status(200).json({ ok: true });
 });
 
 module.exports = router;

@@ -252,6 +252,17 @@ export default function JobHistory({ jobs, onJobRetried }) {
                       );
                     })()}
 
+                    {/* Quality degraded badge */}
+                    {job.status === 'done' && job.quality?.verdict === 'degraded' && (
+                      <span
+                        className="badge badge-icon badge-warning"
+                        title={`${t('tft.quality_degraded')}${job.quality.hallucinations_filtered > 0 ? ` · ${job.quality.hallucinations_filtered} ${t('tft.quality_hallucinations_count')}` : ''}`}
+                        aria-label="Quality degraded"
+                      >
+                        ⚠
+                      </span>
+                    )}
+
                     {/* Embedded tag */}
                     {job.status === 'done' && (job.lyrics_embedded || locallyEmbedded.has(job.job_id)) && (
                       <span

@@ -152,6 +152,8 @@ async function submitTranscription(filePath, options = {}) {
     // Our use case always wants real timestamps for LRC sync. Callers can
     // override (e.g. a future "text-only" mode) by passing 'auto' or 'none'.
     timestamps = 'required',
+    audioType = config.tftDefaultAudioType,
+    language,
   } = options;
 
   const fileBuffer = fs.readFileSync(filePath);
@@ -167,6 +169,8 @@ async function submitTranscription(filePath, options = {}) {
   formData.append('pinyin', String(pinyin));
   formData.append('vintage', String(vintage));
   formData.append('timestamps', String(timestamps));
+  formData.append('audio_type', audioType || 'music');
+  if (language) formData.append('language', language);
 
   logger.info(
     { filePath, size_mb: (stat.size / 1024 / 1024).toFixed(2), timestamps },
@@ -260,6 +264,29 @@ async function listTranscriptions(params = {}) {
   return body;
 }
 
+/**
+ * POST /webhooks — Register a webhook endpoint.
+ * @param {string} url  Public URL that TFT will POST events to
+ * @returns {Promise<{ id: string, secret: string }>}
+ */
+async function registerWebhook(url) {
+  const { body } = await apiFetch('/webhooks', {
+    method: 'POST',
+    body: JSON.stringify({ url, events: ['job.done'] }),
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return body;
+}
+
+/**
+ * DELETE /webhooks/:id — Remove a registered webhook.
+ * @param {string} id
+ */
+async function deleteWebhook(id) {
+  const { body } = await apiFetch(`/webhooks/${id}`, { method: 'DELETE' });
+  return body;
+}
+
 module.exports = {
   getMe,
   submitTranscription,
@@ -268,6 +295,8 @@ module.exports = {
   downloadExport,
   deleteTranscription,
   listTranscriptions,
+  registerWebhook,
+  deleteWebhook,
   MAX_DURATION_SECONDS,
   UPLOAD_EXTENSIONS,
 };

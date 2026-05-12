@@ -17,6 +17,8 @@ const DEFAULTS = {
   backup_before_embed_default: true,
   save_lrc_beside_source_default: false,
   tft_token: '',
+  webhook_id: '',
+  webhook_secret: '',
 };
 
 /**

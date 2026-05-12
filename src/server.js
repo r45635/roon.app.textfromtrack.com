@@ -63,4 +63,12 @@ try {
   logger.error({ err: err.message }, 'Failed to start Roon discovery');
 }
 
+// Startup: register TFT webhook if WEBHOOK_BASE_URL is configured (non-blocking)
+if (config.tftWebhookBaseUrl) {
+  const webhookService = require('./textfromtrack/webhookService');
+  webhookService.ensureWebhookRegistered().catch(err =>
+    logger.warn({ err: err.message }, 'Webhook registration failed — polling will be used as fallback')
+  );
+}
+
 module.exports = app;
