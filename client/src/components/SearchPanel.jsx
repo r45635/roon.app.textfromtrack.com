@@ -19,10 +19,25 @@ export default function SearchPanel({ zones = [], activeZoneId = null, externalQ
   // hideEmpty: filter out items with subtitle starting with "0 " (no albums/tracks)
   const [hideEmpty, setHideEmpty] = useState(true);
   const inputRef = useRef(null);
+  const menuRef = useRef(null);
+  const [menuAnchor, setMenuAnchor] = useState(null);
 
   useEffect(() => {
     if (activeZoneId && !playZoneId) setPlayZoneId(activeZoneId);
   }, [activeZoneId, playZoneId]);
+
+  // Close action menu on click outside
+  useEffect(() => {
+    if (!actionMenu) return;
+    function onMouseDown(e) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setActionMenu(null);
+        setMenuAnchor(null);
+      }
+    }
+    document.addEventListener('mousedown', onMouseDown);
+    return () => document.removeEventListener('mousedown', onMouseDown);
+  }, [actionMenu]);
 
   const zoneOptions = useMemo(() =>
     (zones || []).map(z => ({ id: z.zone_id || z.id, name: z.display_name || z.name })).filter(z => z.id),
@@ -124,9 +139,14 @@ export default function SearchPanel({ zones = [], activeZoneId = null, externalQ
   }
 
   // ── load Roon actions for an action_list item and show menu ──────────────
-  async function handleActionsLoad(item) {
+  async function handleActionsLoad(item, buttonEl) {
     // Toggle off if already open for this item
-    if (actionMenu?.itemKey === item.item_key) { setActionMenu(null); return; }
+    if (actionMenu?.itemKey === item.item_key) { setActionMenu(null); setMenuAnchor(null); return; }
+    // Capture anchor coords synchronously before async work
+    if (buttonEl) {
+      const rect = buttonEl.getBoundingClientRect();
+      setMenuAnchor({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+    }
     if (!playZoneId) {
       setPlayFeedback(prev => ({ ...prev, [item.item_key]: { ok: false, message: t('search.play_pick_zone') } }));
       return;
@@ -334,26 +354,12 @@ export default function SearchPanel({ zones = [], activeZoneId = null, externalQ
                           <button
                             type="button"
                             className={`btn btn-xs search-play-btn${actionMenu?.itemKey === item.item_key ? ' btn-ghost' : ' btn-primary'}`}
-                            onClick={() => handleActionsLoad(item)}
+                            onClick={(e) => handleActionsLoad(item, e.currentTarget)}
                             disabled={playing === item.item_key || !playZoneId}
                             title={!playZoneId ? t('search.play_pick_zone') : t('search.play_now_tip')}
                           >
                             {playing === item.item_key ? '…' : '▶'}
                           </button>
-                          {actionMenu?.itemKey === item.item_key && (
-                            <div className="search-action-menu">
-                              {actionMenu.actions.map(action => (
-                                <button
-                                  key={action.item_key}
-                                  type="button"
-                                  className="search-action-item"
-                                  onClick={() => executeAction(item.item_key, action)}
-                                >
-                                  {action.title}
-                                </button>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       )}
                     </li>
@@ -361,6 +367,26 @@ export default function SearchPanel({ zones = [], activeZoneId = null, externalQ
                 })}
               </ul>
             </div>
+          </div>
+        )}
+
+        {/* Action menu — fixed outside overflow container to avoid clipping */}
+        {actionMenu && menuAnchor && (
+          <div
+            ref={menuRef}
+            className="search-action-menu"
+            style={{ position: 'fixed', top: menuAnchor.top, right: menuAnchor.right }}
+          >
+            {actionMenu.actions.map(action => (
+              <button
+                key={action.item_key}
+                type="button"
+                className="search-action-item"
+                onClick={() => executeAction(actionMenu.itemKey, action)}
+              >
+                {action.title}
+              </button>
+            ))}
           </div>
         )}
       </div>

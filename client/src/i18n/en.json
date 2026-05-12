@@ -373,6 +373,11 @@
     "lrclib_error": "LRCLIB unreachable",
     "source_get": "exact match",
     "source_search": "search result",
+    "hits_picker_label": "Choose a version",
+    "hits_load_more": "See other versions…",
+    "hits_loading_more": "Loading versions…",
+    "hit_synced": "synced",
+    "hit_plain": "plain",
     "tft_button": "Generate lyrics with TextFromTrack",
     "tft_generating": "Generating…",
     "tft_processing": "Processing…",
@@ -394,6 +399,7 @@
     "unsaved_body": "Lyrics found/generated for the previous track have not been transferred to File Tags yet. Save them before switching to the new track?",
     "unsaved_countdown": "Discarding in {{seconds}}s if no action…",
     "unsaved_save": "Yes, save now",
-    "unsaved_discard": "No, discard"
+    "unsaved_discard": "No, discard",
+    "unsaved_stay": "Cancel sync — stay here"
   }
 }

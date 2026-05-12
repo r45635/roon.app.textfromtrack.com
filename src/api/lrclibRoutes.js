@@ -19,23 +19,37 @@ const router = Router();
 const LRCLIB_BASE = 'https://lrclib.net';
 const USER_AGENT = 'TextFromTrackRoonCompanion/1.0 (https://roon.app.textfromtrack.com)';
 
+const LRCLIB_TIMEOUT_MS = 20000; // per-request hard deadline (connect + download)
+
 /**
  * Performs a GET request to LRCLIB and resolves with parsed JSON.
+ * Uses a hard AbortController deadline so slow connections don't block forever.
  */
 function lrclibGet(urlPath) {
   return new Promise((resolve, reject) => {
     const url = `${LRCLIB_BASE}${urlPath}`;
+
+    // Hard timeout: fires whether the socket is idle or just slow.
+    const timer = setTimeout(() => {
+      req.destroy(new Error(`LRCLIB request timed out after ${LRCLIB_TIMEOUT_MS / 1000}s`));
+    }, LRCLIB_TIMEOUT_MS);
+
     const req = https.get(url, { headers: { 'User-Agent': USER_AGENT } }, (res) => {
-      let raw = '';
-      res.on('data', chunk => { raw += chunk; });
+      const chunks = [];
+      res.on('data', chunk => { chunks.push(chunk); });
       res.on('end', () => {
+        clearTimeout(timer);
         if (res.statusCode === 404) return resolve(null);
-        try { resolve({ status: res.statusCode, body: JSON.parse(raw) }); }
-        catch { resolve({ status: res.statusCode, body: null }); }
+        try {
+          const raw = Buffer.concat(chunks).toString('utf8');
+          resolve({ status: res.statusCode, body: JSON.parse(raw) });
+        } catch {
+          resolve({ status: res.statusCode, body: null });
+        }
       });
+      res.on('error', err => { clearTimeout(timer); reject(err); });
     });
-    req.on('error', reject);
-    req.setTimeout(10000, () => { req.destroy(new Error('LRCLIB request timed out')); });
+    req.on('error', err => { clearTimeout(timer); reject(err); });
   });
 }
 
@@ -79,8 +93,8 @@ router.get('/lookup', async (req, res) => {
     logger.info({ title, artist, album, duration }, 'LRCLIB lookup /api/get');
     const result = await lrclibGet(`/api/get?${params.toString()}`);
 
-    // 404 or no result → try search endpoint
-    if (!result || result.status === 404 || !result.body) {
+    // Not found, error response, or missing body → try search fallback
+    if (!result || result.status < 200 || result.status >= 300 || !result.body) {
       logger.info({ title, artist }, 'LRCLIB /api/get not found, trying /api/search');
       const searchParams = new URLSearchParams({ track_name: title, artist_name: artist });
       const searchResult = await lrclibGet(`/api/search?${searchParams.toString()}`);
@@ -92,6 +106,20 @@ router.get('/lookup', async (req, res) => {
       // Pick the first result that has synced lyrics; else the first overall
       const hits = searchResult.body;
       const best = hits.find(h => h.syncedLyrics) || hits[0];
+      const bestIdx = hits.indexOf(best);
+
+      // Expose hit metadata (no lyrics) so the client can render a version picker without
+      // bloating the response. Lyrics are fetched on-demand via GET /hit/:id when the user
+      // switches to a different version.
+      const allHits = hits.map(h => ({
+        id: h.id,
+        instrumental: !!h.instrumental,
+        hasSynced: !!h.syncedLyrics,
+        trackName: h.trackName || null,
+        artistName: h.artistName || null,
+        albumName: h.albumName || null,
+      }));
+
       return res.json({
         found: true,
         synced: best.syncedLyrics || null,
@@ -101,6 +129,8 @@ router.get('/lookup', async (req, res) => {
         artistName: best.artistName,
         albumName: best.albumName,
         source: 'search',
+        hits: allHits.length > 1 ? allHits : undefined,
+        selectedHitIndex: allHits.length > 1 ? bestIdx : undefined,
       });
     }
 
@@ -127,6 +157,74 @@ router.get('/lookup', async (req, res) => {
     logger.error({ err: err.message }, 'LRCLIB lookup failed');
     // Return 200 so the browser does not log a 5xx console error.
     return res.json({ ...buildError('LRCLIB_ERROR', err.message), found: false });
+  }
+});
+
+/**
+ * GET /api/lrclib/hit/:id
+ * Fetches lyrics for a specific LRCLIB track by numeric ID.
+ * Used by the version picker when the user switches to a hit other than the best one.
+ */
+router.get('/hit/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!id || !/^\d+$/.test(id)) {
+    return res.status(400).json(buildError('INVALID_ID', 'id must be a numeric LRCLIB track id'));
+  }
+  try {
+    const result = await lrclibGet(`/api/get/${id}`);
+    if (!result || !result.body) {
+      return res.json({ found: false });
+    }
+    const d = result.body;
+    return res.json({
+      found: true,
+      synced: d.syncedLyrics || null,
+      plain: d.plainLyrics || null,
+      instrumental: !!d.instrumental,
+      trackName: d.trackName,
+      artistName: d.artistName,
+      albumName: d.albumName,
+      source: 'search',
+    });
+  } catch (err) {
+    logger.error({ err: err.message }, 'LRCLIB hit fetch failed');
+    return res.json({ ...buildError('LRCLIB_ERROR', err.message), found: false });
+  }
+});
+
+/**
+ * GET /api/lrclib/search
+ * Query params: title, artist
+ *
+ * Runs /api/search on lrclib.net and returns the full list of hits (metadata
+ * only, no lyrics). Used by the "See other versions" button on the client when
+ * the initial /lookup returned an exact match via /api/get and the user wants
+ * to browse alternatives.
+ */
+router.get('/search', async (req, res) => {
+  const { title, artist } = req.query;
+  if (!title || !artist) {
+    return res.status(400).json(buildError('MISSING_PARAMS', 'title and artist are required'));
+  }
+  try {
+    const params = new URLSearchParams({ track_name: title, artist_name: artist });
+    logger.info({ title, artist }, 'LRCLIB /search (on-demand versions)');
+    const result = await lrclibGet(`/api/search?${params.toString()}`);
+    if (!result || !Array.isArray(result.body) || result.body.length === 0) {
+      return res.json({ hits: [] });
+    }
+    const hits = result.body.map(h => ({
+      id: h.id,
+      instrumental: !!h.instrumental,
+      hasSynced: !!h.syncedLyrics,
+      trackName: h.trackName || null,
+      artistName: h.artistName || null,
+      albumName: h.albumName || null,
+    }));
+    return res.json({ hits });
+  } catch (err) {
+    logger.error({ err: err.message }, 'LRCLIB search failed');
+    return res.json({ ...buildError('LRCLIB_ERROR', err.message), hits: [] });
   }
 });
 

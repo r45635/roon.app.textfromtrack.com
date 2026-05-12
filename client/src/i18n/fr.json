@@ -374,6 +374,11 @@
     "lrclib_error": "LRCLIB inaccessible",
     "source_get": "correspondance exacte",
     "source_search": "via recherche",
+    "hits_picker_label": "Choisir une version",
+    "hits_load_more": "Voir d'autres versions…",
+    "hits_loading_more": "Chargement des versions…",
+    "hit_synced": "synchronisée",
+    "hit_plain": "sans timestamps",
     "tft_button": "Générer les paroles avec TextFromTrack",
     "tft_generating": "Génération en cours…",
     "tft_processing": "Traitement en cours…",
@@ -395,6 +400,7 @@
     "unsaved_body": "Des paroles trouvées/générées pour la piste précédente n'ont pas encore été transférées dans les Tags du fichier. Voulez-vous les sauvegarder avant de passer à la nouvelle piste ?",
     "unsaved_countdown": "Abandon dans {{seconds}}s si aucune action…",
     "unsaved_save": "Oui, sauvegarder maintenant",
-    "unsaved_discard": "Non, ignorer"
+    "unsaved_discard": "Non, ignorer",
+    "unsaved_stay": "Annuler la synch — rester ici"
   }
 }

@@ -3,10 +3,25 @@ import { useTranslation } from 'react-i18next';
 import SyncedLyrics from './SyncedLyrics.jsx';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 
-// 6-second countdown before silently discarding unsaved lyrics on track change.
-// User can short-circuit via "Save" (transfers + then applies) or "Discard"
-// (applies immediately without saving).
-const UNSAVED_COUNTDOWN_SECONDS = 6;
+function EqSpinner() {
+  return (
+    <span className="tft-eq" aria-hidden="true">
+      <svg width="18" height="14" viewBox="0 0 18 14" xmlns="http://www.w3.org/2000/svg">
+        <rect x="0"  y="5" width="3" height="9" rx="1"/>
+        <rect x="4"  y="2" width="3" height="12" rx="1"/>
+        <rect x="8"  y="0" width="3" height="14" rx="1"/>
+        <rect x="12" y="2" width="3" height="12" rx="1"/>
+        <rect x="16" y="5" width="3" height="9" rx="1"/>
+      </svg>
+    </span>
+  );
+}
+
+// 25-second countdown before silently discarding unsaved lyrics on track change.
+// User can short-circuit via "Save" (transfers + then applies), "Discard"
+// (applies immediately without saving), or "Stay" (cancels the re-sync and
+// keeps the current work environment intact).
+const UNSAVED_COUNTDOWN_SECONDS = 25;
 
 /**
  * LyricsSection — unified lyrics providers section.
@@ -41,6 +56,9 @@ export default function LyricsSection({
   // ── LRCLIB state ────────────────────────────────────────────────────────────
   const [lrclibStatus, setLrclibStatus] = useState('idle'); // idle|checking|found|instrumental|not_found|error
   const [lrclibResult, setLrclibResult] = useState(null);   // { synced, plain, source, trackName, artistName, albumName }
+  const [lrclibHits, setLrclibHits] = useState(null);       // array of all search hits, or null
+  const [lrclibHitIdx, setLrclibHitIdx] = useState(0);      // currently selected hit index
+  const [lrclibLoadingVersions, setLrclibLoadingVersions] = useState(false);
   const [lrclibOpen, setLrclibOpen] = useState(true);
   const [lrclibError, setLrclibError] = useState(null);
   const [lrclibTransfer, setLrclibTransfer] = useState('idle'); // idle|checking|confirm|saving|saved|error
@@ -110,10 +128,15 @@ export default function LyricsSection({
   const [pendingTrackKey, setPendingTrackKey] = useState(null);
   const [countdown, setCountdown] = useState(0);
   const [savingOnSwitch, setSavingOnSwitch] = useState(false);
+  // Frozen path at dialog-open time — effectivePath may change to the new
+  // track while the dialog is displayed, so we must save to the old one.
+  const frozenPathRef = useRef(null);
 
   function applyReset() {
     setLrclibStatus('idle');
     setLrclibResult(null);
+    setLrclibHits(null);
+    setLrclibHitIdx(0);
     setLrclibError(null);
     setLrclibTransfer('idle');
     setLrclibOpen(true);
@@ -149,7 +172,9 @@ export default function LyricsSection({
     const lrclibUnsaved = lrclibStatus === 'found' && !!lrclibContent && lrclibTransfer !== 'saved';
     const tftUnsaved   = tftJob?.status === 'done' && !!tftContent   && tftTransfer   !== 'saved';
     if (lrclibUnsaved || tftUnsaved) {
-      // Show save/discard dialog
+      // Freeze the working path before effectivePath can update to the new track
+      frozenPathRef.current = effectivePath;
+      // Show save/discard/stay dialog
       setPendingTrackKey(trackKey);
       setCountdown(UNSAVED_COUNTDOWN_SECONDS);
     } else if (trackKey !== lastAppliedTrackKey.current) {
@@ -177,17 +202,27 @@ export default function LyricsSection({
   async function handleSwitchSave() {
     if (savingOnSwitch) return;
     setSavingOnSwitch(true);
+    // Use the path that was active when the dialog opened, NOT the current
+    // effectivePath which may already point to the new playing track.
+    const savePath = frozenPathRef.current;
     const lrclibContent = lrclibResult?.synced || lrclibResult?.plain || '';
     if (lrclibStatus === 'found' && lrclibContent && lrclibTransfer !== 'saved') {
-      try { await doLrclibTransfer(lrclibContent, setLrclibTransfer); } catch { /* swallow, still proceed */ }
+      try { await doLrclibTransfer(lrclibContent, setLrclibTransfer, savePath); } catch { /* swallow, still proceed */ }
     }
     if (tftJob?.status === 'done' && tftLyrics && tftTransfer !== 'saved') {
-      try { await doTransfer(tftLyrics, setTftTransfer); } catch { /* swallow */ }
+      try { await doTransfer(tftLyrics, setTftTransfer, savePath); } catch { /* swallow */ }
     }
     applyReset();
   }
 
   function handleSwitchDiscard() { applyReset(); }
+
+  // "Stay" — cancel the auto-sync re-enable, keep panels as-is
+  function handleSwitchStay() {
+    setPendingTrackKey(null);
+    setCountdown(0);
+    onAutoSyncChange?.(false);
+  }
 
   useEffect(() => () => clearInterval(pollingRef.current), []);
 
@@ -216,6 +251,8 @@ export default function LyricsSection({
     if (!searchTitle || !searchArtist) return;
     setLrclibStatus('checking');
     setLrclibResult(null);
+    setLrclibHits(null);
+    setLrclibHitIdx(0);
     setLrclibError(null);
     setLrclibTransfer('idle');
     setLrclibOpen(true);
@@ -230,13 +267,57 @@ export default function LyricsSection({
       if (!data.found)      { setLrclibStatus('not_found'); return; }
       if (data.instrumental) { setLrclibStatus('instrumental'); return; }
       setLrclibResult(data);
+      setLrclibHits(data.hits || null);
+      setLrclibHitIdx(data.selectedHitIndex ?? 0);
       setLrclibStatus('found');
     } catch (err) {
       setLrclibStatus('error');
       setLrclibError({ code: 'NETWORK_ERROR', message: err.message });
     }
   }
-
+  // ── LRCLIB: load alternative versions on demand ────────────────────────────
+  async function handleLoadMoreVersions() {
+    if (!searchTitle || !searchArtist || lrclibLoadingVersions) return;
+    setLrclibLoadingVersions(true);
+    try {
+      const params = new URLSearchParams({ title: searchTitle, artist: searchArtist });
+      const res = await fetch(`/api/lrclib/search?${params.toString()}`);
+      const data = await res.json();
+      const hits = data.hits || [];
+      if (hits.length === 0) { setLrclibLoadingVersions(false); return; }
+      setLrclibHits(hits);
+      // Try to keep the current result selected in the new list
+      const currentId = lrclibResult?.id;
+      const matchIdx = currentId != null ? hits.findIndex(h => h.id === currentId) : -1;
+      setLrclibHitIdx(matchIdx >= 0 ? matchIdx : 0);
+    } catch { /* ignore */ } finally {
+      setLrclibLoadingVersions(false);
+    }
+  }
+  // ── LRCLIB: hit selection ──────────────────────────────────────────────────
+  async function handleHitSelect(idx) {
+    if (!lrclibHits || !lrclibHits[idx]) return;
+    const hit = lrclibHits[idx];
+    setLrclibHitIdx(idx);
+    setLrclibTransfer('idle');
+    // Hits contain only metadata; fetch lyrics on demand via the hit id.
+    try {
+      const res = await fetch(`/api/lrclib/hit/${hit.id}`);
+      const data = await res.json();
+      if (data.found) {
+        setLrclibResult(data);
+      } else {
+        // Fallback: show hit metadata with no lyrics
+        setLrclibResult({
+          found: true, source: 'search',
+          synced: null, plain: null, instrumental: hit.instrumental,
+          trackName: hit.trackName, artistName: hit.artistName, albumName: hit.albumName,
+        });
+      }
+    } catch {
+      // Network error: keep previous result
+    }
+  }
   // ── TFT: polling ───────────────────────────────────────────────────────────
   function fetchTftLyricsPreview() {
     if (!effectivePath) return;
@@ -320,13 +401,14 @@ export default function LyricsSection({
     }
   }
 
-  async function doTransfer(lrcContent, setTransfer) {
+  async function doTransfer(lrcContent, setTransfer, pathOverride) {
     setTransfer('saving');
+    const targetPath = pathOverride || effectivePath;
     try {
       const res = await fetch('/api/music/file-lyrics', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ path: effectivePath, lrc_content: lrcContent, embed: true }),
+        body: JSON.stringify({ path: targetPath, lrc_content: lrcContent, embed: true }),
       });
       const data = await res.json();
       if (!data.success) { setTransfer('error'); return; }
@@ -338,14 +420,15 @@ export default function LyricsSection({
   }
 
   // LRCLIB-specific transfer: writes cache + creates job record + embeds
-  async function doLrclibTransfer(lrcContent, setTransfer) {
+  async function doLrclibTransfer(lrcContent, setTransfer, pathOverride) {
     setTransfer('saving');
+    const targetPath = pathOverride || effectivePath;
     try {
       const res = await fetch('/api/lrclib/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          path: effectivePath,
+          path: targetPath,
           lrc_content: lrcContent,
           embed: true,
           title: searchTitle || undefined,
@@ -426,7 +509,7 @@ export default function LyricsSection({
 
   function TftBadge() {
     if (!tftJob && tftGenerating)
-      return <span className="tft-lyrics-badge tft-lyrics-badge--info">{t('tft.progress_processing')}</span>;
+      return <span className="tft-lyrics-badge tft-lyrics-badge--info"><EqSpinner />{t('tft.progress_processing')}</span>;
     if (tftJob?.status === 'done')
       return <span className="tft-lyrics-badge tft-lyrics-badge--ok">{t('lyrics.tft_done')}</span>;
     if (tftJob?.status === 'error')
@@ -437,7 +520,7 @@ export default function LyricsSection({
         : phase === 'transcribing'              ? t('tft.phase_transcribing')
         : phase === 'retrying_with_separation'  ? t('tft.phase_retrying')
         : t('tft.progress_processing');
-      return <span className="tft-lyrics-badge tft-lyrics-badge--info">{label}</span>;
+      return <span className="tft-lyrics-badge tft-lyrics-badge--info"><EqSpinner />{label}</span>;
     }
     return null;
   }
@@ -509,7 +592,9 @@ export default function LyricsSection({
           onClick={handleLrclibCheck}
           disabled={!effectivePath || lrclibStatus === 'checking'}
         >
-          {lrclibStatus === 'checking' ? t('lyrics.lrclib_checking') : t('lyrics.lrclib_button')}
+          {lrclibStatus === 'checking'
+            ? <><EqSpinner />{t('lyrics.lrclib_checking')}</>
+            : t('lyrics.lrclib_button')}
         </button>
         <LrclibBadge />
 
@@ -533,7 +618,9 @@ export default function LyricsSection({
           disabled={tftGenerating || !!tftDisabledReason}
           title={tftDisabledReason || undefined}
         >
-          {tftGenerating ? t('lyrics.tft_generating') : t('lyrics.tft_button')}
+          {tftGenerating
+            ? <><EqSpinner />{t('lyrics.tft_generating')}</>
+            : t('lyrics.tft_button')}
         </button>
         <TftBadge />
 
@@ -678,6 +765,45 @@ export default function LyricsSection({
             </span>
           </summary>
           <div className="tft-lyrics-result-body">
+            {/* "See other versions" button — shown after an exact /api/get match */}
+            {!lrclibHits && lrclibStatus === 'found' && (
+              <button
+                className="btn btn-ghost lrclib-more-versions-btn"
+                onClick={handleLoadMoreVersions}
+                disabled={lrclibLoadingVersions}
+              >
+                {lrclibLoadingVersions ? t('lyrics.hits_loading_more') : t('lyrics.hits_load_more')}
+              </button>
+            )}
+            {/* Version picker: shown when search returned multiple results */}
+            {lrclibHits && lrclibHits.length > 1 && (
+              <div className="lrclib-hits-picker">
+                <label htmlFor="lrclib-hit-select" className="tft-options-label">
+                  {t('lyrics.hits_picker_label')}
+                </label>
+                <select
+                  id="lrclib-hit-select"
+                  className="tft-options-select lrclib-hits-select"
+                  value={lrclibHitIdx}
+                  onChange={e => handleHitSelect(Number(e.target.value))}
+                >
+                  {lrclibHits.map((h, i) => {
+                    const lrcType = h.hasSynced
+                      ? t('lyrics.hit_synced')
+                      : h.instrumental
+                        ? t('lyrics.instrumental')
+                        : t('lyrics.hit_plain');
+                    const parts = [
+                      h.trackName,
+                      h.artistName ? `— ${h.artistName}` : '',
+                      h.albumName  ? `· ${h.albumName}`  : '',
+                      `(${lrcType})`,
+                    ].filter(Boolean);
+                    return <option key={i} value={i}>{parts.join(' ')}</option>;
+                  })}
+                </select>
+              </div>
+            )}
             {lrclibLyrics && (
               <SyncedLyrics
                 lrcText={lrclibLyrics}
@@ -718,9 +844,16 @@ export default function LyricsSection({
                 className="btn"
                 onClick={handleSwitchDiscard}
                 disabled={savingOnSwitch}
-                autoFocus
               >
                 {t('lyrics.unsaved_discard')}
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={handleSwitchStay}
+                disabled={savingOnSwitch}
+                autoFocus
+              >
+                {t('lyrics.unsaved_stay')}
               </button>
             </div>
           </div>

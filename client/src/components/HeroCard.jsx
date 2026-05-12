@@ -189,20 +189,25 @@ export default function HeroCard({
 
       {/* ═══ NOW PLAYING STRIP ══════════════════════════════════════════════════ */}
       <div className="tft-np">
-        {/* Album art */}
-        {artKey ? (
-          <img
-            className="tft-album-art"
-            src={`/api/roon/image/${artKey}?w=160&h=160`}
-            alt=""
-            loading="lazy"
-          />
-        ) : (
-          <div className="tft-album-art-placeholder">♫</div>
-        )}
 
-        {/* Info column */}
-        <div className="tft-np-info">
+        {/* ── Cover ─────────────────────────────────────────────────────────── */}
+        <div className="tft-np-cover">
+          {artKey ? (
+            <img
+              className="tft-album-art"
+              src={`/api/roon/image/${artKey}?w=440&h=440`}
+              alt=""
+              loading="lazy"
+            />
+          ) : (
+            <div className="tft-album-art-placeholder">♫</div>
+          )}
+        </div>
+
+        {/* ── Main column ───────────────────────────────────────────────────── */}
+        <div className="tft-np-main">
+
+          {/* Pills / status */}
           <div className="tft-np-pills">
             {np && (
               <span className={`tft-pill${isPlaying ? ' signal' : ''}`}>
@@ -215,36 +220,38 @@ export default function HeroCard({
               </span>
             )}
             {np?.auto_radio && <span className="tft-pill">{t('now_playing.auto_radio')}</span>}
-            {loopLabel && <span className="tft-pill">↺ {loopLabel}</span>}
-            {np?.shuffle && <span className="tft-pill">🔀</span>}
             <label className="tft-autosync-label">
               <input
                 type="checkbox"
                 checked={autoSync}
                 onChange={e => setAutoSync(e.target.checked)}
+                aria-label={t('now_playing.auto_sync', 'Auto Sync')}
               />
               {t('now_playing.auto_sync', 'Auto Sync')}
             </label>
           </div>
 
-          <h1 className="tft-np-title">{np?.title || t('now_playing.no_track')}</h1>
-          {np && <>
-            {onSearch && np.artist
-              ? <div className="tft-np-artist">
-                  {np.artist.split('/').map((a, i, arr) => (
-                    <React.Fragment key={i}>
-                      <button type="button" className="tft-search-link tft-np-artist-part" onClick={() => onSearch(a.trim())}>{a.trim()}</button>
-                      {i < arr.length - 1 && <span className="tft-np-artist-sep"> / </span>}
-                    </React.Fragment>
-                  ))}
-                </div>
-              : <div className="tft-np-artist">{np?.artist}</div>
-            }
-            {onSearch && np.album
-              ? <button type="button" className="tft-np-album tft-mono tft-search-link" onClick={() => onSearch(np.album)}>{np.album}{np.year ? ` · ${np.year}` : ''}</button>
-              : <div className="tft-np-album tft-mono">{np?.album}{np?.year ? ` · ${np.year}` : ''}</div>
-            }
-          </>}
+          {/* Track meta */}
+          <div className="tft-track-meta">
+            <h1 className="tft-np-title">{np?.title || t('now_playing.no_track')}</h1>
+            {np && <>
+              {onSearch && np.artist
+                ? <div className="tft-np-artist">
+                    {np.artist.split('/').map((a, i, arr) => (
+                      <React.Fragment key={i}>
+                        <button type="button" className="tft-search-link tft-np-artist-part" onClick={() => onSearch(a.trim())}>{a.trim()}</button>
+                        {i < arr.length - 1 && <span className="tft-np-artist-sep"> / </span>}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                : <div className="tft-np-artist">{np?.artist}</div>
+              }
+              {onSearch && np.album
+                ? <button type="button" className="tft-np-album tft-mono tft-search-link" onClick={() => onSearch(np.album)}>{np.album}{np.year ? ` · ${np.year}` : ''}</button>
+                : <div className="tft-np-album tft-mono">{np?.album}{np?.year ? ` · ${np.year}` : ''}</div>
+              }
+            </>}
+          </div>
 
           {/* Progress */}
           {np?.duration_seconds ? (
@@ -266,152 +273,161 @@ export default function HeroCard({
             </div>
           ) : null}
 
-          {/* Controls */}
-          {onControl && np && (
-            <div className="tft-controls">
-              <button
-                className="tft-round-btn"
-                style={{ width: 32, height: 32, fontSize: 14 }}
-                onClick={() => onControl('previous')}
-                disabled={!np.is_previous_allowed}
-              >⏮</button>
-              <button
-                className="tft-round-btn primary"
-                style={{ width: 44, height: 44, fontSize: 18 }}
-                onClick={() => onControl('playpause')}
-                disabled={!np.is_play_allowed && !np.is_pause_allowed}
-              >{isPlaying ? '⏸' : '▶'}</button>
-              <button
-                className="tft-round-btn"
-                style={{ width: 32, height: 32, fontSize: 14 }}
-                onClick={() => onControl('next')}
-                disabled={!np.is_next_allowed}
-              >⏭</button>
+          {/* Controls row: transport + secondary actions */}
+          <div className="tft-main-controls-row">
+            {onControl && np && (
+              <div className="tft-transport">
+                <button
+                  type="button"
+                  className="tft-round-btn tft-round-btn--small"
+                  aria-label={t('now_playing.previous', 'Previous track')}
+                  onClick={() => onControl('previous')}
+                  disabled={!np.is_previous_allowed}
+                >⏮</button>
+                <button
+                  type="button"
+                  className="tft-round-btn tft-round-btn--primary"
+                  aria-label={isPlaying ? t('now_playing.pause', 'Pause') : t('now_playing.play', 'Play')}
+                  onClick={() => onControl('playpause')}
+                  disabled={!np.is_play_allowed && !np.is_pause_allowed}
+                >{isPlaying ? '⏸' : '▶'}</button>
+                <button
+                  type="button"
+                  className="tft-round-btn tft-round-btn--small"
+                  aria-label={t('now_playing.next', 'Next track')}
+                  onClick={() => onControl('next')}
+                  disabled={!np.is_next_allowed}
+                >⏭</button>
+              </div>
+            )}
+            {onSettings && np && (
+              <div className="tft-secondary-actions">
+                <button
+                  type="button"
+                  className={`tft-round-btn tft-round-btn--small${np.shuffle ? ' active' : ''}`}
+                  aria-label={t('now_playing.shuffle', 'Toggle shuffle')}
+                  onClick={() => onSettings({ shuffle: !np.shuffle })}
+                >🔀</button>
+                <button
+                  type="button"
+                  className={`tft-round-btn tft-round-btn--small${np.loop !== 'disabled' ? ' active' : ''}`}
+                  aria-label={t('now_playing.loop', 'Toggle repeat')}
+                  onClick={() => {
+                    const next = np.loop === 'disabled' ? 'loop' : np.loop === 'loop' ? 'loop_one' : 'disabled';
+                    onSettings({ loop: next });
+                  }}
+                >🔁</button>
+              </div>
+            )}
+          </div>
 
-              <div className="tft-ctrl-spacer" />
+        </div>{/* end .tft-np-main */}
 
-              {/* Volume — single output */}
-              {!multiVolume && volumeVal != null && firstOutput && (() => {
-                const vMax = firstOutput.volume?.soft_limit ?? firstOutput.volume?.max ?? 100;
-                const vPct = Math.round((volumeVal / vMax) * 100);
-                return (
+        {/* ── Side — volume ──────────────────────────────────────────────── */}
+        <aside className="tft-np-side">
+          <div className="tft-volume-card">
+            {!multiVolume && volumeVal != null && firstOutput && (() => {
+              const vMax = firstOutput.volume?.soft_limit ?? firstOutput.volume?.max ?? 100;
+              const vPct = Math.round((volumeVal / vMax) * 100);
+              return (
+                <div className="tft-volume">
+                  <span className="tft-volume-icon">🔊</span>
+                  <div
+                    className="tft-volume-bar tft-volume-bar--interactive"
+                    onMouseDown={(e) => startVolumeDrag(e, [firstOutput.output_id], vMax)}
+                  >
+                    <div className="tft-volume-fill" style={{ width: `${vPct}%` }} />
+                  </div>
+                  <div className="tft-volume-val tft-mono">{volumeVal}</div>
+                  <button
+                    type="button"
+                    className="tft-round-btn tft-round-btn--small"
+                    aria-label={t('now_playing.vol_down', 'Decrease volume')}
+                    onClick={() => onVolume?.(firstOutput.output_id, 'relative', -volumeStep)}
+                  >−</button>
+                  <button
+                    type="button"
+                    className="tft-round-btn tft-round-btn--small"
+                    aria-label={t('now_playing.vol_up', 'Increase volume')}
+                    onClick={() => onVolume?.(firstOutput.output_id, 'relative', volumeStep)}
+                  >+</button>
+                </div>
+              );
+            })()}
+            {multiVolume && (() => {
+              const avgVal = Math.round(volumeOutputs.reduce((s, o) => s + o.volume.value, 0) / volumeOutputs.length);
+              const globalMax = Math.max(...volumeOutputs.map(o => o.volume.soft_limit ?? o.volume.max ?? 100));
+              const avgPct = Math.round((avgVal / globalMax) * 100);
+              return (
+                <div className="tft-volume-group">
                   <div className="tft-volume">
+                    <button
+                      type="button"
+                      className="tft-volume-detail-toggle"
+                      onClick={() => setVolDetailOpen(v => !v)}
+                      title={volDetailOpen ? 'Masquer le détail' : 'Voir le détail par enceinte'}
+                    >{volDetailOpen ? '▾' : '▸'}</button>
                     <span className="tft-volume-icon">🔊</span>
                     <div
                       className="tft-volume-bar tft-volume-bar--interactive"
-                      onMouseDown={(e) => startVolumeDrag(e, [firstOutput.output_id], vMax)}
+                      onMouseDown={(e) => startVolumeDrag(e, volumeOutputs.map(o => o.output_id), globalMax)}
                     >
-                      <div className="tft-volume-fill" style={{ width: `${vPct}%` }} />
+                      <div className="tft-volume-fill" style={{ width: `${avgPct}%` }} />
                     </div>
-                    <div className="tft-volume-val tft-mono">{volumeVal}</div>
+                    <div className="tft-volume-val tft-mono">{avgVal}</div>
                     <button
-                      className="tft-round-btn"
-                      style={{ width: 26, height: 26, fontSize: 12 }}
-                      onClick={() => onVolume?.(firstOutput.output_id, 'relative', -volumeStep)}
+                      type="button"
+                      className="tft-round-btn tft-round-btn--small"
+                      aria-label={t('now_playing.vol_down', 'Decrease volume')}
+                      onClick={() => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'relative', -volumeStep))}
                     >−</button>
                     <button
-                      className="tft-round-btn"
-                      style={{ width: 26, height: 26, fontSize: 12 }}
-                      onClick={() => onVolume?.(firstOutput.output_id, 'relative', volumeStep)}
+                      type="button"
+                      className="tft-round-btn tft-round-btn--small"
+                      aria-label={t('now_playing.vol_up', 'Increase volume')}
+                      onClick={() => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'relative', volumeStep))}
                     >+</button>
                   </div>
-                );
-              })()}
-
-              {/* Volume — multiple outputs (grouped zone) */}
-              {multiVolume && (() => {
-                const avgVal = Math.round(volumeOutputs.reduce((s, o) => s + o.volume.value, 0) / volumeOutputs.length);
-                const globalMax = Math.max(...volumeOutputs.map(o => o.volume.soft_limit ?? o.volume.max ?? 100));
-                const avgPct = Math.round((avgVal / globalMax) * 100);
-                return (
-                  <div className="tft-volume-group">
-                    {/* Master row */}
-                    <div className="tft-volume">
-                      <button
-                        className="tft-volume-detail-toggle"
-                        onClick={() => setVolDetailOpen(v => !v)}
-                        title={volDetailOpen ? 'Masquer le détail' : 'Voir le détail par enceinte'}
-                      >{volDetailOpen ? '▾' : '▸'}</button>
-                      <span className="tft-volume-icon">🔊</span>
-                      <div
-                        className="tft-volume-bar tft-volume-bar--interactive"
-                        onMouseDown={(e) => startVolumeDrag(e, volumeOutputs.map(o => o.output_id), globalMax)}
-                      >
-                        <div className="tft-volume-fill" style={{ width: `${avgPct}%` }} />
-                      </div>
-                      <div className="tft-volume-val tft-mono">{avgVal}</div>
-                      <button
-                        className="tft-round-btn"
-                        style={{ width: 26, height: 26, fontSize: 12 }}
-                        onClick={() => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'relative', -volumeStep))}
-                      >−</button>
-                      <button
-                        className="tft-round-btn"
-                        style={{ width: 26, height: 26, fontSize: 12 }}
-                        onClick={() => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'relative', volumeStep))}
-                      >+</button>
-                    </div>
-
-                    {/* Detail rows — foldable */}
-                    {volDetailOpen && (
-                      <div className="tft-volume-rows">
-                        {volumeOutputs.map(o => {
-                          const vMax = o.volume.soft_limit ?? o.volume.max ?? 100;
-                          const vPct = Math.round((o.volume.value / vMax) * 100);
-                          return (
-                            <div className="tft-volume-row" key={o.output_id}>
-                              <span className="tft-volume-name tft-mono" title={o.display_name}>
-                                {o.display_name.split(' ').pop()}
-                              </span>
-                              <div
-                                className="tft-volume-bar tft-volume-bar--interactive"
-                                onMouseDown={(e) => startVolumeDrag(e, [o.output_id], vMax)}
-                              >
-                                <div className="tft-volume-fill" style={{ width: `${vPct}%` }} />
-                              </div>
-                              <div className="tft-volume-val tft-mono">{o.volume.value}</div>
-                              <button
-                                className="tft-round-btn"
-                                style={{ width: 22, height: 22, fontSize: 11 }}
-                                onClick={() => onVolume?.(o.output_id, 'relative', -volumeStep)}
-                              >−</button>
-                              <button
-                                className="tft-round-btn"
-                                style={{ width: 22, height: 22, fontSize: 11 }}
-                                onClick={() => onVolume?.(o.output_id, 'relative', volumeStep)}
-                              >+</button>
+                  {volDetailOpen && (
+                    <div className="tft-volume-rows">
+                      {volumeOutputs.map(o => {
+                        const vMax = o.volume.soft_limit ?? o.volume.max ?? 100;
+                        const vPct = Math.round((o.volume.value / vMax) * 100);
+                        return (
+                          <div className="tft-volume-row" key={o.output_id}>
+                            <span className="tft-volume-name tft-mono" title={o.display_name}>
+                              {o.display_name.split(' ').pop()}
+                            </span>
+                            <div
+                              className="tft-volume-bar tft-volume-bar--interactive"
+                              onMouseDown={(e) => startVolumeDrag(e, [o.output_id], vMax)}
+                            >
+                              <div className="tft-volume-fill" style={{ width: `${vPct}%` }} />
                             </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
+                            <div className="tft-volume-val tft-mono">{o.volume.value}</div>
+                            <button
+                              type="button"
+                              className="tft-round-btn tft-round-btn--small"
+                              aria-label={t('now_playing.vol_down', 'Decrease volume')}
+                              onClick={() => onVolume?.(o.output_id, 'relative', -volumeStep)}
+                            >−</button>
+                            <button
+                              type="button"
+                              className="tft-round-btn tft-round-btn--small"
+                              aria-label={t('now_playing.vol_up', 'Increase volume')}
+                              onClick={() => onVolume?.(o.output_id, 'relative', volumeStep)}
+                            >+</button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+          </div>
+        </aside>
 
-              {/* Shuffle / Loop */}
-              {onSettings && np && (
-                <>
-                  <button
-                    className={`tft-round-btn${np.shuffle ? ' active' : ''}`}
-                    style={{ width: 30, height: 30, fontSize: 13 }}
-                    onClick={() => onSettings({ shuffle: !np.shuffle })}
-                    title={t('now_playing.shuffle')}
-                  >🔀</button>
-                  <button
-                    className={`tft-round-btn${np.loop !== 'disabled' ? ' active' : ''}`}
-                    style={{ width: 30, height: 30, fontSize: 13 }}
-                    onClick={() => {
-                      const next = np.loop === 'disabled' ? 'loop' : np.loop === 'loop' ? 'loop_one' : 'disabled';
-                      onSettings({ loop: next });
-                    }}
-                    title={t('now_playing.loop')}
-                  >🔁</button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
       {/* ═══ LOCAL MATCH STRIP ══════════════════════════════════════════════════ */}

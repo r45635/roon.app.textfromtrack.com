@@ -32,17 +32,27 @@ export default function App() {
   const [roonModalOpen, setRoonModalOpen] = useState(false);
   const [searchTrigger, setSearchTrigger] = useState(null);
   const [backendOnline, setBackendOnline] = useState(true);
+  const backendOnlineRef = useRef(true);
+  const [refreshingCredits, setRefreshingCredits] = useState(false);
 
   // ── API helpers ──────────────────────────────────────────────────────────────
 
   async function apiFetch(endpoint) {
     try {
       const res = await fetch(endpoint);
+      // 502/503/504 = proxy/gateway error — backend process is down
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        setBackendOnline(false);
+        backendOnlineRef.current = false;
+        return null;
+      }
       setBackendOnline(true);
+      backendOnlineRef.current = true;
       if (!res.ok) return null;
       return res.json().catch(() => null);
     } catch {
       setBackendOnline(false);
+      backendOnlineRef.current = false;
       return null;
     }
   }
@@ -80,6 +90,12 @@ export default function App() {
     if (data) setTftAccount({ token_valid: data.token_valid !== false, ...data });
   }, []);
 
+  const refreshTftCredits = useCallback(async () => {
+    if (refreshingCredits) return;
+    setRefreshingCredits(true);
+    try { await fetchTftAccount(); } finally { setRefreshingCredits(false); }
+  }, [fetchTftAccount, refreshingCredits]);
+
   const fetchJobs = useCallback(async () => {
     const data = await apiFetch('/api/tft/jobs?limit=20');
     if (data?.success) setJobs(data.jobs);
@@ -110,17 +126,34 @@ export default function App() {
     fetchTftAccount();
     fetchJobs();
 
-    // Continuous polling — tick every 500 ms, actual fetch rate governed by roonPollMsRef
+    // Continuous polling — tick every 500 ms, actual fetch rate governed by roonPollMsRef.
+    // When backend is offline, back off to 15 s (health-check only) to avoid request pile-up.
+    const OFFLINE_BACKOFF_MS = 15_000;
     let lastRoonFetch = Date.now();
+    let roonFetching = false;
     const roonInterval = setInterval(async () => {
-      if (Date.now() - lastRoonFetch < roonPollMsRef.current) return;
+      if (roonFetching) return; // prevent overlapping polls
+      const pollMs = backendOnlineRef.current ? roonPollMsRef.current : OFFLINE_BACKOFF_MS;
+      if (Date.now() - lastRoonFetch < pollMs) return;
       lastRoonFetch = Date.now();
-      await fetchRoonStatus();
-      await fetchNowPlaying();
-      await fetchZones();
+      roonFetching = true;
+      try {
+        await fetchRoonStatus();
+        if (backendOnlineRef.current) {
+          await fetchNowPlaying();
+          await fetchZones();
+        }
+      } finally {
+        roonFetching = false;
+      }
     }, 500);
 
-    const jobsInterval = setInterval(fetchJobs, JOBS_POLL_MS);
+    let jobsFetching = false;
+    const jobsInterval = setInterval(async () => {
+      if (jobsFetching || !backendOnlineRef.current) return;
+      jobsFetching = true;
+      try { await fetchJobs(); } finally { jobsFetching = false; }
+    }, JOBS_POLL_MS);
 
     return () => {
       clearInterval(roonInterval);
@@ -157,11 +190,13 @@ export default function App() {
   // ── Playback control ─────────────────────────────────────────────────────────
 
   async function handleControl(action) {
-    await fetch('/api/roon/control', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action }),
-    });
+    try {
+      await fetch('/api/roon/control', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+    } catch { setBackendOnline(false); return; }
     // Short delay then refresh now-playing to reflect new state
     setTimeout(fetchNowPlaying, 300);
   }
@@ -169,75 +204,91 @@ export default function App() {
   // ── Volume control ───────────────────────────────────────────────────────────
 
   async function handleVolumeChange(outputId, how, value) {
-    await fetch('/api/roon/volume', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ output_id: outputId, how, value }),
-    });
+    try {
+      await fetch('/api/roon/volume', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ output_id: outputId, how, value }),
+      });
+    } catch { setBackendOnline(false); return; }
     setTimeout(fetchNowPlaying, 300);
   }
 
   async function handleMute(outputId, how) {
-    await fetch('/api/roon/mute', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ output_id: outputId, how }),
-    });
+    try {
+      await fetch('/api/roon/mute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ output_id: outputId, how }),
+      });
+    } catch { setBackendOnline(false); return; }
     setTimeout(fetchNowPlaying, 300);
   }
 
   async function handleSeek(how, seconds) {
     if (!nowPlaying?.zone_id) return;
-    await fetch('/api/roon/seek', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ zone_id: nowPlaying.zone_id, how, seconds }),
-    });
+    try {
+      await fetch('/api/roon/seek', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zone_id: nowPlaying.zone_id, how, seconds }),
+      });
+    } catch { setBackendOnline(false); }
   }
 
   async function handleSettings(settings) {
     if (!nowPlaying?.zone_id) return;
-    await fetch('/api/roon/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ zone_id: nowPlaying.zone_id, ...settings }),
-    });
+    try {
+      await fetch('/api/roon/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zone_id: nowPlaying.zone_id, ...settings }),
+      });
+    } catch { setBackendOnline(false); return; }
     setTimeout(fetchNowPlaying, 400);
   }
 
   async function handleSelectZone(zoneId) {
-    await fetch('/api/roon/active-zone', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ zone_id: zoneId }),
-    });
+    try {
+      await fetch('/api/roon/active-zone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zone_id: zoneId }),
+      });
+    } catch { setBackendOnline(false); return; }
     setTimeout(() => { fetchNowPlaying(); fetchZones(); }, 300);
   }
 
   async function handleTransfer(toZoneId) {
-    await fetch('/api/roon/transfer', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ to_zone_id: toZoneId }),
-    });
+    try {
+      await fetch('/api/roon/transfer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to_zone_id: toZoneId }),
+      });
+    } catch { setBackendOnline(false); return; }
     setTimeout(() => { fetchNowPlaying(); fetchZones(); }, 500);
   }
 
   async function handleGroup(outputIds) {
-    await fetch('/api/roon/group', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ output_ids: outputIds }),
-    });
+    try {
+      await fetch('/api/roon/group', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ output_ids: outputIds }),
+      });
+    } catch { setBackendOnline(false); return; }
     setTimeout(() => { fetchNowPlaying(); fetchZones(); }, 500);
   }
 
   async function handleUngroup(outputIds) {
-    await fetch('/api/roon/ungroup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ output_ids: outputIds }),
-    });
+    try {
+      await fetch('/api/roon/ungroup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ output_ids: outputIds }),
+      });
+    } catch { setBackendOnline(false); return; }
     setTimeout(() => { fetchNowPlaying(); fetchZones(); }, 500);
   }
 
@@ -301,12 +352,17 @@ export default function App() {
           )}
 
           {tftAccount?.credit_balance != null && (
-            <div className="tft-credit-pill">
+            <button
+              className={`tft-credit-pill tft-credit-pill-btn${(tftAccount.credit_available ?? tftAccount.credit_balance) === 0 ? ' tft-credit-pill--zero' : ''}`}
+              onClick={refreshTftCredits}
+              title="Click to refresh credit balance"
+              disabled={refreshingCredits}
+            >
               <span className="credit-dot" />
               <span className="tft-mono" style={{ fontSize: 12 }}>
-                {tftAccount.credit_available ?? tftAccount.credit_balance} credits
+                {refreshingCredits ? '…' : `${tftAccount.credit_available ?? tftAccount.credit_balance} credits`}
               </span>
-            </div>
+            </button>
           )}
 
           <div className="lang-switcher">

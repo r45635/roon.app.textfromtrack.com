@@ -128,6 +128,22 @@ body {
   display: flex; align-items: center; gap: 6px;
   padding: 5px 12px; background: var(--tft-signal-soft); border-radius: 999px;
 }
+.tft-credit-pill-btn {
+  border: none; cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+.tft-credit-pill-btn:hover  { opacity: 0.8; }
+.tft-credit-pill-btn:active { opacity: 0.6; }
+.tft-credit-pill-btn:disabled { cursor: default; opacity: 0.6; }
+.tft-credit-pill--zero {
+  background: var(--tft-error-soft, #ffe5e5);
+  animation: credit-zero-pulse 2s ease-in-out infinite;
+}
+@keyframes credit-zero-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.6; }
+}
+.tft-credit-pill--zero .credit-dot { background: var(--tft-error, #e53e3e); }
 .tft-credit-pill .credit-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--tft-signal); flex-shrink: 0; }
 .tft-credit-pill .credit-val { font-family: var(--tft-mono); font-size: 12px; font-weight: 500; color: var(--tft-signal-ink); }
 .tft-credit-pill .credit-reserved { font-family: var(--tft-mono); font-size: 10px; color: var(--tft-signal-ink); opacity: 0.6; }
@@ -352,80 +368,271 @@ body {
 
 /* ── Hero card ───────────────────────────────────────────────────────────────── */
 .tft-hero {
-  background: var(--tft-card); border: 1px solid var(--tft-line);
-  border-radius: var(--tft-r-xl); box-shadow: var(--tft-shadow-md); overflow: hidden;
+  overflow: hidden; border-radius: 28px;
+  background: #fbfaf6; border: 1px solid rgba(40,35,28,0.1);
+  box-shadow: 0 18px 42px rgba(38,34,28,0.12);
 }
 
-/* Now playing strip */
+/* ══════════════════════════════════════════════════════════════════════════════
+   NOW PLAYING — soft premium charcoal player (mobile-first)
+══════════════════════════════════════════════════════════════════════════════ */
 .tft-np {
-  padding: 28px 28px 22px; display: flex; gap: 24px; align-items: flex-start;
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 18px 18px 20px; border-radius: 24px 24px 0 0;
+  color: rgba(255,255,255,0.9);
+  background: linear-gradient(135deg, #2d2d2a 0%, #252625 52%, #202124 100%);
+  border: 1px solid rgba(255,255,255,0.11);
+  box-shadow: 0 18px 44px rgba(38,34,28,0.24), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
+/* ── Cover ────────────────────────────────────────────────────────────────── */
+.tft-np-cover { order: 2; display: flex; justify-content: center; }
 .tft-album-art {
-  width: 140px; height: 140px; border-radius: var(--tft-r-md);
-  object-fit: cover; background: var(--tft-paper-2); flex-shrink: 0;
-  border: 1px solid var(--tft-line-2);
+  width: min(76vw, 292px); height: min(76vw, 292px);
+  object-fit: cover; border-radius: 22px; display: block;
+  box-shadow: 0 18px 36px rgba(0,0,0,0.32), 0 0 0 1px rgba(255,255,255,0.10);
 }
 .tft-album-art-placeholder {
-  width: 140px; height: 140px; border-radius: var(--tft-r-md);
-  background: var(--tft-paper-2); border: 1px solid var(--tft-line-2);
+  width: min(76vw, 292px); height: min(76vw, 292px); border-radius: 22px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
   display: flex; align-items: center; justify-content: center;
-  font-size: 48px; flex-shrink: 0; color: var(--tft-mute);
+  font-size: 72px; color: rgba(255,255,255,0.3);
 }
-.tft-np-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.tft-np-pills { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+
+/* ── Main column — display:contents on mobile ─────────────────────────────── */
+.tft-np-main { display: contents; }
+
+/* ── Pills ────────────────────────────────────────────────────────────────── */
+.tft-np-pills {
+  order: 1; display: flex; align-items: center; justify-content: center;
+  gap: 6px; flex-wrap: wrap;
+}
+.tft-np .tft-pill {
+  color: rgba(255,255,255,0.7);
+  background: rgba(255,255,255,0.075);
+  border-color: rgba(255,255,255,0.1);
+}
+.tft-np .tft-pill.signal {
+  color: #e8f8ee; background: rgba(92,190,124,0.20); border-color: rgba(92,190,124,0.28);
+}
+.tft-np .tft-pill.amber {
+  color: #fef3c7; background: rgba(217,149,0,0.16); border-color: rgba(217,149,0,0.22);
+}
+.tft-np .tft-pill.error {
+  color: #fee2e2; background: rgba(220,38,38,0.16); border-color: rgba(220,38,38,0.22);
+}
+.tft-np .tft-pill.sky {
+  color: #e0f2fe; background: rgba(14,165,233,0.16); border-color: rgba(14,165,233,0.22);
+}
+.tft-np .pill-dot { background: #6fd99a; box-shadow: 0 0 0 4px rgba(111,217,154,0.12); }
+.tft-np .tft-autosync-label { color: rgba(255,255,255,0.62); margin-left: auto; }
+.tft-np .tft-autosync-label input[type="checkbox"] { accent-color: #6fd99a; }
+
+/* ── Track meta ───────────────────────────────────────────────────────────── */
+.tft-track-meta { order: 5; text-align: center; min-width: 0; }
 .tft-np-title {
-  margin: 0; font-size: 26px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.05;
-  color: var(--tft-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  margin: 0 0 6px;
+  font-size: clamp(30px, 9vw, 40px); font-weight: 760; letter-spacing: -0.045em; line-height: 1.0;
+  color: rgba(255,255,255,0.92);
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.tft-np-artist { font-size: 15px; color: var(--tft-ink-2); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; flex-wrap: nowrap; align-items: baseline; gap: 0; }
+.tft-np-artist {
+  font-size: 18px; font-weight: 600; color: rgba(255,255,255,0.76); margin-bottom: 4px;
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 0;
+}
 .tft-np-artist-part { background: none; border: none; cursor: pointer; padding: 0; font: inherit; color: inherit; }
-.tft-np-artist-part:hover { text-decoration: underline; }
-.tft-np-artist-sep { color: var(--tft-ink-3); }
-.tft-np-album { font-family: var(--tft-mono); font-size: 11px; color: var(--tft-ink-3); margin-top: 2px; }
-/* Clickable artist/album links */
-button.tft-search-link { background: none; border: none; cursor: pointer; padding: 0; text-align: left; font: inherit; color: inherit; display: block; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-underline-offset: 2px; }
+.tft-np-artist-part:hover { color: rgba(255,255,255,0.95); text-decoration: underline; text-underline-offset: 3px; }
+.tft-np-artist-sep { color: rgba(255,255,255,0.35); }
+.tft-np-album {
+  font-family: var(--tft-mono); font-size: 12px; letter-spacing: 0.06em;
+  text-transform: uppercase; color: rgba(255,255,255,0.58); display: block;
+}
+button.tft-search-link {
+  background: none; border: none; cursor: pointer; padding: 0; font: inherit;
+  color: inherit; max-width: 100%; overflow: hidden; text-overflow: ellipsis; text-align: left;
+}
+button.tft-search-link:hover { color: rgba(255,255,255,0.95); text-decoration: underline; text-underline-offset: 3px; }
 
-/* Progress */
-.tft-progress-wrap { margin-top: 16px; }
-.tft-progress-bar { height: 4px; background: var(--tft-line); border-radius: 2px; overflow: hidden; }
-.tft-progress-fill { height: 100%; background: var(--tft-signal); border-radius: 2px; transition: width 0.8s linear; }
-.tft-progress-times { display: flex; justify-content: space-between; margin-top: 6px; }
-.tft-progress-times .t-current { font-family: var(--tft-mono); font-size: 11px; color: var(--tft-signal-ink); }
-.tft-progress-times .t-total   { font-family: var(--tft-mono); font-size: 11px; color: var(--tft-ink-3); }
+/* ── Progress ─────────────────────────────────────────────────────────────── */
+.tft-progress-wrap { order: 4; }
+.tft-progress-bar {
+  width: 100%; height: 9px;
+  background: rgba(255,255,255,0.16); border-radius: 999px; overflow: hidden; cursor: default;
+}
+.np-progress-seekable { cursor: pointer; }
+.np-progress-seekable:hover .tft-progress-fill { filter: brightness(1.08); }
+.tft-progress-fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #67d990, #a9e8bd);
+  box-shadow: 0 0 14px rgba(103,217,144,0.24);
+  transition: width 0.8s linear;
+}
+.tft-progress-times {
+  display: flex; justify-content: space-between; margin-top: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.tft-progress-times .t-current { font-family: var(--tft-mono); font-size: 11px; color: rgba(255,255,255,0.5); }
+.tft-progress-times .t-total   { font-family: var(--tft-mono); font-size: 11px; color: rgba(255,255,255,0.34); }
 
-/* Controls */
-.tft-controls { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
-.tft-ctrl-spacer { flex: 1; }
+/* ── Controls row ─────────────────────────────────────────────────────────── */
+.tft-main-controls-row {
+  order: 3; display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.tft-transport  { display: flex; align-items: center; justify-content: center; gap: 18px; }
+.tft-secondary-actions {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  opacity: 0.72; transition: opacity 0.15s;
+}
+.tft-secondary-actions:hover { opacity: 1; }
 
+/* ── Round buttons ────────────────────────────────────────────────────────── */
 .tft-round-btn {
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; border: 1px solid var(--tft-line);
-  background: var(--tft-paper-2); cursor: pointer; color: var(--tft-ink-2);
-  transition: background 0.12s; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; cursor: pointer; flex-shrink: 0; touch-action: manipulation;
+  width: 44px; height: 44px; font-size: 16px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.085); color: rgba(255,255,255,0.86);
+  box-shadow: none; transition: transform 130ms ease, background 130ms ease;
 }
-.tft-round-btn:hover:not(:disabled) { background: var(--tft-line-2); }
-.tft-round-btn:disabled { opacity: 0.35; cursor: not-allowed; }
-.tft-round-btn.primary { background: var(--tft-ink); border-color: var(--tft-ink); color: var(--tft-paper); }
-.tft-round-btn.primary:hover:not(:disabled) { background: var(--tft-ink-2); }
-.tft-round-btn.active  { background: var(--tft-signal-soft); border-color: var(--tft-signal); color: var(--tft-signal-ink); }
+.tft-round-btn:hover:not(:disabled) { transform: translateY(-1px); background: rgba(255,255,255,0.13); border-color: rgba(255,255,255,0.18); }
+.tft-round-btn:disabled { opacity: 0.32; cursor: not-allowed; }
+.tft-round-btn--small { width: 48px; height: 48px; font-size: 16px; }
+.tft-round-btn--primary,
+.tft-round-btn.primary {
+  width: 64px; height: 64px; font-size: 26px;
+  background: #f4f1e8; color: #171816;
+  border-color: rgba(255,255,255,0.5);
+  box-shadow: 0 12px 28px rgba(244,241,232,0.12);
+}
+.tft-round-btn--primary:hover:not(:disabled),
+.tft-round-btn.primary:hover:not(:disabled) { background: #e8e5dc; transform: translateY(-1px); }
+.tft-round-btn.active {
+  background: rgba(111,217,154,0.18); border-color: rgba(111,217,154,0.34); color: #a9e8bd;
+}
 
-/* Volume */
-.tft-volume { display: flex; align-items: center; gap: 8px; }
-.tft-volume-group { display: flex; flex-direction: column; gap: 4px; }
-.tft-volume-multi { display: flex; align-items: flex-start; gap: 6px; }
-.tft-volume-rows { display: flex; flex-direction: column; gap: 3px; padding-left: 20px; }
-.tft-volume-row { display: flex; align-items: center; gap: 5px; }
-.tft-volume-name { font-size: 10px; color: var(--tft-mute); min-width: 16px; }
-.tft-volume-bar--interactive { cursor: ew-resize; user-select: none; }
-.tft-volume-bar--interactive:hover .tft-volume-fill { filter: brightness(1.18); }
-.tft-volume-detail-toggle {
-  background: none; border: none; cursor: pointer; padding: 0 2px;
-  font-size: 10px; color: var(--tft-mute); line-height: 1;
-  transition: color 0.15s;
+/* ── Volume card ──────────────────────────────────────────────────────────── */
+.tft-np-side { order: 6; display: flex; align-items: center; }
+.tft-volume-card {
+  width: 100%; padding: 16px; border-radius: 20px;
+  display: flex; flex-direction: column; gap: 10px;
+  background: rgba(255,255,255,0.075); border: 1px solid rgba(255,255,255,0.1);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
 }
-.tft-volume-detail-toggle:hover { color: var(--tft-ink); }
+.tft-volume { display: flex; align-items: center; gap: 10px; }
+.tft-volume-icon { font-size: 16px; opacity: 0.68; flex-shrink: 0; }
+.tft-volume-bar {
+  height: 7px; background: rgba(255,255,255,0.16);
+  border-radius: 999px; overflow: hidden; flex: 1; min-width: 60px;
+}
+.tft-volume-fill { height: 100%; border-radius: 999px; background: rgba(244,241,232,0.86); }
+.tft-volume-bar--interactive { cursor: ew-resize; user-select: none; }
+.tft-volume-bar--interactive:hover .tft-volume-fill { background: rgba(255,255,255,0.96); }
+.tft-volume-val {
+  font-family: var(--tft-mono); font-size: 13px; min-width: 26px; text-align: right;
+  font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.56);
+}
+.tft-volume-group { display: flex; flex-direction: column; gap: 6px; }
+.tft-volume-rows { display: flex; flex-direction: column; gap: 4px; padding-left: 18px; }
+.tft-volume-row { display: flex; align-items: center; gap: 8px; }
+.tft-volume-name { font-size: 10px; color: rgba(255,255,255,0.44); min-width: 20px; font-family: var(--tft-mono); }
+.tft-volume-detail-toggle {
+  width: 22px; height: 22px; border-radius: 999px; flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.56); cursor: pointer; font-size: 10px; line-height: 1;
+  display: flex; align-items: center; justify-content: center; transition: background 0.12s;
+}
+.tft-volume-detail-toggle:hover { background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.9); }
+
+/* ── Desktop grid (≥ 901px) ──────────────────────────────────────────────── */
+@media (min-width: 901px) {
+  .tft-np {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr) 280px;
+    grid-template-areas: "cover main side";
+    gap: 24px; align-items: center;
+    max-width: 1180px; min-height: 230px;
+    margin: 0 auto; padding: 24px; border-radius: 28px 28px 0 0;
+  }
+  .tft-np-cover { grid-area: cover; order: initial; display: flex; align-items: center; justify-content: center; }
+  .tft-np-main  { grid-area: main;  display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+  .tft-np-side  { grid-area: side;  order: initial; display: flex; align-items: center; }
+  .tft-album-art,
+  .tft-album-art-placeholder { width: 200px; height: 200px; border-radius: 22px; }
+  .tft-np-pills { order: initial; justify-content: flex-start; }
+  .tft-track-meta { order: initial; text-align: left; }
+  .tft-np-title {
+    font-size: clamp(36px, 4.4vw, 52px); display: block;
+    white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+    -webkit-line-clamp: unset; -webkit-box-orient: unset;
+  }
+  .tft-np-artist { justify-content: flex-start; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-wrap: nowrap; }
+  .tft-progress-wrap { order: initial; }
+  .tft-progress-bar { height: 9px; }
+  .tft-main-controls-row { order: initial; flex-direction: row; align-items: center; justify-content: space-between; }
+  .tft-transport { justify-content: flex-start; gap: 12px; }
+  .tft-secondary-actions { justify-content: flex-end; gap: 8px; }
+  .tft-round-btn { width: 40px; height: 40px; font-size: 15px; }
+  .tft-round-btn--small { width: 36px; height: 36px; font-size: 13px; }
+  .tft-round-btn--primary,
+  .tft-round-btn.primary { width: 56px; height: 56px; font-size: 22px; }
+  .tft-np-side .tft-volume-card { height: 100%; justify-content: center; }
+}
+
+/* ── Tablet 621–900px ────────────────────────────────────────────────────── */
+@media (min-width: 621px) and (max-width: 900px) {
+  .tft-np {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr);
+    grid-template-areas: "cover main" "side  side";
+    gap: 20px; padding: 20px; border-radius: 24px 24px 0 0;
+  }
+  .tft-np-cover { grid-area: cover; order: initial; display: flex; align-items: flex-start; justify-content: center; }
+  .tft-np-main  { grid-area: main;  display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+  .tft-np-side  { grid-area: side;  order: initial; }
+  .tft-album-art,
+  .tft-album-art-placeholder { width: 160px; height: 160px; border-radius: 18px; }
+  .tft-np-pills { order: initial; justify-content: flex-start; }
+  .tft-track-meta { order: initial; text-align: left; }
+  .tft-np-title {
+    font-size: clamp(32px, 6vw, 46px); display: block;
+    white-space: nowrap; text-overflow: ellipsis; overflow: hidden;
+    -webkit-line-clamp: unset; -webkit-box-orient: unset;
+  }
+  .tft-np-artist { justify-content: flex-start; font-size: 17px; white-space: nowrap; overflow: hidden; flex-wrap: nowrap; }
+  .tft-progress-wrap { order: initial; }
+  .tft-main-controls-row { order: initial; flex-direction: row; align-items: center; justify-content: space-between; }
+  .tft-transport { justify-content: flex-start; gap: 10px; }
+  .tft-secondary-actions { justify-content: flex-end; }
+  .tft-round-btn { width: 40px; height: 40px; font-size: 15px; }
+  .tft-round-btn--small { width: 36px; height: 36px; font-size: 13px; }
+  .tft-round-btn--primary,
+  .tft-round-btn.primary { width: 52px; height: 52px; font-size: 20px; }
+}
+
+/* ── Mobile (≤ 620px) ────────────────────────────────────────────────────── */
+@media (max-width: 620px) {
+  .tft-np {
+    border-radius: 24px 24px 0 0; padding: 18px; gap: 15px;
+    background: linear-gradient(160deg, #2d2d2a 0%, #232422 100%);
+  }
+  .tft-np-cover { order: 2; }
+  .tft-np-pills { order: 1; }
+  .tft-main-controls-row { order: 3; gap: 12px; }
+  .tft-transport { justify-content: center; gap: 18px; }
+  .tft-secondary-actions { justify-content: center; opacity: 0.8; }
+  .tft-progress-wrap { order: 4; }
+  .tft-track-meta { order: 5; text-align: center; }
+  .tft-np-title {
+    font-size: clamp(30px, 8.5vw, 40px); letter-spacing: -0.04em;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal;
+  }
+  .tft-np-artist { justify-content: center; font-size: 17px; }
+  .tft-np-side { order: 6; width: 100%; display: flex; align-items: center; }
+  .tft-volume-card { width: 100%; }
+  .tft-progress-bar { height: 10px; }
+  .tft-album-art,
+  .tft-album-art-placeholder { width: min(74vw, 292px); height: min(74vw, 292px); border-radius: 22px; }
+}
 
 /* ── App Preferences panel ───────────────────────────────────────────────────── */
 .app-pref-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
@@ -501,6 +708,28 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
 .tft-lyrics-hint { font-size: 11px; color: var(--tft-mute); font-family: var(--tft-mono); }
 .tft-lyrics-force { font-size: 12px; }
 
+/* Equalizer spinner — 5 bars that bounce like an audio meter */
+@keyframes tft-eq-bounce {
+  0%, 100% { transform: scaleY(0.25); }
+  50%       { transform: scaleY(1);    }
+}
+.tft-eq {
+  display: inline-flex; align-items: flex-end; gap: 1.5px;
+  height: 14px; flex-shrink: 0;
+}
+.tft-eq rect {
+  width: 3px; border-radius: 1px;
+  transform-origin: bottom;
+  animation: tft-eq-bounce 0.9s ease-in-out infinite;
+}
+.tft-eq rect:nth-child(1) { animation-delay: 0s;     }
+.tft-eq rect:nth-child(2) { animation-delay: 0.15s;  }
+.tft-eq rect:nth-child(3) { animation-delay: 0.3s;   }
+.tft-eq rect:nth-child(4) { animation-delay: 0.15s;  }
+.tft-eq rect:nth-child(5) { animation-delay: 0s;     }
+/* inside a button: inherit the button text colour */
+.tft-eq rect { fill: currentColor; }
+
 /* Badges (reuse lrclib palette, independent class names) */
 .tft-lyrics-badge {
   display: inline-flex; align-items: center; gap: 4px;
@@ -558,8 +787,9 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
 
 /* Match strip */
 .tft-match-strip {
-  padding: 16px 28px; background: var(--tft-paper-2);
-  border-top: 1px solid var(--tft-line);
+  margin-top: 0;
+  padding: 16px 28px; background: #fbfaf6;
+  border-top: 1px solid rgba(255,255,255,0.08);
   display: flex; align-items: flex-start; gap: 14px;
 }
 .tft-match-strip.no-match { color: var(--tft-mute); font-family: var(--tft-mono); font-size: 12px; }
@@ -1497,6 +1727,29 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
 }
 .tft-options-select:focus { outline: none; border-color: var(--tft-ink-3); }
 
+/* ── LRCLIB "See other versions" button ──────────────────────────────────────── */
+.lrclib-more-versions-btn {
+  font-size: 0.8em;
+  padding: 3px 10px;
+  margin-bottom: 8px;
+  opacity: 0.75;
+}
+.lrclib-more-versions-btn:hover { opacity: 1; }
+
+/* ── LRCLIB multi-version picker ────────────────────────────────────────────────────── */
+.lrclib-hits-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.lrclib-hits-select {
+  width: auto;
+  max-width: 100%;
+  flex: 1 1 200px;
+}
+
 /* ── TFT options help modal ──────────────────────────────────────────────────── */
 .tft-help-backdrop {
   position: fixed;
@@ -1947,15 +2200,14 @@ button.tft-search-link:hover { opacity: 0.75; text-decoration: underline; text-u
 }
 .search-hide-empty-toggle input[type=checkbox] { width: 12px; height: 12px; cursor: pointer; accent-color: var(--tft-signal); }
 
-/* Action menu dropdown (appears below the ▶ button) */
-.search-play-wrap { position: relative; flex-shrink: 0; margin-left: 6px; }
+/* Action menu dropdown (fixed — avoids clipping from overflow containers) */
+.search-play-wrap { flex-shrink: 0; margin-left: 6px; }
 .search-play-wrap .search-play-btn { margin-left: 0; }
 .search-action-menu {
-  position: absolute; right: 0; top: calc(100% + 4px);
   background: var(--tft-paper-1); border: 1px solid var(--tft-line);
   border-radius: var(--tft-r-sm); box-shadow: 0 4px 12px rgba(0,0,0,0.12);
   display: flex; flex-direction: column; padding: 4px;
-  z-index: 200; min-width: 150px;
+  z-index: 1000; min-width: 150px;
 }
 .search-action-item {
   background: none; border: none; cursor: pointer; text-align: left;
