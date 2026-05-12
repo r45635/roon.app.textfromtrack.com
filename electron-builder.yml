@@ -42,6 +42,8 @@ mac:
 dmg:
   title: TextFromTrack Companion
   icon: electron/assets/icon.png
+  # Disable background image so the APFS DMG build works on arm64 CI runners.
+  background: null
 
 # ── Windows ──────────────────────────────────────────────────────────────────
 win:
