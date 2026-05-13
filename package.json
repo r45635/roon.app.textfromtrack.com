@@ -6,6 +6,7 @@
     "name": "r45635",
     "email": "contact@textfromtrack.com"
   },
+  "license": "MIT",
   "main": "electron/main.js",
   "scripts": {
     "dev": "node src/server.js",

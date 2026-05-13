@@ -1,5 +1,7 @@
 # TextFromTrack Roon Companion
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A local companion app that connects to Roon, detects the currently playing track, locates the physical audio source file, and generates synchronized `.lrc` lyrics through the [TextFromTrack](https://app.textfromtrack.com) API.
 
 This is **not** an official Roon plugin. It is a standalone Node.js service that runs on the same machine (or local network) as your Roon Core.
@@ -7,6 +9,9 @@ This is **not** an official Roon plugin. It is a standalone Node.js service that
 ![TextFromTrack Roon Companion — app preview](screenshoots/app-preview.png)
 
 ---
+
+> © 2025–2026 [Vincent Cruvellier](https://github.com/r45635) — Released under the [MIT License](LICENSE).
+
 
 ## Table of contents
 
