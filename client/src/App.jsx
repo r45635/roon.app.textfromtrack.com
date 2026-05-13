@@ -28,6 +28,7 @@ export default function App() {
   const [jobs, setJobs] = useState([]);
   const [confirmedPath, setConfirmedPath] = useState(null);
   const prevTrackKeyRef = useRef(null);
+  const zoneSelectorRef = useRef(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [roonModalOpen, setRoonModalOpen] = useState(false);
   const [searchTrigger, setSearchTrigger] = useState(null);
@@ -249,6 +250,7 @@ export default function App() {
   }
 
   async function handleSelectZone(zoneId) {
+    setNowPlaying(prev => prev ? { ...prev, zone_id: zoneId } : prev);
     try {
       await fetch('/api/roon/active-zone', {
         method: 'POST',
@@ -260,6 +262,7 @@ export default function App() {
   }
 
   async function handleTransfer(toZoneId) {
+    setNowPlaying(prev => prev ? { ...prev, zone_id: toZoneId } : prev);
     try {
       await fetch('/api/roon/transfer', {
         method: 'POST',
@@ -435,6 +438,7 @@ export default function App() {
           <div className="tft-zone-bar">
             <span className="tft-eyebrow" style={{ whiteSpace: 'nowrap' }}>{t('section.zones', 'Zones')}</span>
             <ZoneSelector
+              ref={zoneSelectorRef}
               zones={zones}
               activeZoneId={nowPlaying?.zone_id}
               onSelect={handleSelectZone}
@@ -456,6 +460,7 @@ export default function App() {
             onGenerated={handleGenerated}
             onSearch={(q) => setSearchTrigger({ q, ts: Date.now() })}
             volumeStep={prefs.volumeStep}
+            onZonePillClick={() => zoneSelectorRef.current?.open()}
           />
           <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} externalQuery={searchTrigger} />
           <JobHistory jobs={jobs} onJobRetried={handleJobRetried} />

@@ -75,6 +75,7 @@ export default function HeroCard({
   onGenerated,
   onSearch,
   volumeStep = 1,
+  onZonePillClick,
 }) {
   const { t } = useTranslation();
 
@@ -84,7 +85,46 @@ export default function HeroCard({
   const [altFormatCache, setAltFormatCache] = useState({});
   const [tagsRefreshKey, setTagsRefreshKey] = useState(0);
   const [volDetailOpen, setVolDetailOpen] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const prevVolumeRef = useRef(null);
   const [autoSync, setAutoSync] = useState(true);
+
+  // ── Title / Artist / Album marquee ──────────────────────────────────────────
+  const titleRef = useRef(null);
+  const artistRef = useRef(null);
+  const albumRef = useRef(null);
+  const [titleOverflows, setTitleOverflows] = useState(false);
+  const [artistOverflows, setArtistOverflows] = useState(false);
+  const [albumOverflows, setAlbumOverflows] = useState(false);
+
+  const checkMarquee = (el, setter) => {
+    if (!el) return;
+    const ov = el.scrollWidth > el.clientWidth + 2;
+    setter(ov);
+    if (ov) el.style.setProperty('--marquee-offset', `${-(el.scrollWidth - el.clientWidth)}px`);
+  };
+
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    const check = () => checkMarquee(el, setTitleOverflows);
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [nowPlaying?.title]);
+
+  useEffect(() => {
+    const checkAll = () => {
+      checkMarquee(artistRef.current, setArtistOverflows);
+      checkMarquee(albumRef.current, setAlbumOverflows);
+    };
+    checkAll();
+    const ro = new ResizeObserver(checkAll);
+    if (artistRef.current) ro.observe(artistRef.current);
+    if (albumRef.current) ro.observe(albumRef.current);
+    return () => ro.disconnect();
+  }, [nowPlaying?.artist, nowPlaying?.album, nowPlaying?.year]);
 
   // Freeze matchData when Auto Sync is off so the Local File Match strip
   // doesn't jump to the new track while the user is editing lyrics.
@@ -121,6 +161,7 @@ export default function HeroCard({
     setAltOpen(false);
     setConfirmedPath(null);
     setAltFormatCache({});
+    setIsMuted(false);
   }, [trackKey]);
 
   // ── Derived values ───────────────────────────────────────────────────────────
@@ -190,6 +231,34 @@ export default function HeroCard({
       {/* ═══ NOW PLAYING STRIP ══════════════════════════════════════════════════ */}
       <div className="tft-np">
 
+        {/* ── Pills row — full width ─────────────────────────────────────────── */}
+        <div className="tft-np-pills">
+          {np && (
+            <span
+              className={`tft-pill${isPlaying ? ' signal' : ''}`}
+              onClick={isPlaying ? onZonePillClick : undefined}
+              style={isPlaying ? { cursor: 'pointer' } : undefined}
+            >
+              {isPlaying && <span className="pill-dot" />}
+              {np.state === 'playing'
+                ? `${t('now_playing.state_playing')} · ${np.zone_name}`
+                : np.state === 'paused'
+                ? t('now_playing.state_paused')
+                : t('now_playing.state_stopped')}
+            </span>
+          )}
+          {np?.auto_radio && <span className="tft-pill">{t('now_playing.auto_radio')}</span>}
+          <label className="tft-autosync-label">
+            <input
+              type="checkbox"
+              checked={autoSync}
+              onChange={e => setAutoSync(e.target.checked)}
+              aria-label={t('now_playing.auto_sync', 'Auto Sync')}
+            />
+            {t('now_playing.auto_sync', 'Auto Sync')}
+          </label>
+        </div>
+
         {/* ── Cover ─────────────────────────────────────────────────────────── */}
         <div className="tft-np-cover">
           {artKey ? (
@@ -207,48 +276,34 @@ export default function HeroCard({
         {/* ── Main column ───────────────────────────────────────────────────── */}
         <div className="tft-np-main">
 
-          {/* Pills / status */}
-          <div className="tft-np-pills">
-            {np && (
-              <span className={`tft-pill${isPlaying ? ' signal' : ''}`}>
-                {isPlaying && <span className="pill-dot" />}
-                {np.state === 'playing'
-                  ? `${t('now_playing.state_playing')} · ${np.zone_name}`
-                  : np.state === 'paused'
-                  ? t('now_playing.state_paused')
-                  : t('now_playing.state_stopped')}
-              </span>
-            )}
-            {np?.auto_radio && <span className="tft-pill">{t('now_playing.auto_radio')}</span>}
-            <label className="tft-autosync-label">
-              <input
-                type="checkbox"
-                checked={autoSync}
-                onChange={e => setAutoSync(e.target.checked)}
-                aria-label={t('now_playing.auto_sync', 'Auto Sync')}
-              />
-              {t('now_playing.auto_sync', 'Auto Sync')}
-            </label>
-          </div>
-
           {/* Track meta */}
           <div className="tft-track-meta">
-            <h1 className="tft-np-title">{np?.title || t('now_playing.no_track')}</h1>
+            <h1 ref={titleRef} className={`tft-np-title${titleOverflows ? ' is-scrolling' : ''}`}>
+              <span className="tft-np-title-text">{np?.title || t('now_playing.no_track')}</span>
+            </h1>
             {np && <>
               {onSearch && np.artist
-                ? <div className="tft-np-artist">
-                    {np.artist.split('/').map((a, i, arr) => (
-                      <React.Fragment key={i}>
-                        <button type="button" className="tft-search-link tft-np-artist-part" onClick={() => onSearch(a.trim())}>{a.trim()}</button>
-                        {i < arr.length - 1 && <span className="tft-np-artist-sep"> / </span>}
-                      </React.Fragment>
-                    ))}
+                ? <div ref={artistRef} className={`tft-np-artist${artistOverflows ? ' is-scrolling' : ''}`}>
+                    <span className="tft-np-artist-inner">
+                      {np.artist.split('/').map((a, i, arr) => (
+                        <React.Fragment key={i}>
+                          <button type="button" className="tft-search-link tft-np-artist-part" onClick={() => onSearch(a.trim())}>{a.trim()}</button>
+                          {i < arr.length - 1 && <span className="tft-np-artist-sep"> / </span>}
+                        </React.Fragment>
+                      ))}
+                    </span>
                   </div>
-                : <div className="tft-np-artist">{np?.artist}</div>
+                : <div ref={artistRef} className={`tft-np-artist${artistOverflows ? ' is-scrolling' : ''}`}>
+                    <span className="tft-np-artist-inner">{np?.artist}</span>
+                  </div>
               }
               {onSearch && np.album
-                ? <button type="button" className="tft-np-album tft-mono tft-search-link" onClick={() => onSearch(np.album)}>{np.album}{np.year ? ` · ${np.year}` : ''}</button>
-                : <div className="tft-np-album tft-mono">{np?.album}{np?.year ? ` · ${np.year}` : ''}</div>
+                ? <button ref={albumRef} type="button" className={`tft-np-album tft-mono tft-search-link${albumOverflows ? ' is-scrolling' : ''}`} onClick={() => onSearch(np.album)}>
+                    <span className="tft-np-album-text">{np.album}{np.year ? ` · ${np.year}` : ''}</span>
+                  </button>
+                : <div ref={albumRef} className={`tft-np-album tft-mono${albumOverflows ? ' is-scrolling' : ''}`}>
+                    <span className="tft-np-album-text">{np?.album}{np?.year ? ` · ${np.year}` : ''}</span>
+                  </div>
               }
             </>}
           </div>
@@ -273,65 +328,28 @@ export default function HeroCard({
             </div>
           ) : null}
 
-          {/* Controls row: transport + secondary actions */}
-          <div className="tft-main-controls-row">
-            {onControl && np && (
-              <div className="tft-transport">
-                <button
-                  type="button"
-                  className="tft-round-btn tft-round-btn--small"
-                  aria-label={t('now_playing.previous', 'Previous track')}
-                  onClick={() => onControl('previous')}
-                  disabled={!np.is_previous_allowed}
-                >⏮</button>
-                <button
-                  type="button"
-                  className="tft-round-btn tft-round-btn--primary"
-                  aria-label={isPlaying ? t('now_playing.pause', 'Pause') : t('now_playing.play', 'Play')}
-                  onClick={() => onControl('playpause')}
-                  disabled={!np.is_play_allowed && !np.is_pause_allowed}
-                >{isPlaying ? '⏸' : '▶'}</button>
-                <button
-                  type="button"
-                  className="tft-round-btn tft-round-btn--small"
-                  aria-label={t('now_playing.next', 'Next track')}
-                  onClick={() => onControl('next')}
-                  disabled={!np.is_next_allowed}
-                >⏭</button>
-              </div>
-            )}
-            {onSettings && np && (
-              <div className="tft-secondary-actions">
-                <button
-                  type="button"
-                  className={`tft-round-btn tft-round-btn--small${np.shuffle ? ' active' : ''}`}
-                  aria-label={t('now_playing.shuffle', 'Toggle shuffle')}
-                  onClick={() => onSettings({ shuffle: !np.shuffle })}
-                >🔀</button>
-                <button
-                  type="button"
-                  className={`tft-round-btn tft-round-btn--small${np.loop !== 'disabled' ? ' active' : ''}`}
-                  aria-label={t('now_playing.loop', 'Toggle repeat')}
-                  onClick={() => {
-                    const next = np.loop === 'disabled' ? 'loop' : np.loop === 'loop' ? 'loop_one' : 'disabled';
-                    onSettings({ loop: next });
-                  }}
-                >🔁</button>
-              </div>
-            )}
-          </div>
-
-        </div>{/* end .tft-np-main */}
-
-        {/* ── Side — volume ──────────────────────────────────────────────── */}
-        <aside className="tft-np-side">
+          {/* Volume */}
           <div className="tft-volume-card">
             {!multiVolume && volumeVal != null && firstOutput && (() => {
               const vMax = firstOutput.volume?.soft_limit ?? firstOutput.volume?.max ?? 100;
               const vPct = Math.round((volumeVal / vMax) * 100);
               return (
                 <div className="tft-volume">
-                  <span className="tft-volume-icon">🔊</span>
+                  <button
+                    type="button"
+                    className="tft-volume-mute-btn"
+                    aria-label={t('now_playing.volume_mute')}
+                    onClick={() => {
+                      if (!isMuted) {
+                        prevVolumeRef.current = volumeVal;
+                        setIsMuted(true);
+                        onVolume?.(firstOutput.output_id, 'absolute', 0);
+                      } else {
+                        setIsMuted(false);
+                        onVolume?.(firstOutput.output_id, 'absolute', prevVolumeRef.current ?? 50);
+                      }
+                    }}
+                  >{isMuted ? '🔇' : '🔊'}</button>
                   <div
                     className="tft-volume-bar tft-volume-bar--interactive"
                     onMouseDown={(e) => startVolumeDrag(e, [firstOutput.output_id], vMax)}
@@ -367,7 +385,21 @@ export default function HeroCard({
                       onClick={() => setVolDetailOpen(v => !v)}
                       title={volDetailOpen ? 'Masquer le détail' : 'Voir le détail par enceinte'}
                     >{volDetailOpen ? '▾' : '▸'}</button>
-                    <span className="tft-volume-icon">🔊</span>
+                    <button
+                      type="button"
+                      className="tft-volume-mute-btn"
+                      aria-label={t('now_playing.volume_mute')}
+                      onClick={() => {
+                        if (!isMuted) {
+                          prevVolumeRef.current = avgVal;
+                          setIsMuted(true);
+                          volumeOutputs.forEach(o => onVolume?.(o.output_id, 'absolute', 0));
+                        } else {
+                          setIsMuted(false);
+                          volumeOutputs.forEach(o => onVolume?.(o.output_id, 'absolute', prevVolumeRef.current ?? 50));
+                        }
+                      }}
+                    >{isMuted ? '🔇' : '🔊'}</button>
                     <div
                       className="tft-volume-bar tft-volume-bar--interactive"
                       onMouseDown={(e) => startVolumeDrag(e, volumeOutputs.map(o => o.output_id), globalMax)}
@@ -425,6 +457,61 @@ export default function HeroCard({
                 </div>
               );
             })()}
+          </div>
+
+        </div>{/* end .tft-np-main */}
+
+        {/* ── Side — transport controls ──────────────────────────────────── */}
+        <aside className="tft-np-side">
+          <div className="tft-main-controls-row">
+            {np && (onControl || onSettings) && (
+              <div className="tft-transport">
+                {onSettings && (
+                  <button
+                    type="button"
+                    className={`tft-round-btn tft-round-btn--small${np.shuffle ? ' active' : ''}`}
+                    aria-label={t('now_playing.shuffle', 'Toggle shuffle')}
+                    onClick={() => onSettings({ shuffle: !np.shuffle })}
+                  >🔀</button>
+                )}
+                {onControl && (
+                  <>
+                    <button
+                      type="button"
+                      className="tft-round-btn tft-round-btn--small"
+                      aria-label={t('now_playing.previous', 'Previous track')}
+                      onClick={() => onControl('previous')}
+                      disabled={!np.is_previous_allowed}
+                    >⏮</button>
+                    <button
+                      type="button"
+                      className="tft-round-btn tft-round-btn--primary"
+                      aria-label={isPlaying ? t('now_playing.pause', 'Pause') : t('now_playing.play', 'Play')}
+                      onClick={() => onControl('playpause')}
+                      disabled={!np.is_play_allowed && !np.is_pause_allowed}
+                    >{isPlaying ? '⏸' : '▶'}</button>
+                    <button
+                      type="button"
+                      className="tft-round-btn tft-round-btn--small"
+                      aria-label={t('now_playing.next', 'Next track')}
+                      onClick={() => onControl('next')}
+                      disabled={!np.is_next_allowed}
+                    >⏭</button>
+                  </>
+                )}
+                {onSettings && (
+                  <button
+                    type="button"
+                    className={`tft-round-btn tft-round-btn--small${np.loop !== 'disabled' ? ' active' : ''}`}
+                    aria-label={t('now_playing.loop', 'Toggle repeat')}
+                    onClick={() => {
+                      const next = np.loop === 'disabled' ? 'loop' : np.loop === 'loop' ? 'loop_one' : 'disabled';
+                      onSettings({ loop: next });
+                    }}
+                  >🔁</button>
+                )}
+              </div>
+            )}
           </div>
         </aside>
 

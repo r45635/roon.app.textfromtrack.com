@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
-export default function ZoneSelector({ zones, activeZoneId, onSelect, onTransfer, onGroup, onUngroup }) {
+const ZoneSelector = forwardRef(function ZoneSelector({ zones, activeZoneId, onSelect, onTransfer, onGroup, onUngroup }, ref) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const [groupMode, setGroupMode] = useState(false);
   const [groupSelected, setGroupSelected] = useState([]);
+
+  useImperativeHandle(ref, () => ({ open: () => setExpanded(true) }));
 
   if (!zones || zones.length === 0) return null;
 
@@ -142,4 +144,6 @@ export default function ZoneSelector({ zones, activeZoneId, onSelect, onTransfer
       )}
     </div>
   );
-}
+});
+
+export default ZoneSelector;

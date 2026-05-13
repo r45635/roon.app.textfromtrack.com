@@ -256,6 +256,8 @@ export default function FileTagsCard({ filePath, refreshKey = 0, nowPlaying = nu
   const { t } = useTranslation();
   const [collapsed, toggleCollapsed] = useCollapsed('file-tags', true);
   const [activeTab, setActiveTab] = useState('art');
+  const carouselRef = useRef(null);
+  const [activeSlide, setActiveSlide] = useState(0);
   const [state, setState] = useState({ tags: null, format: null, loading: false, error: null });
   const [fetchKey, setFetchKey] = useState(0);
   const [panelKey, setPanelKey] = useState(0);
@@ -342,6 +344,19 @@ export default function FileTagsCard({ filePath, refreshKey = 0, nowPlaying = nu
   const discLabel = tags?.disc_no != null
     ? (tags.disc_total ? `${tags.disc_no} / ${tags.disc_total}` : String(tags.disc_no)) : null;
 
+  function handleCarouselScroll() {
+    const el = carouselRef.current;
+    if (!el) return;
+    const idx = Math.round(el.scrollLeft / el.offsetWidth);
+    setActiveSlide(idx);
+  }
+
+  function scrollToSlide(idx) {
+    const el = carouselRef.current;
+    if (!el) return;
+    el.scrollTo({ left: idx * el.offsetWidth, behavior: 'smooth' });
+  }
+
   return (
     <div className="file-tags-card">
       <div className="file-tags-card-header" onClick={toggleCollapsed}>
@@ -370,7 +385,8 @@ export default function FileTagsCard({ filePath, refreshKey = 0, nowPlaying = nu
           {error && <p className="muted small" style={{ color: 'var(--tft-error)' }}>{t('file_tags.error')}: {error}</p>}
 
           {(tags || format) && (
-            <div className="file-tags-columns">
+            <>
+            <div className="file-tags-columns" ref={carouselRef} onScroll={handleCarouselScroll}>
               {/* ── Left: Tags + Format ──────────────────────────────── */}
               <div className="file-tags-left">
                 {/* Edit mode: input grid */}
@@ -486,7 +502,7 @@ export default function FileTagsCard({ filePath, refreshKey = 0, nowPlaying = nu
                 )}
               </div>
 
-              {/* ── Right: Tabs ──────────────────────────────────────── */}
+              {/* ── Right: Tabs (desktop) ────────────────────────────── */}
               <div className="file-tags-right">
                 <div className="file-tabs-bar">
                   <button
@@ -510,7 +526,24 @@ export default function FileTagsCard({ filePath, refreshKey = 0, nowPlaying = nu
                     isPlaying={nowPlaying?.state === 'playing'} />}
                 </div>
               </div>
+              {/* ── Mobile slides (art + lyrics) ─────────────────────── */}
+              <div className="file-tags-mobile-art">
+                <ArtworkPanel key={`art-m-${panelKey}`} filePath={filePath} active />
+              </div>
+              <div className="file-tags-mobile-lyrics">
+                <LyricsPanel key={`lyrics-m-${panelKey}`} filePath={filePath} active
+                  onDelete={() => { setPanelKey(k => k + 1); }}
+                  seekSeconds={nowPlaying?.seek_position_seconds ?? 0}
+                  isPlaying={nowPlaying?.state === 'playing'} />
+              </div>
             </div>
+            {/* Dots indicator — shown on mobile only via CSS */}
+            <div className="file-tags-dots">
+              <button className={`file-tags-dot${activeSlide === 0 ? ' active' : ''}`} onClick={() => scrollToSlide(0)} aria-label="Tags" />
+              <button className={`file-tags-dot${activeSlide === 1 ? ' active' : ''}`} onClick={() => scrollToSlide(1)} aria-label="Cover" />
+              <button className={`file-tags-dot${activeSlide === 2 ? ' active' : ''}`} onClick={() => scrollToSlide(2)} aria-label="Lyrics" />
+            </div>
+            </>
           )}
         </div>
       )}

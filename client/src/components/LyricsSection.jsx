@@ -132,6 +132,10 @@ export default function LyricsSection({
   // track while the dialog is displayed, so we must save to the old one.
   const frozenPathRef = useRef(null);
 
+  // ── LRCLIB per-path cache ────────────────────────────────────────────────────
+  const lrclibCacheRef = useRef({});
+  const [pendingAutoCheck, setPendingAutoCheck] = useState(false);
+
   function applyReset() {
     setLrclibStatus('idle');
     setLrclibResult(null);
@@ -148,6 +152,8 @@ export default function LyricsSection({
     setPendingTrackKey(null);
     setCountdown(0);
     setSavingOnSwitch(false);
+    setPendingAutoCheck(false);
+    lrclibCacheRef.current = {};
     clearInterval(pollingRef.current);
     lastAppliedTrackKey.current = trackKey;
   }
@@ -160,6 +166,50 @@ export default function LyricsSection({
     applyReset();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackKey]);
+
+  // Detect alternative selection change — reset panels when user picks a different file
+  const prevEffectivePathRef = useRef(effectivePath);
+  useEffect(() => {
+    const prev = prevEffectivePathRef.current;
+    prevEffectivePathRef.current = effectivePath;
+    if (!prev || !effectivePath) return;
+    if (effectivePath === prev) return;
+    if (trackKey !== lastAppliedTrackKey.current) return;
+    // Partial reset (preserves track-change dialog state)
+    setLrclibResult(null);
+    setLrclibHits(null);
+    setLrclibHitIdx(0);
+    setLrclibError(null);
+    setLrclibTransfer('idle');
+    setLrclibOpen(true);
+    setTftJob(null);
+    setTftLyrics(null);
+    setTftTransfer('idle');
+    setTftGenError(null);
+    setForce(false);
+    clearInterval(pollingRef.current);
+    // Restore from cache or show spinner + auto-check
+    const cached = lrclibCacheRef.current[effectivePath];
+    if (cached) {
+      setLrclibStatus(cached.status);
+      setLrclibResult(cached.result);
+      setLrclibHits(cached.hits);
+      setLrclibHitIdx(cached.hitIdx);
+    } else {
+      setLrclibStatus('checking');
+      setPendingAutoCheck(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [effectivePath]);
+
+  // Auto-trigger LRCLIB check when fileSearchMeta is ready after an alt switch
+  useEffect(() => {
+    if (!pendingAutoCheck) return;
+    if (!fileSearchMeta) return; // still fetching tags
+    setPendingAutoCheck(false);
+    handleLrclibCheck(true); // true = skip turning off autoSync
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fileSearchMeta, pendingAutoCheck]);
 
   // When Auto Sync is re-enabled: check for unsaved lyrics before syncing
   useEffect(() => {
@@ -246,8 +296,8 @@ export default function LyricsSection({
   else if (lyricsExist && !force)                        tftDisabledReason = t('tft.lyrics_exist');
 
   // ── LRCLIB: check ──────────────────────────────────────────────────────────
-  async function handleLrclibCheck() {
-    onAutoSyncChange?.(false);
+  async function handleLrclibCheck(skipAutoSyncOff = false) {
+    if (!skipAutoSyncOff) onAutoSyncChange?.(false);
     if (!searchTitle || !searchArtist) return;
     setLrclibStatus('checking');
     setLrclibResult(null);
@@ -264,12 +314,22 @@ export default function LyricsSection({
       const res = await fetch(`/api/lrclib/lookup?${params.toString()}`);
       const data = await res.json();
       if (!data.success && data.error) { setLrclibStatus('error'); setLrclibError(data.error); return; }
-      if (!data.found)      { setLrclibStatus('not_found'); return; }
-      if (data.instrumental) { setLrclibStatus('instrumental'); return; }
+      if (!data.found)      {
+        setLrclibStatus('not_found');
+        if (effectivePath) lrclibCacheRef.current[effectivePath] = { status: 'not_found', result: null, hits: null, hitIdx: 0 };
+        return;
+      }
+      if (data.instrumental) {
+        setLrclibStatus('instrumental');
+        if (effectivePath) lrclibCacheRef.current[effectivePath] = { status: 'instrumental', result: null, hits: null, hitIdx: 0 };
+        return;
+      }
+      const hitIdx = data.selectedHitIndex ?? 0;
       setLrclibResult(data);
       setLrclibHits(data.hits || null);
-      setLrclibHitIdx(data.selectedHitIndex ?? 0);
+      setLrclibHitIdx(hitIdx);
       setLrclibStatus('found');
+      if (effectivePath) lrclibCacheRef.current[effectivePath] = { status: 'found', result: data, hits: data.hits || null, hitIdx };
     } catch (err) {
       setLrclibStatus('error');
       setLrclibError({ code: 'NETWORK_ERROR', message: err.message });
@@ -802,6 +862,13 @@ export default function LyricsSection({
                     return <option key={i} value={i}>{parts.join(' ')}</option>;
                   })}
                 </select>
+              </div>
+            )}
+            {lrclibStatus === 'checking' && (
+              <div className="synced-lyrics syncing">
+                <div className="synced-stream synced-stream--loading">
+                  <EqSpinner />
+                </div>
               </div>
             )}
             {lrclibLyrics && (
