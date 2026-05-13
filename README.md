@@ -4,6 +4,8 @@ A local companion app that connects to Roon, detects the currently playing track
 
 This is **not** an official Roon plugin. It is a standalone Node.js service that runs on the same machine (or local network) as your Roon Core.
 
+![TextFromTrack Roon Companion — app preview](screenshoots/app-preview.png)
+
 ---
 
 ## Table of contents
