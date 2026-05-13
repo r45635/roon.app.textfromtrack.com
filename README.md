@@ -47,7 +47,8 @@ roon.app.textfromtrack.com/
 │   ├── textfromtrack/
 │   │   ├── tftClient.js        TextFromTrack REST API client
 │   │   ├── transcriptionService.js  Full orchestration (validate → submit → poll → save)
-│   │   └── jobStore.js         JSON-backed job persistence
+│   │   ├── jobStore.js         JSON-backed job persistence
+│   │   └── webhookService.js   TFT webhook lifecycle (register, HMAC-SHA256 verify, process)
 │   ├── api/
 │   │   ├── routes.js           Top-level router
 │   │   ├── roonRoutes.js       /api/roon/*
@@ -62,13 +63,17 @@ roon.app.textfromtrack.com/
 │   └── utils/
 │       ├── logger.js           Pino logger
 │       ├── normalize.js        Error codes, error builder, string normalizer
-│       └── fileUtils.js        Atomic JSON read/write
+│       ├── fileUtils.js        Atomic JSON read/write
+│       ├── sseService.js       Server-Sent Events broadcast (real-time job status push)
+│       └── lrcCache.js         LRC content cache keyed by file path and track metadata
 ├── client/                     Vite + React frontend
 │   ├── src/
 │   │   ├── App.jsx             Main layout, polling, state management
 │   │   ├── i18n/               English + French translations (i18next)
 │   │   └── components/         RoonStatus, NowPlaying, ZoneSelector, SearchPanel,
-│   │                           LocalMatch, TftPanel, JobHistory, LibrarySettings
+│                           LocalMatch, LrclibPanel, FileTagsCard, TftPanel,
+│                           JobHistory, LibrarySettings, LyricsSection,
+│                           SyncedLyrics, AppPrefs, FilesManagement, TftApiKey
 │   └── dist/                   Built frontend (served by Express in production)
 └── scripts/
     ├── scan-library.js         CLI: npm run scan
@@ -82,7 +87,7 @@ roon.app.textfromtrack.com/
 3. Frontend calls `/api/music/match-current` → `matcher.js` scores local index tracks
 4. User clicks **Generate LRC** → `POST /api/tft/generate-current`
 5. Backend: validate → submit to TFT → save job → start background poll
-6. Frontend polls `/api/tft/jobs/:id` → shows progress
+6. Frontend receives SSE event via `/api/tft/events` (or polls `/api/tft/jobs/:id`) → shows progress
 7. Backend: TFT done → download LRC → save next to source file → update index
 8. Frontend shows `HAS_LRC_FILE`
 
@@ -134,6 +139,9 @@ Copy `.env.example` to `.env` and fill in the values.
 | `TFT_DEFAULT_EXPORT_FORMAT` | `lrc` | Export format (`lrc`, `srt`, `txt`, `json`) |
 | `TFT_DEFAULT_PINYIN` | `false` | Enable Pinyin romanization |
 | `TFT_DEFAULT_VINTAGE` | `false` | Enable vintage transcription mode |
+| `TFT_DEFAULT_AUDIO_TYPE` | `music` | Audio type hint for transcription (`music`, `speech`) |
+| `TFT_DEFAULT_LANGUAGE` | _(empty)_ | Force a specific transcription language (ISO 639-1 code) |
+| `WEBHOOK_BASE_URL` | _(empty)_ | Public base URL for TFT webhook delivery. When set, the app auto-registers a webhook with TFT on startup |
 | `TFT_POLL_INTERVAL_MS` | `2000` | How often to poll for job status |
 | `TFT_POLL_TIMEOUT_MS` | `600000` | Maximum polling duration (10 min) |
 | `LOG_LEVEL` | `info` | Pino log level (`fatal`/`error`/`warn`/`info`/`debug`/`trace`) |
@@ -146,6 +154,8 @@ Copy `.env.example` to `.env` and fill in the values.
 | `path_mappings` | `[]` | Path mappings (overrides `PATH_MAPPINGS`) |
 | `embed_lyrics_default` | `false` | Default state of the **embed `[LYRICS]` tag** checkbox |
 | `backup_before_embed_default` | `true` | Default state of the **save `.org` backup** checkbox |
+| `save_lrc_beside_source_default` | `false` | Default state of the **save LRC beside source** checkbox |
+| `tft_token` | `""` | TFT Personal Access Token set via the UI (overrides `TFT_TOKEN` env var) |
 
 **Path mappings** (SMB / NAS):
 
@@ -206,13 +216,18 @@ PATH_MAPPINGS=smb://NAS.local/Music=/Volumes/Music
 
 | Method | Path | Description |
 |---|---|---|
+| `GET` | `/api/tft/config` | Whether a TFT token is currently configured. Returns `{ token_configured, token_source }` — never the raw token |
+| `POST` | `/api/tft/config` | Save or clear the TFT token from user settings. Body: `{ tft_token }` |
 | `GET` | `/api/tft/me` | Account info (token status, email, credit balance) |
 | `POST` | `/api/tft/generate-current` | Submit current track for LRC generation. Body: `{ embed, backup, backup_conflict, force }` |
 | `GET` | `/api/tft/jobs` | Local job history (newest first) |
 | `GET` | `/api/tft/jobs/:jobId` | Single job status |
+| `GET` | `/api/tft/job-lyrics` | Fetch the LRC content for a `done` job. Query: `?job_id=...` |
 | `POST` | `/api/tft/retry` | Re-submit a `done` job with no real timestamps. Body: `{ job_id }` |
 | `POST` | `/api/tft/embed` | Retroactively embed the LRC of a `done` job. Body: `{ job_id, backup, backup_conflict }` |
 | `POST` | `/api/tft/reveal` | Open an `.lrc` file's enclosing folder in Finder. Body: `{ path }` |
+| `GET` | `/api/tft/events` | SSE stream — pushes `{ type: 'job_updated', job_id }` events to connected clients |
+| `POST` | `/api/tft/webhook` | Receive TFT webhook deliveries (HMAC-SHA256 verified). Auto-registered on startup when `WEBHOOK_BASE_URL` is set |
 
 #### Error envelope
 
@@ -304,16 +319,22 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - Karaoke-style highlight + auto-scroll, locally-interpolated between Roon polls
 - Unsaved-lyrics warning + 6-second discard countdown on track change
 
-#### v0.5 — Local tag editor (mp3tag-style, lyrics-aware)
-Full tag inspection and editing surface: read/write every field, bulk operations, inline LRC editor with timestamp-aware shortcuts, `LYRICS.ORG` history.
+#### v0.3.1 ✓ — Electron app + infrastructure
+- **Electron desktop app** — single-download installer for macOS / Windows / Linux; tray icon spawns the Express server, opens the UI in the system browser; auto-update check on startup
+- TFT API token configurable from the UI — no `.env` editing required
+- SSE push channel (`/api/tft/events`) for real-time job status updates without polling
+- TFT webhook integration — HMAC-SHA256 verified, auto-registered on startup when `WEBHOOK_BASE_URL` is set
+- LRC cache layer — avoids redundant TFT downloads for previously-processed tracks
+- `save_lrc_beside_source` option configurable as a per-operation default
 
-#### v0.6 — Local player with synced lyrics verification
+#### Upcoming
+
+##### Local tag editor (mp3tag-style, lyrics-aware)
+Tag inspection (all fields) and LYRICS write/delete are already done. Still pending: read/write every metadata field, bulk operations, inline LRC editor with timestamp-aware shortcuts.
+
+##### Local player with synced lyrics verification
 HTML5 `<audio>` playback streamed from the backend so users can audibly confirm the local match and visually verify lyrics sync before spending TFT credits.
 
-#### v0.7
+##### Security & remote access
 - HTTP Basic Auth / token auth when exposed outside localhost
-- HTTPS reverse proxy deployment guide (Nginx / Caddy)
 - Background job queue with priority and retry logic
-
-#### v1.0 — Electron desktop app
-Single-download installer for macOS / Windows / Linux. Tray-only design — Electron spawns the Express server, puts an icon in the menu bar, and opens the UI in the system browser. No Node.js, no terminal, no Docker required.
