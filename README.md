@@ -20,8 +20,8 @@ This is **not** an official Roon plugin. It is a standalone Node.js service that
 
 | | |
 |---|---|
-| 📦 **Install** | [Installation guide](docs/install.html) — Docker (recommended) or Node.js |
-| 📖 **Use** | [User guide](docs/user-guide.html) — authorize Roon, scan your library, generate lyrics, embed tags |
+| 📦 **Install** | [Installation guide](docs/install.md) — Docker (recommended) or Node.js |
+| 📖 **Use** | [User guide](docs/user-guide.md) — authorize Roon, scan your library, generate lyrics, embed tags |
 
 ---
 
