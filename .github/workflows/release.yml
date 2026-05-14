@@ -62,13 +62,25 @@ jobs:
 
       # Build x64 and arm64 sequentially to avoid concurrent hdiutil calls that
       # cause "hdiutil detach failed - No such file or directory" on GH runners.
-      - name: Build Electron — macOS (x64)
-        run: npx electron-builder --mac --x64 --publish never
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      # arm64 first (native runner arch) — no cross-arch hdiutil issues.
+      - name: Ensure app-builder binaries are executable
+        run: |
+          find node_modules/app-builder-bin -type f -name 'app-builder*' -exec chmod +x {} \;
+          xattr -d com.apple.quarantine node_modules/app-builder-bin/mac/app-builder_arm64 2>/dev/null || true
+          xattr -d com.apple.quarantine node_modules/app-builder-bin/mac/app-builder_x64 2>/dev/null || true
 
       - name: Build Electron — macOS (arm64)
         run: npx electron-builder --mac --arm64 --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Restore app-builder permissions after arm64 build
+        run: |
+          find node_modules/app-builder-bin -type f -name 'app-builder*' -exec chmod +x {} \;
+          xattr -d com.apple.quarantine node_modules/app-builder-bin/mac/app-builder_x64 2>/dev/null || true
+
+      - name: Build Electron — macOS (x64)
+        run: npx electron-builder --mac --x64 --publish never
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
