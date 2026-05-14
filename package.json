@@ -1,6 +1,6 @@
 {
   "name": "roon-companion-textfromtrack",
-  "version": "0.3.10",
+  "version": "0.3.11",
   "description": "Local companion app connecting Roon to TextFromTrack for automated LRC generation",
   "author": {
     "name": "r45635",
@@ -34,7 +34,8 @@
     "node-roon-api-status": "github:roonlabs/node-roon-api-status",
     "node-roon-api-transport": "github:roonlabs/node-roon-api-transport",
     "pino": "^9.2.0",
-    "pino-pretty": "^11.2.1"
+    "pino-pretty": "^11.2.1",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

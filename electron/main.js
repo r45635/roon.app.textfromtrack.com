@@ -293,6 +293,11 @@ function rebuildMenu() {
       enabled: serverReady,
       click: () => shell.openExternal(networkURL),
     });
+    items.push({
+      label: 'Show QR Code for Phone…',
+      enabled: serverReady,
+      click: () => shell.openExternal(`http://localhost:${PORT}/api/qr`),
+    });
   }
 
   items.push({ type: 'separator' });

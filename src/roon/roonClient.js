@@ -190,11 +190,14 @@ function startRoon() {
       _coreName = core.display_name;
       _coreVersion = core.display_version;
 
-      // Capture Roon HTTP server for image proxy
+      // Capture Roon HTTP server for image proxy.
+      // core.moo.transport.host is the actual IP used to connect to this Core
+      // (the Core's real LAN/loopback IP). extension_host is the extension's own
+      // IP as seen by the Core — wrong for remote machines.
       const httpPort = core.http_port || 9330;
-      const httpHost = core.extension_host || '127.0.0.1';
+      const httpHost = core.moo?.transport?.host || '127.0.0.1';
       _roonImageBase = `http://${httpHost}:${httpPort}`;
-      logger.debug({ _roonImageBase }, 'Roon image base set');
+      logger.info({ _roonImageBase }, 'Roon image base set');
 
       _svcStatus.set_status(
         `Connected to ${core.display_name}`,
