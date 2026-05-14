@@ -341,7 +341,18 @@
     "backup_before_embed_default": "Save .org backup before embedding",
     "backup_before_embed_default_hint": "Creates Track.flac.org / Track.mp3.org next to the original before any tag write, so the file can be restored if anything goes wrong.",
     "save_lrc_beside_source_default": "Save LRC file next to audio source",
-    "save_lrc_beside_source_default_hint": "When enabled, the .lrc sidecar file is saved next to the audio file. Roon does not read LRC files natively — leave this off if you only use embedded lyrics."
+    "save_lrc_beside_source_default_hint": "When enabled, the .lrc sidecar file is saved next to the audio file. Roon does not read LRC files natively — leave this off if you only use embedded lyrics.",
+    "app_prefs_title": "App Preferences",
+    "debug_title": "Diagnostics",
+    "server_log": "Server Log",
+    "server_log_hint": "Last lines of the server log — useful for remote debugging",
+    "load_log": "Load log",
+    "refresh_log": "Refresh",
+    "copy_log": "Copy",
+    "copied": "Copied!",
+    "log_empty": "Log file is empty or not yet created.",
+    "log_unavailable": "Log unavailable (dev mode — Electron not running)",
+    "log_path": "Log file"
   },
   "lrclib": {
     "check_button": "Check LRCLIB Lyrics",

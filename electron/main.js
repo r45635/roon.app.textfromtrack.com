@@ -81,6 +81,9 @@ function startServer() {
       TFT_USER_DATA_DIR: userData,
       PORT: String(PORT),
       ELECTRON_RUN_AS_NODE: '1',
+      // Force production mode so pino does NOT use pino-pretty's worker thread,
+      // which can crash silently inside a packaged Electron environment.
+      NODE_ENV: app.isPackaged ? 'production' : (process.env.NODE_ENV || 'development'),
     },
     stdio: ['ignore', logFd, logFd],
   });

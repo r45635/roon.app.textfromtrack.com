@@ -5,6 +5,7 @@ const roonRoutes = require('./roonRoutes');
 const musicRoutes = require('./musicRoutes');
 const tftRoutes = require('./textfromtrackRoutes');
 const lrclibRoutes = require('./lrclibRoutes');
+const debugRoutes = require('./debugRoutes');
 
 const router = Router();
 
@@ -12,5 +13,6 @@ router.use('/roon', roonRoutes);
 router.use('/music', musicRoutes);
 router.use('/tft', tftRoutes);
 router.use('/lrclib', lrclibRoutes);
+router.use('/debug', debugRoutes);
 
 module.exports = router;

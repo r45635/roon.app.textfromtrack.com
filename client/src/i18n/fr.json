@@ -342,7 +342,17 @@
     "backup_before_embed_default": "Sauvegarder en .org avant l'intégration",
     "backup_before_embed_default_hint": "Crée Track.flac.org / Track.mp3.org à côté de l'original avant toute écriture de tag, pour pouvoir restaurer en cas de problème.",
     "save_lrc_beside_source_default": "Sauvegarder le fichier LRC à côté du fichier audio",
-    "save_lrc_beside_source_default_hint": "Si activé, le fichier .lrc sidecar est enregistré à côté du fichier audio. Roon ne lit pas les fichiers LRC nativement — laissez désactivé si vous utilisez uniquement les paroles intégrées."
+    "save_lrc_beside_source_default_hint": "Si activé, le fichier .lrc sidecar est enregistré à côté du fichier audio. Roon ne lit pas les fichiers LRC nativement — laissez désactivé si vous utilisez uniquement les paroles intégrées.",
+    "debug_title": "Diagnostics",
+    "server_log": "Log serveur",
+    "server_log_hint": "Dernières lignes du log serveur — utile pour le débogage à distance",
+    "load_log": "Charger le log",
+    "refresh_log": "Actualiser",
+    "copy_log": "Copier",
+    "copied": "Copié !",
+    "log_empty": "Le fichier log est vide ou pas encore créé.",
+    "log_unavailable": "Log indisponible (mode dev — Electron non actif)",
+    "log_path": "Fichier log"
   },
   "lrclib": {
     "check_button": "Chercher sur LRCLIB",

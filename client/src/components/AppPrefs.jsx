@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 
@@ -7,6 +7,33 @@ const POLL_PRESETS = [500, 1000, 2000, 3000, 5000];
 export default function AppPrefs({ prefs, setPref }) {
   const { t } = useTranslation();
   const [collapsed, toggleCollapsed] = useCollapsed('app-prefs', false);
+
+  // ── Diagnostics state ────────────────────────────────────────────────────────
+  const [logState, setLogState] = useState(null); // null | { available, content, logPath, truncated, totalLines, message }
+  const [logLoading, setLogLoading] = useState(false);
+  const [logCopied, setLogCopied] = useState(false);
+
+  const loadLog = useCallback(async () => {
+    setLogLoading(true);
+    try {
+      const res = await fetch('/api/debug/logs?lines=200');
+      const data = await res.json();
+      setLogState(data);
+    } catch {
+      setLogState({ available: false, message: 'Network error — server unreachable' });
+    } finally {
+      setLogLoading(false);
+    }
+  }, []);
+
+  const copyLog = useCallback(async () => {
+    if (!logState?.content) return;
+    try {
+      await navigator.clipboard.writeText(logState.content);
+      setLogCopied(true);
+      setTimeout(() => setLogCopied(false), 2000);
+    } catch {}
+  }, [logState]);
 
   function handleVolumeStep(e) {
     const v = parseInt(e.target.value, 10);
@@ -85,6 +112,77 @@ export default function AppPrefs({ prefs, setPref }) {
                   title="Custom (ms)"
                 />
               </div>
+            </div>
+
+            {/* ── Diagnostics ─────────────────────────────────────────────── */}
+            <div className="app-pref-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+              <label className="settings-label" title={t('settings.server_log_hint')}>
+                {t('settings.debug_title', 'Diagnostics')} — {t('settings.server_log', 'Server Log')}
+              </label>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <button
+                  className="tft-round-btn"
+                  style={{ height: 24, padding: '0 10px', fontSize: 11, borderRadius: 12 }}
+                  onClick={loadLog}
+                  disabled={logLoading}
+                >
+                  {logLoading ? '…' : (logState ? t('settings.refresh_log', 'Refresh') : t('settings.load_log', 'Load log'))}
+                </button>
+                {logState?.content && (
+                  <button
+                    className="tft-round-btn"
+                    style={{ height: 24, padding: '0 10px', fontSize: 11, borderRadius: 12 }}
+                    onClick={copyLog}
+                  >
+                    {logCopied ? t('settings.copied', 'Copied!') : t('settings.copy_log', 'Copy')}
+                  </button>
+                )}
+              </div>
+
+              {logState && (
+                <div style={{ width: '100%' }}>
+                  {!logState.available ? (
+                    <p style={{ fontSize: 11, color: 'var(--color-text-muted, #888)', margin: 0 }}>
+                      {t('settings.log_unavailable', 'Log unavailable (dev mode — Electron not running)')}
+                    </p>
+                  ) : logState.content ? (
+                    <>
+                      <pre style={{
+                        fontSize: 10,
+                        lineHeight: 1.45,
+                        fontFamily: 'ui-monospace, "SF Mono", Menlo, monospace',
+                        background: 'var(--color-bg-sunken, #111)',
+                        color: 'var(--color-text, #eee)',
+                        borderRadius: 6,
+                        padding: '8px 10px',
+                        maxHeight: 280,
+                        overflowY: 'auto',
+                        overflowX: 'auto',
+                        whiteSpace: 'pre',
+                        margin: 0,
+                        border: '1px solid var(--color-border, #333)',
+                      }}>
+                        {logState.truncated && (
+                          <span style={{ color: 'var(--color-warning, #f90)', display: 'block', marginBottom: 4 }}>
+                            {`[Showing last 200 of ${logState.totalLines} lines]\n`}
+                          </span>
+                        )}
+                        {logState.content}
+                      </pre>
+                      {logState.logPath && (
+                        <p style={{ fontSize: 10, color: 'var(--color-text-muted, #888)', margin: '4px 0 0', wordBreak: 'break-all' }}>
+                          {t('settings.log_path', 'Log file')}: {logState.logPath}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p style={{ fontSize: 11, color: 'var(--color-text-muted, #888)', margin: 0 }}>
+                      {t('settings.log_empty', 'Log file is empty or not yet created.')}
+                      {logState.logPath && <><br /><span style={{ fontSize: 10, wordBreak: 'break-all' }}>{logState.logPath}</span></>}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
           </div>
