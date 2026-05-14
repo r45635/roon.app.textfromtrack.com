@@ -219,7 +219,7 @@ jobs:
 # ── Publish GitHub Release ─────────────────────────────────────────────────────────────────────
   release:
     name: Publish GitHub Release
-    needs: [build-mac, build-windows, build-linux, build-docker]
+    needs: [build-mac, build-windows, build-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Download all build artifacts
