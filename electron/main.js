@@ -56,15 +56,20 @@ function startServer() {
     ? process.execPath.replace(/electron(\.exe)?$/, 'node$1')
     : process.execPath;
 
-  // In packaged builds Electron bundles Node; we use its own execPath.
-  const exec = app.isPackaged ? process.execPath : process.execPath;
-  const args = app.isPackaged ? ['--runAsNode', serverEntry] : [serverEntry];
+  // In packaged builds Electron bundles Node; we use its own execPath with
+  // ELECTRON_RUN_AS_NODE=1 so it behaves like a plain Node.js process.
+  // Do NOT pass --runAsNode — it is not a valid flag and causes Node to reject it.
+  const exec = process.execPath;
+  const args = [serverEntry];
+
+  const userData = app.getPath('userData');
 
   serverProcess = spawn(exec, args, {
+    cwd: userData, // node-roon-api writes config.json relative to cwd
     env: {
       ...process.env,
       // Point writable storage at the OS user-data folder so it survives updates.
-      TFT_USER_DATA_DIR: app.getPath('userData'),
+      TFT_USER_DATA_DIR: userData,
       PORT: String(PORT),
       ELECTRON_RUN_AS_NODE: '1',
     },

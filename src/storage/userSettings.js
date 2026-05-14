@@ -8,7 +8,11 @@
 const path = require('path');
 const { readJson, writeJson } = require('../utils/fileUtils');
 
-const SETTINGS_PATH = path.join(__dirname, 'user-settings.json');
+// In Electron packaged builds TFT_USER_DATA_DIR points to app.getPath('userData')
+// so settings survive updates and never write into the read-only asar.
+const SETTINGS_PATH = process.env.TFT_USER_DATA_DIR
+  ? path.join(process.env.TFT_USER_DATA_DIR, 'storage', 'user-settings.json')
+  : path.join(__dirname, 'user-settings.json');
 
 const DEFAULTS = {
   music_roots: [],

@@ -66,10 +66,20 @@ const config = {
   ),
 
   // ── Storage ─────────────────────────────────────────────────────────────────
-  storageDir: path.join(__dirname, 'storage'),
-  musicIndexPath: path.join(__dirname, 'storage', 'music-index.json'),
-  jobsPath: path.join(__dirname, 'storage', 'jobs.json'),
-  lrcCacheDir: path.join(__dirname, 'storage', 'lrc-cache'),
+  // In Electron packaged builds TFT_USER_DATA_DIR is set to app.getPath('userData')
+  // so storage survives updates and never tries to write into the read-only asar.
+  storageDir: process.env.TFT_USER_DATA_DIR
+    ? path.join(process.env.TFT_USER_DATA_DIR, 'storage')
+    : path.join(__dirname, 'storage'),
+  musicIndexPath: process.env.TFT_USER_DATA_DIR
+    ? path.join(process.env.TFT_USER_DATA_DIR, 'storage', 'music-index.json')
+    : path.join(__dirname, 'storage', 'music-index.json'),
+  jobsPath: process.env.TFT_USER_DATA_DIR
+    ? path.join(process.env.TFT_USER_DATA_DIR, 'storage', 'jobs.json')
+    : path.join(__dirname, 'storage', 'jobs.json'),
+  lrcCacheDir: process.env.TFT_USER_DATA_DIR
+    ? path.join(process.env.TFT_USER_DATA_DIR, 'storage', 'lrc-cache')
+    : path.join(__dirname, 'storage', 'lrc-cache'),
 
   // ── Logging ─────────────────────────────────────────────────────────────────
   logLevel: process.env.LOG_LEVEL || 'info',

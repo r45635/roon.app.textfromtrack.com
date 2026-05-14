@@ -3,6 +3,73 @@ import { useTranslation } from 'react-i18next';
 import SyncedLyrics from './SyncedLyrics.jsx';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 
+// ── Custom Hits Dropdown ──────────────────────────────────────────────────
+// Native <select> can't be styled on iOS — use a custom accessible dropdown.
+function HitsDropdown({ hits, value, onChange, t }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onOutside(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onOutside);
+    document.addEventListener('touchstart', onOutside);
+    return () => {
+      document.removeEventListener('mousedown', onOutside);
+      document.removeEventListener('touchstart', onOutside);
+    };
+  }, [open]);
+
+  function hitLabel(h) {
+    const lrcType = h.hasSynced
+      ? t('lyrics.hit_synced')
+      : h.instrumental
+        ? t('lyrics.instrumental')
+        : t('lyrics.hit_plain');
+    return [
+      h.trackName,
+      h.artistName ? `— ${h.artistName}` : '',
+      h.albumName  ? `· ${h.albumName}`  : '',
+      `(${lrcType})`,
+    ].filter(Boolean).join(' ');
+  }
+
+  const selectedLabel = hits[value] ? hitLabel(hits[value]) : '';
+
+  return (
+    <div className="hits-dropdown" ref={ref}>
+      <button
+        type="button"
+        className="hits-dropdown-trigger"
+        onClick={() => setOpen(o => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        <span className="hits-dropdown-value">{selectedLabel}</span>
+        <span className="hits-dropdown-chevron" aria-hidden="true">{open ? '▲' : '▼'}</span>
+      </button>
+      {open && (
+        <ul className="hits-dropdown-list" role="listbox">
+          {hits.map((h, i) => (
+            <li
+              key={i}
+              role="option"
+              aria-selected={i === value}
+              className={`hits-dropdown-option${i === value ? ' selected' : ''}`}
+              onMouseDown={() => { onChange(i); setOpen(false); }}
+              onTouchEnd={e => { e.preventDefault(); onChange(i); setOpen(false); }}
+            >
+              {hitLabel(h)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function EqSpinner() {
   return (
     <span className="tft-eq" aria-hidden="true">
@@ -838,30 +905,13 @@ export default function LyricsSection({
             {/* Version picker: shown when search returned multiple results */}
             {lrclibHits && lrclibHits.length > 1 && (
               <div className="lrclib-hits-picker">
-                <label htmlFor="lrclib-hit-select" className="tft-options-label">
-                  {t('lyrics.hits_picker_label')}
-                </label>
-                <select
-                  id="lrclib-hit-select"
-                  className="tft-options-select lrclib-hits-select"
+                <span className="tft-options-label">{t('lyrics.hits_picker_label')}</span>
+                <HitsDropdown
+                  hits={lrclibHits}
                   value={lrclibHitIdx}
-                  onChange={e => handleHitSelect(Number(e.target.value))}
-                >
-                  {lrclibHits.map((h, i) => {
-                    const lrcType = h.hasSynced
-                      ? t('lyrics.hit_synced')
-                      : h.instrumental
-                        ? t('lyrics.instrumental')
-                        : t('lyrics.hit_plain');
-                    const parts = [
-                      h.trackName,
-                      h.artistName ? `— ${h.artistName}` : '',
-                      h.albumName  ? `· ${h.albumName}`  : '',
-                      `(${lrcType})`,
-                    ].filter(Boolean);
-                    return <option key={i} value={i}>{parts.join(' ')}</option>;
-                  })}
-                </select>
+                  onChange={handleHitSelect}
+                  t={t}
+                />
               </div>
             )}
             {lrclibStatus === 'checking' && (
