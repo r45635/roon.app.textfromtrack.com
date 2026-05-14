@@ -122,7 +122,7 @@ export default function AppPrefs({ prefs, setPref }) {
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 <button
                   className="tft-round-btn"
-                  style={{ height: 24, padding: '0 10px', fontSize: 11, borderRadius: 12 }}
+                  style={{ width: 'auto', height: 24, padding: '0 10px', fontSize: 11, borderRadius: 12 }}
                   onClick={loadLog}
                   disabled={logLoading}
                 >
@@ -131,7 +131,7 @@ export default function AppPrefs({ prefs, setPref }) {
                 {logState?.content && (
                   <button
                     className="tft-round-btn"
-                    style={{ height: 24, padding: '0 10px', fontSize: 11, borderRadius: 12 }}
+                    style={{ width: 'auto', height: 24, padding: '0 10px', fontSize: 11, borderRadius: 12 }}
                     onClick={copyLog}
                   >
                     {logCopied ? t('settings.copied', 'Copied!') : t('settings.copy_log', 'Copy')}

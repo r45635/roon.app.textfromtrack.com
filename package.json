@@ -1,6 +1,6 @@
 {
   "name": "roon-companion-textfromtrack",
-  "version": "0.3.7",
+  "version": "0.3.8",
   "description": "Local companion app connecting Roon to TextFromTrack for automated LRC generation",
   "author": {
     "name": "r45635",
@@ -45,6 +45,5 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  },
-  "license": "MIT"
+  }
 }

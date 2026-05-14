@@ -2,6 +2,7 @@
 
 require('dotenv').config();
 const path = require('path');
+const os = require('os');
 
 /**
  * Parse PATH_MAPPINGS env var into an array of {from, to} objects.
@@ -32,7 +33,7 @@ const config = {
   roonExtensionId:
     process.env.ROON_EXTENSION_ID || 'com.textfromtrack.roon.companion',
   roonDisplayName:
-    process.env.ROON_DISPLAY_NAME || 'TextFromTrack Roon Companion',
+    process.env.ROON_DISPLAY_NAME || `TextFromTrack Roon Companion @ ${os.hostname()}`,
   roonDisplayVersion: process.env.ROON_DISPLAY_VERSION || '0.1.0',
   roonPublisher: process.env.ROON_PUBLISHER || 'TextFromTrack',
   // When set, skip Sood UDP auto-discovery and connect directly via WebSocket.
