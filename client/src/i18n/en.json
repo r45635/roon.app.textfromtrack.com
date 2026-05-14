@@ -352,7 +352,21 @@
     "copied": "Copied!",
     "log_empty": "Log file is empty or not yet created.",
     "log_unavailable": "Log unavailable (dev mode — Electron not running)",
-    "log_path": "Log file"
+    "log_path": "Log file",
+    "sys_info_title": "System Info",
+    "sys_info_hint": "Runtime memory and disk usage for the current session",
+    "sys_info_load": "Load",
+    "sys_info_refresh": "Refresh",
+    "sys_info_electron_ram": "Electron RAM",
+    "sys_info_server_ram": "Server RAM",
+    "sys_info_userdata": "userData folder",
+    "sys_info_lrc_cache": "LRC cache",
+    "sys_info_files": "files",
+    "sys_info_uptime": "Uptime",
+    "sys_info_node": "Node",
+    "sys_info_platform": "Platform",
+    "sys_info_version": "Version",
+    "sys_info_unavailable": "Unavailable (dev mode — Electron not running)"
   },
   "lrclib": {
     "check_button": "Check LRCLIB Lyrics",

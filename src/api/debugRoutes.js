@@ -7,6 +7,39 @@ const os = require('os');
 
 const router = Router();
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function dirSizeBytes(dirPath) {
+  let total = 0;
+  try {
+    const walk = (p) => {
+      for (const entry of fs.readdirSync(p, { withFileTypes: true })) {
+        const full = path.join(p, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (entry.isFile()) { try { total += fs.statSync(full).size; } catch {} }
+      }
+    };
+    walk(dirPath);
+  } catch {}
+  return total;
+}
+
+function countFiles(dirPath, ext) {
+  let count = 0;
+  try {
+    const walk = (p) => {
+      for (const entry of fs.readdirSync(p, { withFileTypes: true })) {
+        const full = path.join(p, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (entry.isFile() && (!ext || entry.name.endsWith(ext))) count++;
+      }
+    };
+    walk(dirPath);
+  } catch {}
+  return count;
+}
+
+function toMB(bytes) { return Math.round(bytes / 1024 / 1024 * 10) / 10; }
+
 // ── GET /api/debug/logs?lines=N ───────────────────────────────────────────────
 // Returns the tail of server.log. Path is hardcoded to the Electron userData dir
 // (TFT_USER_DATA_DIR env var) — no user-supplied paths accepted.
@@ -41,12 +74,23 @@ router.get('/logs', (req, res) => {
 });
 
 // ── GET /api/debug/info ───────────────────────────────────────────────────────
-// Returns runtime info useful for remote diagnosis.
+// Returns runtime info useful for remote diagnosis and system metrics.
 router.get('/info', (req, res) => {
   const userData = process.env.TFT_USER_DATA_DIR;
   const pkg = (() => {
     try { return require('../../package.json'); } catch { return {}; }
   })();
+
+  // Disk metrics — compute only if userData is set (Electron mode)
+  let userDataSizeMB = null;
+  let lrcCacheSizeMB = null;
+  let lrcCacheCount = null;
+  if (userData) {
+    userDataSizeMB = toMB(dirSizeBytes(userData));
+    const cacheDir = path.join(userData, 'storage', 'lrc-cache');
+    lrcCacheSizeMB = toMB(dirSizeBytes(cacheDir));
+    lrcCacheCount = countFiles(cacheDir, '.lrc');
+  }
 
   res.json({
     success: true,
@@ -59,6 +103,9 @@ router.get('/info', (req, res) => {
     userDataDir: userData || null,
     memoryMB: Math.round(process.memoryUsage().rss / 1024 / 1024),
     hostname: os.hostname(),
+    userDataSizeMB,
+    lrcCacheSizeMB,
+    lrcCacheCount,
   });
 });
 

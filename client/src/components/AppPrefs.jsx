@@ -13,6 +13,11 @@ export default function AppPrefs({ prefs, setPref }) {
   const [logLoading, setLogLoading] = useState(false);
   const [logCopied, setLogCopied] = useState(false);
 
+  // ── System Info state ────────────────────────────────────────────────────────
+  const [sysInfo, setSysInfo] = useState(null); // null | response from /api/debug/info
+  const [sysInfoLoading, setSysInfoLoading] = useState(false);
+  const [sysInfoError, setSysInfoError] = useState(null);
+
   const loadLog = useCallback(async () => {
     setLogLoading(true);
     try {
@@ -34,6 +39,28 @@ export default function AppPrefs({ prefs, setPref }) {
       setTimeout(() => setLogCopied(false), 2000);
     } catch {}
   }, [logState]);
+
+  const loadSysInfo = useCallback(async () => {
+    setSysInfoLoading(true);
+    setSysInfoError(null);
+    try {
+      const res = await fetch('/api/debug/info');
+      const data = await res.json();
+      setSysInfo(data);
+    } catch {
+      setSysInfoError(t('settings.sys_info_unavailable', 'Unavailable (dev mode — Electron not running)'));
+    } finally {
+      setSysInfoLoading(false);
+    }
+  }, [t]);
+
+  function fmtUptime(sec) {
+    if (sec == null) return '—';
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return [h && `${h}h`, m && `${m}m`, `${s}s`].filter(Boolean).join(' ');
+  }
 
   function handleVolumeStep(e) {
     const v = parseInt(e.target.value, 10);
@@ -182,6 +209,52 @@ export default function AppPrefs({ prefs, setPref }) {
                     </p>
                   )}
                 </div>
+              )}
+            </div>
+
+            {/* ── System Info ─────────────────────────────────────────────── */}
+            <div className="app-pref-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+              <label className="settings-label" title={t('settings.sys_info_hint')}>
+                {t('settings.debug_title', 'Diagnostics')} — {t('settings.sys_info_title', 'System Info')}
+              </label>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <button
+                  className="tft-round-btn"
+                  style={{ width: 'auto', height: 24, padding: '0 10px', fontSize: 11, borderRadius: 12 }}
+                  onClick={loadSysInfo}
+                  disabled={sysInfoLoading}
+                >
+                  {sysInfoLoading ? '…' : (sysInfo ? t('settings.sys_info_refresh', 'Refresh') : t('settings.sys_info_load', 'Load'))}
+                </button>
+              </div>
+
+              {sysInfoError && (
+                <p style={{ fontSize: 11, color: 'var(--color-text-muted, #888)', margin: 0 }}>{sysInfoError}</p>
+              )}
+
+              {sysInfo && !sysInfoError && (
+                <table style={{ fontSize: 11, borderCollapse: 'collapse', width: '100%' }}>
+                  <tbody>
+                    {[
+                      [t('settings.sys_info_version', 'Version'), sysInfo.version],
+                      [t('settings.sys_info_node', 'Node'), sysInfo.nodeVersion],
+                      [t('settings.sys_info_platform', 'Platform'), `${sysInfo.platform} / ${sysInfo.arch}`],
+                      [t('settings.sys_info_uptime', 'Uptime'), fmtUptime(sysInfo.uptime)],
+                      [t('settings.sys_info_server_ram', 'Server RAM'), sysInfo.memoryMB != null ? `${sysInfo.memoryMB} MB` : '—'],
+                      sysInfo.userDataSizeMB != null
+                        ? [t('settings.sys_info_userdata', 'userData folder'), `${sysInfo.userDataSizeMB} MB`]
+                        : null,
+                      sysInfo.lrcCacheSizeMB != null
+                        ? [t('settings.sys_info_lrc_cache', 'LRC cache'), `${sysInfo.lrcCacheSizeMB} MB (${sysInfo.lrcCacheCount} ${t('settings.sys_info_files', 'files')})`]
+                        : null,
+                    ].filter(Boolean).map(([label, value]) => (
+                      <tr key={label}>
+                        <td style={{ paddingRight: 12, paddingBottom: 3, color: 'var(--color-text-muted, #888)', whiteSpace: 'nowrap' }}>{label}</td>
+                        <td style={{ paddingBottom: 3, wordBreak: 'break-all' }}>{value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               )}
             </div>
 

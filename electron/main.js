@@ -365,7 +365,7 @@ function getLocalNetworkIP() {
 }
 
 // ── About dialog ─────────────────────────────────────────────────────────────
-function showAbout() {
+async function showAbout() {
   const pkg = (() => { try { return require('../package.json'); } catch { return {}; } })();
   const version = pkg.version || 'unknown';
   // Build date: prefer the SOURCE_DATE_EPOCH env var injected by CI, else file mtime.
@@ -378,25 +378,55 @@ function showAbout() {
     releaseDate = mtime.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   } catch {}
 
-  dialog.showMessageBox({
+  // Fetch server metrics (2s timeout — non-blocking if backend unreachable)
+  let metrics = null;
+  try {
+    const infoURL = `${activeBackendURL}/api/debug/info`;
+    metrics = await new Promise((resolve, reject) => {
+      const req = http.get(infoURL, { timeout: 2000 }, (res) => {
+        let data = '';
+        res.on('data', c => (data += c));
+        res.on('end', () => { try { resolve(JSON.parse(data)); } catch { reject(new Error('parse')); } });
+      });
+      req.on('error', reject);
+      req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+    });
+  } catch {}
+
+  const electronRAM = Math.round(process.memoryUsage().rss / 1024 / 1024);
+
+  const networkLine = backendMode === 'remote'
+    ? `Backend: ${remoteDisplayName}`
+    : (() => { const ip = getLocalNetworkIP(); return ip ? `Local network: http://${ip}:${PORT}` : ''; })();
+
+  const detail = [
+    `Version: ${version}`,
+    releaseDate ? `Released: ${releaseDate}` : '',
+    '',
+    '── Memory',
+    `  Electron:  ${electronRAM} MB`,
+    metrics ? `  Server:    ${metrics.memoryMB} MB` : null,
+    '',
+    metrics?.userDataSizeMB != null ? `── Storage` : null,
+    metrics?.userDataSizeMB != null ? `  userData:  ${metrics.userDataSizeMB} MB` : null,
+    metrics?.lrcCacheSizeMB != null ? `  LRC cache: ${metrics.lrcCacheSizeMB} MB (${metrics.lrcCacheCount} files)` : null,
+    '',
+    networkLine,
+    '',
+    'GitHub: https://github.com/r45635/roon.app.textfromtrack.com',
+  ].filter(l => l !== null && l !== undefined).join('\n');
+
+  const { response } = await dialog.showMessageBox({
     type: 'info',
     title: 'About TextFromTrack Roon Companion',
-    message: `TextFromTrack Roon Companion`,
-    detail: [
-      `Version: ${version}`,
-      releaseDate ? `Released: ${releaseDate}` : '',
-      '',
-      'GitHub: https://github.com/r45635/roon.app.textfromtrack.com',
-      '',
-      (() => { const ip = getLocalNetworkIP(); return ip ? `Local network: http://${ip}:${PORT}` : ''; })(),
-    ].filter(l => l !== undefined).join('\n'),
+    message: 'TextFromTrack Roon Companion',
+    detail,
     buttons: ['OK', 'Open GitHub'],
     defaultId: 0,
-  }).then(({ response }) => {
-    if (response === 1) {
-      shell.openExternal('https://github.com/r45635/roon.app.textfromtrack.com');
-    }
   });
+  if (response === 1) {
+    shell.openExternal('https://github.com/r45635/roon.app.textfromtrack.com');
+  }
 }
 
 // ── Help — open local user guide ─────────────────────────────────────────────

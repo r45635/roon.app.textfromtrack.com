@@ -623,6 +623,7 @@
     <div class="nav-section-label">Settings</div>
     <li><a href="#configuration"><span class="nav-icon">⚙️</span> Configuration</a></li>
     <li><a href="#mobile"><span class="nav-icon">📱</span> Mobile</a></li>
+    <li><a href="#remote-backend"><span class="nav-icon">🖥️</span> Remote Backend</a></li>
   </ul>
 </nav>
 
@@ -660,6 +661,11 @@
       <p class="section-subtitle">TextFromTrack works as a Roon Extension. Open the web app in any browser — your Roon player state syncs in real time.</p>
 
       <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">🖥️</div>
+          <h3>Install the Electron App</h3>
+          <p>Download the macOS app and launch it. It runs silently in the <strong>system tray</strong> — click the tray icon to access controls. The server starts automatically on login.</p>
+        </div>
         <div class="feature-card">
           <div class="icon">1️⃣</div>
           <h3>Enable the Extension</h3>
@@ -1071,6 +1077,7 @@
         <tbody>
           <tr><td>Volume step (± per click)</td><td>How many Roon volume units each +/− button press changes. Default: 3.</td></tr>
           <tr><td>Player refresh interval</td><td>How often the progress bar and volume update. Lower = more responsive, higher = less network traffic. Options: 500ms, 1s, 2s, 3s, 5s, or a custom value.</td></tr>
+          <tr><td>System Info</td><td>Click <strong>Load</strong> in the Diagnostics section to fetch live server metrics: version, Node.js version, platform, uptime, server RAM, userData folder size, and LRC cache size. Data refreshes on each click.</td></tr>
         </tbody>
       </table>
 
@@ -1124,6 +1131,76 @@
           <h3>Remote Control</h3>
           <p>Use your phone as a full Roon remote — control volume, skip tracks, switch zones, and fetch lyrics from the couch.</p>
         </div>
+        <div class="feature-card">
+          <div class="icon">📷</div>
+          <h3>QR Code Access</h3>
+          <p>In the Electron tray menu, click <strong>Show QR Code for Phone…</strong> to display a scannable QR code that opens the web app on your phone without typing the URL.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- REMOTE BACKEND -->
+    <section class="section" id="remote-backend">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);">🖥️</div>
+        <h2 class="section-title">Remote Backend</h2>
+      </div>
+      <p class="section-subtitle">The macOS Electron app can automatically discover and connect to a TextFromTrack backend running on another machine on your local network, using mDNS (Bonjour) zero-configuration networking.</p>
+
+      <h3 style="font-size:16px;font-weight:600;margin:28px 0 12px;">How it works</h3>
+      <p style="color:var(--ink-2);font-size:14px;margin-bottom:16px;">When the Electron app starts, it listens for other TextFromTrack instances advertising themselves via mDNS on the local network. If it finds one (e.g. a backend running on a headless Mac mini or a NAS), a dialog offers to connect to it instead of starting a local server.</p>
+
+      <ol class="step-list" style="margin-bottom:24px;">
+        <li>
+          <div class="step-number">1</div>
+          <div class="step-content">Start TextFromTrack on the <strong>host machine</strong> (the one with the music files). It advertises itself on the LAN via Bonjour as <code>_textfromtrack._tcp</code>.</div>
+        </li>
+        <li>
+          <div class="step-number">2</div>
+          <div class="step-content">On your laptop, open the Electron app. It scans the LAN for 3 seconds. If a backend is found, a dialog asks: <em>"A TextFromTrack backend was found at [machine name]. Connect to it?"</em></div>
+        </li>
+        <li>
+          <div class="step-number">3</div>
+          <div class="step-content">Click <strong>Connect</strong>. The app opens the remote backend's UI in your browser. All tray menu actions (Open UI, Roon status…) now point to the remote machine.</div>
+        </li>
+        <li>
+          <div class="step-number">4</div>
+          <div class="step-content">The choice is remembered in <code>electron-prefs.json</code> inside your userData folder. Next launch reconnects automatically without scanning again.</div>
+        </li>
+      </ol>
+
+      <h3 style="font-size:16px;font-weight:600;margin:28px 0 12px;">Tray menu — Remote mode</h3>
+      <table class="doc-table">
+        <thead><tr><th>Item</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>Remote: [machine name]</td><td>Status label — shows which backend you are connected to (non-clickable).</td></tr>
+          <tr><td>Open Remote UI</td><td>Opens the remote backend's web interface in your default browser.</td></tr>
+          <tr><td>Switch Backend…</td><td>Re-scans the LAN for 3 seconds and shows a dialog to pick a different backend or stay on the current one.</td></tr>
+          <tr><td>Use Local Backend</td><td>Disconnects from the remote backend, starts the local server, and opens the local UI. Clears the saved remote preference.</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="font-size:16px;font-weight:600;margin:28px 0 12px;">Tray menu — Local mode</h3>
+      <table class="doc-table">
+        <thead><tr><th>Item</th><th>Action</th></tr></thead>
+        <tbody>
+          <tr><td>Open UI</td><td>Opens the local web interface (<code>http://localhost:3888</code>) in your default browser.</td></tr>
+          <tr><td>Open on Network</td><td>Opens the LAN-accessible URL (<code>http://[local-IP]:3888</code>) — useful for sharing the link with other devices.</td></tr>
+          <tr><td>Show QR Code for Phone…</td><td>Displays a scannable QR code pointing to the local LAN URL — scan with your phone to open the UI instantly.</td></tr>
+          <tr><td>Switch Backend…</td><td>Scans the LAN and offers to connect to a discovered remote backend.</td></tr>
+          <tr><td>About TextFromTrack…</td><td>Shows app version, release date, Electron and server RAM usage, userData disk size, and LRC cache stats.</td></tr>
+        </tbody>
+      </table>
+
+      <div class="info-block tip">
+        <span class="info-block-icon">💡</span>
+        <div class="info-block-text"><strong>mDNS and Windows:</strong> mDNS discovery uses UDP port 5353 (multicast). On Windows, the built-in firewall may block this. If the app does not detect a remote backend, check that <strong>mDNS / Bonjour</strong> traffic is allowed through the firewall on the host machine.</div>
+      </div>
+
+      <div class="info-block tip">
+        <span class="info-block-icon">🔒</span>
+        <div class="info-block-text"><strong>No authentication:</strong> The remote backend connection is unauthenticated — anyone on the same LAN who knows the URL can access the UI. Only use on trusted networks.</div>
       </div>
     </section>
 

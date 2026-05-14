@@ -352,7 +352,21 @@
     "copied": "Copié !",
     "log_empty": "Le fichier log est vide ou pas encore créé.",
     "log_unavailable": "Log indisponible (mode dev — Electron non actif)",
-    "log_path": "Fichier log"
+    "log_path": "Fichier log",
+    "sys_info_title": "Infos système",
+    "sys_info_hint": "Mémoire et stockage utilisés pour la session en cours",
+    "sys_info_load": "Charger",
+    "sys_info_refresh": "Actualiser",
+    "sys_info_electron_ram": "RAM Electron",
+    "sys_info_server_ram": "RAM Serveur",
+    "sys_info_userdata": "Dossier userData",
+    "sys_info_lrc_cache": "Cache LRC",
+    "sys_info_files": "fichiers",
+    "sys_info_uptime": "Temps actif",
+    "sys_info_node": "Node",
+    "sys_info_platform": "Plateforme",
+    "sys_info_version": "Version",
+    "sys_info_unavailable": "Indisponible (mode dev — Electron non actif)"
   },
   "lrclib": {
     "check_button": "Chercher sur LRCLIB",
