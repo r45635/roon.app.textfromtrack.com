@@ -2,14 +2,19 @@ appId: com.textfromtrack.roon-companion
 productName: TextFromTrack Companion
 copyright: Copyright © 2026 TextFromTrack
 
+# Disable asar so the Express server can be spawned as a plain Node.js child
+# process (ELECTRON_RUN_AS_NODE=1). Asar archives are Electron's virtual FS —
+# a separately spawned Node.js process cannot read from them.
+asar: false
+
 # ── Source files to bundle ───────────────────────────────────────────────────
 files:
   - "electron/**"
   - "src/**"
   - "client/dist/**"
   - "package.json"
-  - "config.json"
-  # Exclude runtime-mutable storage from the asar — it lives in userData instead.
+  # config.json is gitignored and created at runtime by node-roon-api.
+  # Do NOT include it in the bundle.
   - "!src/storage/**"
   # Exclude dev/test artefacts
   - "!tests/**"

@@ -13,6 +13,7 @@
 
 const { app, Tray, Menu, shell, nativeImage, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { spawn } = require('child_process');
 const http = require('http');
 
@@ -52,17 +53,25 @@ const serverEntry = app.isPackaged
 
 // ── Start the Express server as a child process ──────────────────────────────
 function startServer() {
-  const nodeExec = process.execPath.includes('electron')
-    ? process.execPath.replace(/electron(\.exe)?$/, 'node$1')
-    : process.execPath;
-
   // In packaged builds Electron bundles Node; we use its own execPath with
   // ELECTRON_RUN_AS_NODE=1 so it behaves like a plain Node.js process.
-  // Do NOT pass --runAsNode — it is not a valid flag and causes Node to reject it.
+  // asar: false in electron-builder.yml ensures serverEntry is a real file
+  // on disk (not inside a virtual .asar archive) so spawn() can read it.
   const exec = process.execPath;
   const args = [serverEntry];
 
   const userData = app.getPath('userData');
+
+  // Write server stdout/stderr to a log file — critical for diagnosing crashes
+  // in packaged apps where there is no visible terminal.
+  const logPath = path.join(userData, 'server.log');
+  let logFd;
+  try {
+    if (!fs.existsSync(userData)) fs.mkdirSync(userData, { recursive: true });
+    logFd = fs.openSync(logPath, 'a');
+  } catch (e) {
+    logFd = 'inherit';
+  }
 
   serverProcess = spawn(exec, args, {
     cwd: userData, // node-roon-api writes config.json relative to cwd
@@ -73,18 +82,33 @@ function startServer() {
       PORT: String(PORT),
       ELECTRON_RUN_AS_NODE: '1',
     },
-    stdio: 'inherit',
+    stdio: ['ignore', logFd, logFd],
   });
 
   serverProcess.on('error', (err) => {
-    dialog.showErrorBox('TextFromTrack — Server error', err.message);
+    dialog.showErrorBox(
+      'TextFromTrack — Server error',
+      `${err.message}\n\nLog: ${logPath}`
+    );
   });
 
   serverProcess.on('exit', (code) => {
+    if (typeof logFd === 'number') { try { fs.closeSync(logFd); } catch {} }
     if (code !== 0 && code !== null) {
+      // Read last 2 KB of log to show in the error dialog
+      let tail = '';
+      try {
+        const stat = fs.statSync(logPath);
+        const buf = Buffer.alloc(2048);
+        const fd2 = fs.openSync(logPath, 'r');
+        const offset = Math.max(0, stat.size - 2048);
+        const n = fs.readSync(fd2, buf, 0, 2048, offset);
+        fs.closeSync(fd2);
+        tail = buf.slice(0, n).toString('utf8');
+      } catch {}
       dialog.showErrorBox(
-        'TextFromTrack — Server crashed',
-        `The background server exited with code ${code}. Please restart the app.`
+        `TextFromTrack — Server crashed (exit ${code})`,
+        `Log: ${logPath}\n\n${tail || '(no output)'}`
       );
     }
     serverProcess = null;
@@ -199,6 +223,17 @@ function rebuildMenu() {
       } else {
         dialog.showMessageBox({ message: 'The server is still starting. Please wait a moment.' });
       }
+    },
+  });
+
+  items.push({ type: 'separator' });
+
+  // Show log file
+  items.push({
+    label: 'Show Log File…',
+    click: () => {
+      const logPath = path.join(app.getPath('userData'), 'server.log');
+      shell.showItemInFinder ? shell.showItemInFinder(logPath) : shell.openPath(logPath);
     },
   });
 
