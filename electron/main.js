@@ -14,6 +14,7 @@
 const { app, Tray, Menu, shell, nativeImage, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const { spawn } = require('child_process');
 const http = require('http');
 
@@ -199,6 +200,17 @@ function startPolling() {
   if (!creditsTimer) creditsTimer = setInterval(pollCredits, POLL_CREDITS_MS);
 }
 
+// ── Local network IP ─────────────────────────────────────────────────────────
+function getLocalNetworkIP() {
+  const ifaces = os.networkInterfaces();
+  for (const name of Object.keys(ifaces)) {
+    for (const iface of ifaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) return iface.address;
+    }
+  }
+  return null;
+}
+
 // ── About dialog ─────────────────────────────────────────────────────────────
 function showAbout() {
   const pkg = (() => { try { return require('../package.json'); } catch { return {}; } })();
@@ -222,6 +234,8 @@ function showAbout() {
       releaseDate ? `Released: ${releaseDate}` : '',
       '',
       'GitHub: https://github.com/r45635/roon.app.textfromtrack.com',
+      '',
+      (() => { const ip = getLocalNetworkIP(); return ip ? `Local network: http://${ip}:${PORT}` : ''; })(),
     ].filter(l => l !== undefined).join('\n'),
     buttons: ['OK', 'Open GitHub'],
     defaultId: 0,
@@ -258,7 +272,7 @@ function rebuildMenu() {
 
   items.push({ type: 'separator' });
 
-  // Open UI
+  // Open UI (localhost)
   items.push({
     label: 'Open UI',
     click: () => {
@@ -269,6 +283,17 @@ function rebuildMenu() {
       }
     },
   });
+
+  // Open UI on local network (from another device)
+  const localIP = getLocalNetworkIP();
+  if (localIP) {
+    const networkURL = `http://${localIP}:${PORT}`;
+    items.push({
+      label: `Open on Network  (${networkURL})`,
+      enabled: serverReady,
+      click: () => shell.openExternal(networkURL),
+    });
+  }
 
   items.push({ type: 'separator' });
 
