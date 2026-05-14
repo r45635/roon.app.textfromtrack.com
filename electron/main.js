@@ -199,6 +199,47 @@ function startPolling() {
   if (!creditsTimer) creditsTimer = setInterval(pollCredits, POLL_CREDITS_MS);
 }
 
+// ── About dialog ─────────────────────────────────────────────────────────────
+function showAbout() {
+  const pkg = (() => { try { return require('../package.json'); } catch { return {}; } })();
+  const version = pkg.version || 'unknown';
+  // Build date: prefer the SOURCE_DATE_EPOCH env var injected by CI, else file mtime.
+  let releaseDate = '';
+  try {
+    const pkgPath = app.isPackaged
+      ? path.join(process.resourcesPath, 'app', 'package.json')
+      : path.join(__dirname, '..', 'package.json');
+    const mtime = fs.statSync(pkgPath).mtime;
+    releaseDate = mtime.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  } catch {}
+
+  dialog.showMessageBox({
+    type: 'info',
+    title: 'About TextFromTrack Roon Companion',
+    message: `TextFromTrack Roon Companion`,
+    detail: [
+      `Version: ${version}`,
+      releaseDate ? `Released: ${releaseDate}` : '',
+      '',
+      'GitHub: https://github.com/r45635/roon.app.textfromtrack.com',
+    ].filter(l => l !== undefined).join('\n'),
+    buttons: ['OK', 'Open GitHub'],
+    defaultId: 0,
+  }).then(({ response }) => {
+    if (response === 1) {
+      shell.openExternal('https://github.com/r45635/roon.app.textfromtrack.com');
+    }
+  });
+}
+
+// ── Help — open local user guide ─────────────────────────────────────────────
+function openHelp() {
+  const guidePath = app.isPackaged
+    ? path.join(process.resourcesPath, 'app', 'docs', 'user-guide.html')
+    : path.join(__dirname, '..', 'docs', 'user-guide.html');
+  shell.openPath(guidePath);
+}
+
 // ── Tray menu ────────────────────────────────────────────────────────────────
 function rebuildMenu() {
   if (!tray) return;
@@ -227,6 +268,19 @@ function rebuildMenu() {
         dialog.showMessageBox({ message: 'The server is still starting. Please wait a moment.' });
       }
     },
+  });
+
+  items.push({ type: 'separator' });
+
+  // Help & About
+  items.push({
+    label: 'Help — User Guide',
+    click: () => openHelp(),
+  });
+
+  items.push({
+    label: 'About TextFromTrack…',
+    click: () => showAbout(),
   });
 
   items.push({ type: 'separator' });

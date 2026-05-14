@@ -12,6 +12,7 @@ files:
   - "electron/**"
   - "src/**"
   - "client/dist/**"
+  - "docs/**"
   - "package.json"
   # Exclude runtime-mutable data files from the bundle — they live in userData.
   # Keep src/storage/userSettings.js (it's a required JS module, not data).
