@@ -54,6 +54,26 @@ app.use((err, req, res, _next) => {
 app.listen(config.port, () => {
   logger.info({ port: config.port, env: config.nodeEnv }, 'TextFromTrack Roon Companion started');
   logger.info(`Open http://localhost:${config.port}`);
+
+  // Advertise on the LAN via mDNS so Electron instances on other machines can
+  // discover this backend and offer to connect to it instead of starting their own.
+  try {
+    const { Bonjour } = require('bonjour-service');
+    const os = require('os');
+    const bonjour = new Bonjour();
+    bonjour.publish({
+      name: `TextFromTrack @ ${os.hostname()}`,
+      type: 'textfromtrack',
+      port: config.port,
+      txt: { hostname: os.hostname() },
+    });
+    logger.info({ port: config.port }, 'mDNS service advertised (_textfromtrack._tcp)');
+    const stopBonjour = () => { try { bonjour.destroy(); } catch {} };
+    process.once('SIGTERM', stopBonjour);
+    process.once('SIGINT',  stopBonjour);
+  } catch (err) {
+    logger.warn({ err: err.message }, 'mDNS advertisement skipped');
+  }
 });
 
 // Initialise Roon discovery (non-blocking)

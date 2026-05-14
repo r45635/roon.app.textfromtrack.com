@@ -17,6 +17,7 @@ const fs = require('fs');
 const os = require('os');
 const { spawn } = require('child_process');
 const http = require('http');
+const backendPrefs = require('./backendPrefs');
 
 // ── Keep the app alive in the tray when all windows are closed ──────────────
 app.on('window-all-closed', (e) => {
@@ -43,6 +44,10 @@ let serverReady = false;
 
 let roonLabel = 'Roon: connecting…';
 let creditsLabel = null; // null = TFT token not configured yet
+
+let backendMode = 'local'; // 'local' | 'remote'
+let activeBackendURL = UI_URL;
+let remoteDisplayName = null;
 
 // ── Resolve server entry point ───────────────────────────────────────────────
 // In a packaged asar build, __dirname is inside the asar. The server is
@@ -140,7 +145,7 @@ function waitForServer(attempt = 0) {
 // ── Polling: Roon status ─────────────────────────────────────────────────────
 function pollRoon() {
   if (!serverReady) return;
-  http.get(`${UI_URL}/api/roon/status`, (res) => {
+  http.get(`${activeBackendURL}/api/roon/status`, (res) => {
     let data = '';
     res.on('data', (c) => (data += c));
     res.on('end', () => {
@@ -167,7 +172,7 @@ function pollRoon() {
 // ── Polling: TFT credits ─────────────────────────────────────────────────────
 function pollCredits() {
   if (!serverReady) return;
-  http.get(`${UI_URL}/api/tft/me`, (res) => {
+  http.get(`${activeBackendURL}/api/tft/me`, (res) => {
     let data = '';
     res.on('data', (c) => (data += c));
     res.on('end', () => {
@@ -198,6 +203,154 @@ function startPolling() {
   pollCredits();
   if (!roonTimer) roonTimer = setInterval(pollRoon, POLL_ROON_MS);
   if (!creditsTimer) creditsTimer = setInterval(pollCredits, POLL_CREDITS_MS);
+}
+
+// ── Remote backend ping ───────────────────────────────────────────────────────
+function checkRemoteAlive(url) {
+  return new Promise((resolve) => {
+    const req = http.get(`${url}/api/roon/status`, { timeout: 3000 }, (res) => {
+      res.resume();
+      resolve(res.statusCode < 500);
+    });
+    req.on('error', () => resolve(false));
+    req.on('timeout', () => { req.destroy(); resolve(false); });
+  });
+}
+
+// ── mDNS backend discovery ────────────────────────────────────────────────────
+function scanForBackends(timeoutMs) {
+  return new Promise((resolve) => {
+    let Bonjour;
+    try { ({ Bonjour } = require('bonjour-service')); } catch { return resolve([]); }
+    const bonjour = new Bonjour();
+    const found = [];
+    const ownIP = getLocalNetworkIP();
+    bonjour.find({ type: 'textfromtrack' }, (service) => {
+      const ip = (service.addresses || []).find(a => /^\d+\.\d+\.\d+\.\d+$/.test(a));
+      if (!ip || ip === '127.0.0.1' || ip === ownIP) return;
+      const url = `http://${ip}:${service.port}`;
+      if (!found.find(f => f.url === url)) {
+        found.push({ url, displayName: `${service.name} (${ip}:${service.port})` });
+      }
+    });
+    setTimeout(() => {
+      try { bonjour.destroy(); } catch {}
+      resolve(found);
+    }, timeoutMs);
+  });
+}
+
+// ── Remote / local mode switching ─────────────────────────────────────────────
+function enterRemoteMode(url, displayName) {
+  if (roonTimer) { clearInterval(roonTimer); roonTimer = null; }
+  if (creditsTimer) { clearInterval(creditsTimer); creditsTimer = null; }
+  backendMode = 'remote';
+  activeBackendURL = url;
+  remoteDisplayName = displayName;
+  serverReady = true;
+  roonLabel = 'Connecting to remote…';
+  creditsLabel = null;
+  startPolling();
+  rebuildMenu();
+}
+
+function enterLocalMode() {
+  if (roonTimer) { clearInterval(roonTimer); roonTimer = null; }
+  if (creditsTimer) { clearInterval(creditsTimer); creditsTimer = null; }
+  backendMode = 'local';
+  activeBackendURL = UI_URL;
+  remoteDisplayName = null;
+  serverReady = false;
+  roonLabel = 'Roon: connecting…';
+  creditsLabel = null;
+  backendPrefs.write({ backendMode: 'local', remoteUrl: null, remoteDisplayName: null });
+  rebuildMenu();
+  startServer();
+}
+
+async function switchBackend() {
+  const found = await scanForBackends(3000);
+  if (found.length === 0) {
+    await dialog.showMessageBox({
+      type: 'info',
+      title: 'No backends found',
+      message: 'No TextFromTrack backends were found on the local network.',
+      detail: 'Make sure TextFromTrack is running on another machine on the same network.',
+      buttons: ['OK'],
+    });
+    return;
+  }
+  const localIdx = backendMode === 'remote' ? found.length + 1 : -1;
+  const buttons = [
+    'Cancel',
+    ...found.map(b => `Connect: ${b.displayName}`),
+    ...(backendMode === 'remote' ? ['Use Local Backend'] : []),
+  ];
+  const { response } = await dialog.showMessageBox({
+    type: 'question',
+    title: 'Switch Backend',
+    message: `Found ${found.length} backend${found.length > 1 ? 's' : ''} on your network`,
+    detail: found.map(b => `• ${b.displayName}`).join('\n') + '\n\nSelect a backend to connect to:',
+    buttons,
+    defaultId: 0,
+  });
+  if (response === 0) return;
+  if (backendMode === 'remote' && response === localIdx) { enterLocalMode(); return; }
+  const chosen = found[response - 1];
+  backendPrefs.write({ backendMode: 'remote', remoteUrl: chosen.url, remoteDisplayName: chosen.displayName });
+  if (backendMode === 'remote') {
+    activeBackendURL = chosen.url;
+    remoteDisplayName = chosen.displayName;
+    roonLabel = 'Connecting to remote…';
+    creditsLabel = null;
+    if (roonTimer) { clearInterval(roonTimer); roonTimer = null; }
+    if (creditsTimer) { clearInterval(creditsTimer); creditsTimer = null; }
+    startPolling();
+    rebuildMenu();
+  } else {
+    if (serverProcess) { serverProcess.kill(); serverProcess = null; }
+    enterRemoteMode(chosen.url, chosen.displayName);
+  }
+}
+
+async function initBackend() {
+  const prefs = backendPrefs.read();
+
+  // 1. Restore saved remote session if still alive
+  if (prefs.backendMode === 'remote' && prefs.remoteUrl) {
+    const alive = await checkRemoteAlive(prefs.remoteUrl);
+    if (alive) {
+      enterRemoteMode(prefs.remoteUrl, prefs.remoteDisplayName || prefs.remoteUrl);
+      return;
+    }
+    // Remote gone — fall through to scan
+  }
+
+  // 2. Scan LAN for other backends (skip if user explicitly chose local last time)
+  if (prefs.backendMode !== 'local') {
+    const found = await scanForBackends(3000);
+    if (found.length > 0) {
+      const { response } = await dialog.showMessageBox({
+        type: 'question',
+        title: 'TextFromTrack — Backend Found',
+        message: `Found ${found.length} TextFromTrack backend${found.length > 1 ? 's' : ''} on your network`,
+        detail: found.map(b => `• ${b.displayName}`).join('\n') + '\n\nConnect to a network backend, or start the local backend?',
+        buttons: ['Start Local Backend', ...found.map(b => `Connect: ${b.displayName}`)],
+        defaultId: 0,
+      });
+      if (response > 0) {
+        const chosen = found[response - 1];
+        backendPrefs.write({ backendMode: 'remote', remoteUrl: chosen.url, remoteDisplayName: chosen.displayName });
+        enterRemoteMode(chosen.url, chosen.displayName);
+        return;
+      }
+      // User chose local — remember so we skip scan next launch
+      backendPrefs.write({ backendMode: 'local', remoteUrl: null, remoteDisplayName: null });
+    }
+  }
+
+  // 3. Default: local backend
+  startServer();
 }
 
 // ── Local network IP ─────────────────────────────────────────────────────────
@@ -259,93 +412,99 @@ function rebuildMenu() {
   if (!tray) return;
 
   const items = [];
-
-  // Status items (non-clickable)
-  items.push({
-    label: serverReady ? roonLabel : 'Starting…',
-    enabled: false,
-  });
-
-  if (creditsLabel) {
-    items.push({ label: creditsLabel, enabled: false });
-  }
-
-  items.push({ type: 'separator' });
-
-  // Open UI (localhost)
-  items.push({
-    label: 'Open UI',
-    click: () => {
-      if (serverReady) {
-        shell.openExternal(UI_URL);
-      } else {
-        dialog.showMessageBox({ message: 'The server is still starting. Please wait a moment.' });
-      }
-    },
-  });
-
-  // Open UI on local network (from another device)
-  const localIP = getLocalNetworkIP();
-  if (localIP) {
-    const networkURL = `http://${localIP}:${PORT}`;
-    items.push({
-      label: `Open on Network  (${networkURL})`,
-      enabled: serverReady,
-      click: () => shell.openExternal(networkURL),
-    });
-    items.push({
-      label: 'Show QR Code for Phone…',
-      enabled: serverReady,
-      click: () => shell.openExternal(`http://localhost:${PORT}/api/qr`),
-    });
-  }
-
-  items.push({ type: 'separator' });
-
-  // Help & About
-  items.push({
-    label: 'Help — User Guide',
-    click: () => openHelp(),
-  });
-
-  items.push({
-    label: 'About TextFromTrack…',
-    click: () => showAbout(),
-  });
-
-  items.push({ type: 'separator' });
-
-  // Show log file
-  items.push({
-    label: 'Show Log File…',
-    click: () => {
-      const logPath = path.join(app.getPath('userData'), 'server.log');
-      shell.showItemInFinder ? shell.showItemInFinder(logPath) : shell.openPath(logPath);
-    },
-  });
-
-  items.push({ type: 'separator' });
-
-  // Start at login toggle
   const loginItem = app.getLoginItemSettings();
-  items.push({
-    label: 'Start at Login',
-    type: 'checkbox',
-    checked: loginItem.openAtLogin,
-    click: (menuItem) => {
-      app.setLoginItemSettings({ openAtLogin: menuItem.checked });
-    },
-  });
 
-  items.push({ type: 'separator' });
-
-  items.push({
-    label: 'Quit TextFromTrack',
-    click: () => {
-      if (serverProcess) serverProcess.kill();
-      app.exit(0);
-    },
-  });
+  if (backendMode === 'remote') {
+    // ── Remote mode ──────────────────────────────────────────────────────────
+    items.push({ label: `Remote: ${remoteDisplayName}`, enabled: false });
+    items.push({ label: serverReady ? roonLabel : 'Connecting…', enabled: false });
+    if (creditsLabel) items.push({ label: creditsLabel, enabled: false });
+    items.push({ type: 'separator' });
+    items.push({
+      label: 'Open Remote UI',
+      enabled: serverReady,
+      click: () => shell.openExternal(activeBackendURL),
+    });
+    items.push({
+      label: 'Switch Backend…',
+      click: () => switchBackend(),
+    });
+    items.push({
+      label: 'Use Local Backend',
+      click: () => enterLocalMode(),
+    });
+    items.push({ type: 'separator' });
+    items.push({ label: 'Help — User Guide', click: () => openHelp() });
+    items.push({ label: 'About TextFromTrack…', click: () => showAbout() });
+    items.push({ type: 'separator' });
+    items.push({
+      label: 'Start at Login',
+      type: 'checkbox',
+      checked: loginItem.openAtLogin,
+      click: (menuItem) => app.setLoginItemSettings({ openAtLogin: menuItem.checked }),
+    });
+    items.push({ type: 'separator' });
+    items.push({ label: 'Quit TextFromTrack', click: () => app.exit(0) });
+  } else {
+    // ── Local mode ───────────────────────────────────────────────────────────
+    items.push({ label: serverReady ? roonLabel : 'Starting…', enabled: false });
+    if (creditsLabel) items.push({ label: creditsLabel, enabled: false });
+    items.push({ type: 'separator' });
+    items.push({
+      label: 'Open UI',
+      click: () => {
+        if (serverReady) {
+          shell.openExternal(UI_URL);
+        } else {
+          dialog.showMessageBox({ message: 'The server is still starting. Please wait a moment.' });
+        }
+      },
+    });
+    const localIP = getLocalNetworkIP();
+    if (localIP) {
+      const networkURL = `http://${localIP}:${PORT}`;
+      items.push({
+        label: `Open on Network  (${networkURL})`,
+        enabled: serverReady,
+        click: () => shell.openExternal(networkURL),
+      });
+      items.push({
+        label: 'Show QR Code for Phone…',
+        enabled: serverReady,
+        click: () => shell.openExternal(`http://localhost:${PORT}/api/qr`),
+      });
+    }
+    items.push({
+      label: 'Switch Backend…',
+      click: () => switchBackend(),
+    });
+    items.push({ type: 'separator' });
+    items.push({ label: 'Help — User Guide', click: () => openHelp() });
+    items.push({ label: 'About TextFromTrack…', click: () => showAbout() });
+    items.push({ type: 'separator' });
+    items.push({
+      label: 'Show Log File…',
+      click: () => {
+        const logPath = path.join(app.getPath('userData'), 'server.log');
+        shell.showItemInFinder ? shell.showItemInFinder(logPath) : shell.openPath(logPath);
+      },
+    });
+    items.push({ type: 'separator' });
+    items.push({
+      label: 'Start at Login',
+      type: 'checkbox',
+      checked: loginItem.openAtLogin,
+      click: (menuItem) => app.setLoginItemSettings({ openAtLogin: menuItem.checked }),
+    });
+    items.push({ type: 'separator' });
+    items.push({
+      label: 'Quit TextFromTrack',
+      click: () => {
+        if (serverProcess) serverProcess.kill();
+        app.exit(0);
+      },
+    });
+  }
 
   tray.setContextMenu(Menu.buildFromTemplate(items));
 }
@@ -376,12 +535,12 @@ function createTray() {
 }
 
 // ── App lifecycle ─────────────────────────────────────────────────────────────
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // Hide from the macOS Dock — this is a tray-only app.
   if (app.dock) app.dock.hide();
 
   createTray();
-  startServer();
+  await initBackend();
 });
 
 app.on('before-quit', () => {
