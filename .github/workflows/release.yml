@@ -60,11 +60,16 @@ jobs:
         working-directory: client
         run: npm run build
 
-      - name: Build Electron — macOS
-        run: npx electron-builder --mac --publish never
+      # Build x64 and arm64 sequentially to avoid concurrent hdiutil calls that
+      # cause "hdiutil detach failed - No such file or directory" on GH runners.
+      - name: Build Electron — macOS (x64)
+        run: npx electron-builder --mac --x64 --publish never
         env:
-          # Skip codesigning on CI unless certificates are configured.
-          # Set CSC_LINK + CSC_KEY_PASSWORD secrets to enable notarization.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Build Electron — macOS (arm64)
+        run: npx electron-builder --mac --arm64 --publish never
+        env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
 
       - name: Upload macOS artifacts
