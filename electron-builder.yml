@@ -13,9 +13,10 @@ files:
   - "src/**"
   - "client/dist/**"
   - "package.json"
-  # config.json is gitignored and created at runtime by node-roon-api.
-  # Do NOT include it in the bundle.
-  - "!src/storage/**"
+  # Exclude runtime-mutable data files from the bundle — they live in userData.
+  # Keep src/storage/userSettings.js (it's a required JS module, not data).
+  - "!src/storage/*.json"
+  - "!src/storage/lrc-cache/**"
   # Exclude dev/test artefacts
   - "!tests/**"
   - "!scripts/**"
