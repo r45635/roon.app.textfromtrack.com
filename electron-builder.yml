@@ -33,10 +33,8 @@ directories:
 # ── macOS ────────────────────────────────────────────────────────────────────
 mac:
   target:
-    - target: dmg
-      arch: [x64, arm64]
-    - target: zip
-      arch: [x64, arm64]
+    - dmg
+    - zip
   icon: electron/assets/icon.png
   # Uncomment and fill in when you have an Apple Developer ID certificate:
   # identity: "Developer ID Application: Your Name (XXXXXXXXXX)"
