@@ -11,7 +11,7 @@
  * No BrowserWindow is created — the UI lives at http://localhost:3888.
  */
 
-const { app, Tray, Menu, shell, nativeImage, dialog } = require('electron');
+const { app, Tray, Menu, shell, nativeImage, dialog, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -240,6 +240,90 @@ function scanForBackends(timeoutMs) {
   });
 }
 
+// ── Simple text-prompt window ────────────────────────────────────────────────
+function showPromptWindow({ title, label, placeholder = '', defaultValue = '' }) {
+  return new Promise((resolve) => {
+    const win = new BrowserWindow({
+      width: 460, height: 165,
+      resizable: false, minimizable: false, maximizable: false, fullscreenable: false,
+      alwaysOnTop: true, title,
+      webPreferences: { nodeIntegration: true, contextIsolation: false },
+    });
+    win.setMenuBarVisibility(false);
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:20px;
+    background:#1c1c1e;color:#e5e5ea;margin:0;}
+  label{display:block;font-size:13px;margin-bottom:8px;color:#aeaeb2;}
+  input{width:100%;box-sizing:border-box;padding:7px 10px;border-radius:6px;
+    border:1px solid #3a3a3c;background:#2c2c2e;color:#fff;font-size:14px;outline:none;}
+  input:focus{border-color:#0a84ff;}
+  .row{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}
+  button{padding:6px 18px;border-radius:6px;border:none;font-size:13px;cursor:pointer;}
+  .cancel{background:#3a3a3c;color:#e5e5ea;}
+  .ok{background:#0a84ff;color:#fff;}
+</style></head><body>
+<label>${label}</label>
+<input id="val" type="text" value="${defaultValue.replace(/"/g, '&quot;')}" placeholder="${placeholder.replace(/"/g, '&quot;')}" autofocus>
+<div class="row">
+  <button class="cancel" onclick="cancel()">Cancel</button>
+  <button class="ok" onclick="submit()">Connect</button>
+</div>
+<script>
+  const {ipcRenderer}=require('electron');
+  const inp=document.getElementById('val'); inp.select();
+  function submit(){ipcRenderer.send('prompt-result',inp.value.trim());}
+  function cancel(){ipcRenderer.send('prompt-result',null);}
+  document.addEventListener('keydown',e=>{if(e.key==='Enter')submit();if(e.key==='Escape')cancel();});
+<\/script></body></html>`;
+    win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+    const handler = (_e, value) => { ipcMain.removeListener('prompt-result', handler); win.close(); resolve(value); };
+    ipcMain.once('prompt-result', handler);
+    win.on('closed', () => { ipcMain.removeListener('prompt-result', handler); resolve(null); });
+  });
+}
+
+// ── Manual IP connection ──────────────────────────────────────────────────────
+async function connectToIPManually() {
+  const raw = await showPromptWindow({
+    title: 'Connect to Backend',
+    label: 'IP address of the TextFromTrack backend (e.g. 192.168.1.100 or 192.168.1.100:3888):',
+    placeholder: '192.168.1.100',
+  });
+  if (!raw) return;
+  let url = raw.startsWith('http') ? raw : `http://${raw}`;
+  if (!/:\d+$/.test(url)) url += `:${PORT}`;
+  url = url.replace(/\/$/, '');
+
+  const alive = await checkRemoteAlive(url);
+  if (!alive) {
+    await dialog.showMessageBox({
+      type: 'error',
+      title: 'Cannot Reach Backend',
+      message: `Cannot connect to ${url}`,
+      detail: 'Make sure TextFromTrack is running on that machine and port 3888 is reachable.\n\nOn Windows, check that the firewall allows inbound connections on port 3888.',
+      buttons: ['OK'],
+    });
+    return;
+  }
+  const displayName = raw;
+  backendPrefs.write({ backendMode: 'remote', remoteUrl: url, remoteDisplayName: displayName });
+  if (backendMode === 'remote') {
+    activeBackendURL = url;
+    remoteDisplayName = displayName;
+    roonLabel = 'Connecting to remote…';
+    creditsLabel = null;
+    if (roonTimer) { clearInterval(roonTimer); roonTimer = null; }
+    if (creditsTimer) { clearInterval(creditsTimer); creditsTimer = null; }
+    startPolling();
+    rebuildMenu();
+  } else {
+    if (serverProcess) { serverProcess.kill(); serverProcess = null; }
+    enterRemoteMode(url, displayName);
+  }
+  shell.openExternal(url);
+}
+
 // ── Remote / local mode switching ─────────────────────────────────────────────
 function enterRemoteMode(url, displayName) {
   if (roonTimer) { clearInterval(roonTimer); roonTimer = null; }
@@ -271,19 +355,23 @@ function enterLocalMode() {
 async function switchBackend() {
   const found = await scanForBackends(3000);
   if (found.length === 0) {
-    await dialog.showMessageBox({
+    const { response: noFoundResp } = await dialog.showMessageBox({
       type: 'info',
-      title: 'No backends found',
+      title: 'No Backends Found',
       message: 'No TextFromTrack backends were found on the local network.',
-      detail: 'Make sure TextFromTrack is running on another machine on the same network.',
-      buttons: ['OK'],
+      detail: 'mDNS discovery may be blocked by a firewall (common on Windows).\nYou can connect manually by entering the IP address of the machine running TextFromTrack.',
+      buttons: ['Cancel', 'Enter IP Manually…'],
+      defaultId: 1,
     });
+    if (noFoundResp === 1) await connectToIPManually();
     return;
   }
-  const localIdx = backendMode === 'remote' ? found.length + 1 : -1;
+  const manualIdx = found.length + 1;
+  const localIdx = backendMode === 'remote' ? found.length + 2 : -1;
   const buttons = [
     'Cancel',
     ...found.map(b => `Connect: ${b.displayName}`),
+    'Enter IP Manually…',
     ...(backendMode === 'remote' ? ['Use Local Backend'] : []),
   ];
   const { response } = await dialog.showMessageBox({
@@ -292,9 +380,10 @@ async function switchBackend() {
     message: `Found ${found.length} backend${found.length > 1 ? 's' : ''} on your network`,
     detail: found.map(b => `• ${b.displayName}`).join('\n') + '\n\nSelect a backend to connect to:',
     buttons,
-    defaultId: 0,
+    defaultId: 1,
   });
   if (response === 0) return;
+  if (response === manualIdx) { await connectToIPManually(); return; }
   if (backendMode === 'remote' && response === localIdx) { enterLocalMode(); return; }
   const chosen = found[response - 1];
   backendPrefs.write({ backendMode: 'remote', remoteUrl: chosen.url, remoteDisplayName: chosen.displayName });
@@ -460,6 +549,10 @@ function rebuildMenu() {
       click: () => switchBackend(),
     });
     items.push({
+      label: 'Connect to IP…',
+      click: () => connectToIPManually(),
+    });
+    items.push({
       label: 'Use Local Backend',
       click: () => enterLocalMode(),
     });
@@ -507,6 +600,10 @@ function rebuildMenu() {
     items.push({
       label: 'Switch Backend…',
       click: () => switchBackend(),
+    });
+    items.push({
+      label: 'Connect to IP…',
+      click: () => connectToIPManually(),
     });
     items.push({ type: 'separator' });
     items.push({ label: 'Help — User Guide', click: () => openHelp() });

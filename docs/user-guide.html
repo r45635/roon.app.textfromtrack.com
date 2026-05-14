@@ -1176,7 +1176,8 @@
         <tbody>
           <tr><td>Remote: [machine name]</td><td>Status label — shows which backend you are connected to (non-clickable).</td></tr>
           <tr><td>Open Remote UI</td><td>Opens the remote backend's web interface in your default browser.</td></tr>
-          <tr><td>Switch Backend…</td><td>Re-scans the LAN for 3 seconds and shows a dialog to pick a different backend or stay on the current one.</td></tr>
+          <tr><td>Switch Backend…</td><td>Re-scans the LAN for 3 seconds and shows a dialog to pick a different backend or stay on the current one. Also offers <strong>Enter IP Manually…</strong> if mDNS discovery fails (common on Windows).</td></tr>
+          <tr><td>Connect to IP…</td><td>Opens a dialog to type an IP address directly — use this on Windows where mDNS is often blocked by the firewall. The app pings the address first to verify it's reachable.</td></tr>
           <tr><td>Use Local Backend</td><td>Disconnects from the remote backend, starts the local server, and opens the local UI. Clears the saved remote preference.</td></tr>
         </tbody>
       </table>
@@ -1188,7 +1189,8 @@
           <tr><td>Open UI</td><td>Opens the local web interface (<code>http://localhost:3888</code>) in your default browser.</td></tr>
           <tr><td>Open on Network</td><td>Opens the LAN-accessible URL (<code>http://[local-IP]:3888</code>) — useful for sharing the link with other devices.</td></tr>
           <tr><td>Show QR Code for Phone…</td><td>Displays a scannable QR code pointing to the local LAN URL — scan with your phone to open the UI instantly.</td></tr>
-          <tr><td>Switch Backend…</td><td>Scans the LAN and offers to connect to a discovered remote backend.</td></tr>
+          <tr><td>Switch Backend…</td><td>Scans the LAN and offers to connect to a discovered remote backend, or to enter an IP manually.</td></tr>
+          <tr><td>Connect to IP…</td><td>Opens a dialog to type an IP address directly — the primary method on Windows where mDNS is often blocked. The app pings the address first to verify it's reachable before connecting.</td></tr>
           <tr><td>About TextFromTrack…</td><td>Shows app version, release date, Electron and server RAM usage, userData disk size, and LRC cache stats.</td></tr>
         </tbody>
       </table>
