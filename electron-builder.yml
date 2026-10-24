@@ -7,6 +7,9 @@ copyright: Copyright © 2026 TextFromTrack
 # a separately spawned Node.js process cannot read from them.
 asar: false
 
+# Unique Mach-O UUIDs on macOS — required for Local Network privacy (see script).
+afterPack: scripts/after-pack-unique-uuid.js
+
 # ── Source files to bundle ───────────────────────────────────────────────────
 files:
   - "electron/**"
