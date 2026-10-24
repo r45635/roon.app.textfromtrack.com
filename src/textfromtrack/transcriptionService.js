@@ -161,7 +161,7 @@ async function _downloadAndSave(jobId, sourcePath, lrcPath, remoteJob, embed = f
   }
 
   // Count segments from content
-  const segmentCount = (lrcContent.match(/^\[[\d:\.]+\]/gm) || []).length;
+  const segmentCount = (lrcContent.match(/^\[[\d:.]+\]/gm) || []).length;
 
   // Detect whether timestamps are real or all-zero (fallback model).
   // TFT v1.7+ exposes `has_timestamps` explicitly on GET /segments — that's
@@ -309,7 +309,7 @@ async function startTranscription(sourcePath, trackMeta = {}, options = {}) {
         timestamps_mode: null,
         credits_quoted: 0,
         credits_charged: 0,
-        segment_count: (cached.match(/^\[[\d:\.]+\]/gm) || []).length,
+        segment_count: (cached.match(/^\[[\d:.]+\]/gm) || []).length,
         created_at: new Date().toISOString(),
         completed_at: new Date().toISOString(),
         has_timestamps: !cached.includes('--- Timestamps not available for this model ---'),
@@ -357,12 +357,7 @@ async function startTranscription(sourcePath, trackMeta = {}, options = {}) {
   }
 
   // 4. Check credit balance
-  let me;
-  try {
-    me = await tftClient.getMe();
-  } catch (err) {
-    throw err; // propagate auth/network errors
-  }
+  const me = await tftClient.getMe(); // auth/network errors propagate
   // credit_available = credit_balance - credit_reserved (held by in-flight TFT jobs)
   // Fall back to credit_balance if the API doesn't provide credit_available.
   const spendable = me.credit_available ?? me.credit_balance;

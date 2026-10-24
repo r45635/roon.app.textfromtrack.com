@@ -115,7 +115,7 @@ function normalizeArtist(str) {
 
 // Match common edition/remaster suffixes inside trailing parentheses or brackets.
 // Only removes the trailing parenthetical — leaves the base album title intact.
-const _ALBUM_SUFFIX_RE = /\s*[\(\[]\s*(?:remaster(?:ed)?(?:\s+\d{4})?|live|deluxe(?:\s+edition)?|expanded(?:\s+edition)?|anniversary(?:\s+edition)?|special(?:\s+edition)?|super\s+deluxe|bonus\s+tracks?(?:\s+version)?|explicit(?:\s+(?:version|content))?)\s*[\)\]]\s*$/i;
+const _ALBUM_SUFFIX_RE = /\s*[([]\s*(?:remaster(?:ed)?(?:\s+\d{4})?|live|deluxe(?:\s+edition)?|expanded(?:\s+edition)?|anniversary(?:\s+edition)?|special(?:\s+edition)?|super\s+deluxe|bonus\s+tracks?(?:\s+version)?|explicit(?:\s+(?:version|content))?)\s*[)\]]\s*$/i;
 
 /**
  * Normalise an album string for matching:

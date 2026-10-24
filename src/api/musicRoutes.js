@@ -17,7 +17,6 @@ const nowPlayingStore = require('../roon/nowPlayingStore');
 const { getRoonStatus } = require('../roon/roonClient');
 const userSettings = require('../storage/userSettings');
 const lrcCache = require('../utils/lrcCache');
-const jobStore = require('../textfromtrack/jobStore');
 
 const router = Router();
 

@@ -61,14 +61,21 @@ app.listen(config.port, () => {
     const { Bonjour } = require('bonjour-service');
     const os = require('os');
     const bonjour = new Bonjour();
-    bonjour.publish({
+    const service = bonjour.publish({
       name: `TextFromTrack @ ${os.hostname()}`,
       type: 'textfromtrack',
       port: config.port,
       txt: { hostname: os.hostname() },
     });
+    // e.g. a second instance on the same host — not fatal, the backend still serves
+    service.on('error', (err) => logger.warn({ err: err.message }, 'mDNS advertisement failed'));
     logger.info({ port: config.port }, 'mDNS service advertised (_textfromtrack._tcp)');
-    const stopBonjour = () => { try { bonjour.destroy(); } catch {} };
+    // A signal listener replaces Node's default exit, so exit explicitly —
+    // otherwise SIGTERM (Electron quit, docker stop) leaves the backend running.
+    const stopBonjour = () => {
+      try { bonjour.destroy(); } catch {}
+      process.exit(0);
+    };
     process.once('SIGTERM', stopBonjour);
     process.once('SIGINT',  stopBonjour);
   } catch (err) {

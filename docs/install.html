@@ -707,7 +707,12 @@ sudo apt-get install -f</code></pre>
 <span class="comment"># 1. Comment out network_mode: host</span>
 <span class="comment"># 2. Uncomment the ports block</span>
 <span class="comment"># 3. Set the IP of your Roon Core machine</span>
-ROON_CORE_HOST: 192.168.1.10   <span class="comment"># ← replace with your Roon Core IP</span></code></pre>
+ROON_CORE_HOST: 192.168.1.10   <span class="comment"># ← replace with your Roon Core IP</span>
+<span class="comment"># ROON_CORE_PORT: 9330         # default; only change it for a legacy Roon 1.x Core (9100)</span></code></pre>
+    <p style="font-size:13px;color:var(--tft-ink-2);margin-bottom:12px">
+      If the extension does not appear in Roon, check the container logs:
+      <code>Roon direct connect failed</code> means the Core is not reachable at that IP/port.
+    </p>
 
     <h3 style="font-size:14px;font-weight:700;color:var(--tft-ink);margin:24px 0 12px">Updating to a new version</h3>
     <pre><code>docker compose pull

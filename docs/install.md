@@ -161,7 +161,10 @@ Docker Desktop does not support `network_mode: host`, so Roon's automatic extens
 # 2. Uncomment the ports block
 # 3. Set the IP of your Roon Core machine
 ROON_CORE_HOST: 192.168.1.10   # ← replace with your Roon Core IP
+# ROON_CORE_PORT: 9330         # default; only change it for a legacy Roon 1.x Core (9100)
 ```
+
+If the extension does not appear in Roon, check the container logs: `Roon direct connect failed` means the Core is not reachable at that IP/port.
 
 ### Updating to a new version
 

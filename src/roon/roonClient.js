@@ -166,6 +166,39 @@ function _handleZonesSeekChanged(seekChanges) {
   if (dirty) _refreshActiveZone();
 }
 
+// ─── Direct connect (ROON_CORE_HOST) ──────────────────────────────────────────
+
+const DIRECT_RETRY_MS = 10000;
+let _directRetryTimer = null;
+
+/**
+ * Connect straight to the Core's extension WebSocket, bypassing Sood discovery.
+ * A refused connection only fires onerror (never onclose), and a lost one fires
+ * onclose — both schedule a single retry.
+ */
+function _directConnect() {
+  const host = config.roonCoreHost;
+  const port = config.roonCorePort;
+  logger.info({ host, port }, 'Roon direct connect — connecting to Roon Core');
+
+  const retry = (reason) => {
+    if (_directRetryTimer) return;
+    logger.warn({ host, port, reason, retry_in_ms: DIRECT_RETRY_MS }, 'Roon direct connect failed — check ROON_CORE_HOST / ROON_CORE_PORT');
+    if (_svcStatus) _svcStatus.set_status(`Cannot reach Roon Core at ${host}:${port}`, true);
+    _directRetryTimer = setTimeout(() => {
+      _directRetryTimer = null;
+      _directConnect();
+    }, DIRECT_RETRY_MS);
+  };
+
+  _roon.ws_connect({
+    host,
+    port,
+    onerror: () => retry('websocket error'),
+    onclose: () => retry('connection closed'),
+  });
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 /**
@@ -241,8 +274,7 @@ function startRoon() {
   _svcStatus.set_status('Waiting for Roon...', false);
 
   if (config.roonCoreHost) {
-    _roon.ws_connect({ host: config.roonCoreHost, port: 9100 });
-    logger.info({ host: config.roonCoreHost }, 'Roon direct connect — authorize the extension in Roon > Settings > Extensions');
+    _directConnect();
   } else {
     _roon.start_discovery();
     logger.info('Roon discovery started — authorize the extension in Roon > Settings > Extensions');

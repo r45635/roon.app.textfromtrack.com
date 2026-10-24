@@ -4,7 +4,6 @@
 require('dotenv').config();
 
 const config = require('../src/config');
-const logger = require('../src/utils/logger');
 const scanner = require('../src/music/scanner');
 
 async function main() {

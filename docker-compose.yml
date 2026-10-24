@@ -59,6 +59,8 @@ services:
       # setting this bypasses discovery and connects directly via WebSocket.
       # Example: ROON_CORE_HOST: 192.168.1.10
       ROON_CORE_HOST: ""
+      # Roon Core extension port (Roon 2.x: 9330; legacy 1.x cores: 9100).
+      # ROON_CORE_PORT: 9330
 
       # Path mappings: translate Roon's view of a file path to the local path.
       # Useful when Roon sees SMB/NFS paths that differ from /music inside Docker.

@@ -313,7 +313,7 @@ router.post('/save', async (req, res) => {
 
     // Create a job record so this appears in Job History
     const { randomUUID } = require('crypto');
-    const segmentCount = (lrc_content.match(/^\[[\d:\.]+\]/gm) || []).length;
+    const segmentCount = (lrc_content.match(/^\[[\d:.]+\]/gm) || []).length;
     const hasTimestamps = segmentCount > 0;
     const lrclibJob = {
       job_id: randomUUID(),
