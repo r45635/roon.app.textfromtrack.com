@@ -77,7 +77,8 @@ linux:
   icon: electron/assets/icon.png
   category: AudioVideo
   desktop:
-    StartupNotify: false
+    entry:
+      StartupNotify: "false"
 
 # ── Auto-update: publish to GitHub Releases ──────────────────────────────────
 publish:
