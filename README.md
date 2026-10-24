@@ -340,7 +340,7 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - LRC cache layer — avoids redundant TFT downloads for previously-processed tracks
 - `save_lrc_beside_source` option configurable as a per-operation default
 
-#### v0.3.16 ✓ — Roon 2.x and macOS fixes
+#### v0.3.17 ✓ — Roon 2.x and macOS fixes
 - Direct connect uses Roon 2.x's port `9330` (`ROON_CORE_PORT`), with retries and explicit errors
 - Discovery retries a Core whose first connection failed (it was ignored until restart)
 - Backend exits on SIGTERM (no orphan after quitting the app, fast `docker stop`)

@@ -58,7 +58,7 @@ All builds are published automatically from the [GitHub Releases page](https://g
 4. **Allow local network access** — macOS asks *"Allow TextFromTrack Companion to find devices on local networks?"*. Click **Allow**: the app needs it to reach your Roon Core. If you dismissed it, enable the app in *System Settings → Privacy & Security → Local Network*.
 5. **Find it in the menu bar** — The app runs as a tray icon in the macOS menu bar (top-right). Click it to open the context menu.
 
-> ⚠️ **"Malware Blocked" with v0.3.13 – v0.3.15 on Apple Silicon?** Those builds shipped Electron 31.7.7's stock executable, which Apple has since revoked (malware reused it), so macOS blocks them. The app itself is not affected — **install v0.3.16 or later**, which is signed on its own, and delete the old copy.
+> ⚠️ **"Malware Blocked" with v0.3.13 – v0.3.15 on Apple Silicon?** Those builds shipped Electron 31.7.7's stock executable, which Apple has since revoked (malware reused it), so macOS blocks them. The app itself is not affected — **install v0.3.17 or later**, which is signed on its own, and delete the old copy.
 
 > ⚠️ **"Damaged and can't be opened"?** Run:
 > ```bash
