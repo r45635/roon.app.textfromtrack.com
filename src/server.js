@@ -65,6 +65,10 @@ app.listen(config.port, () => {
       name: `TextFromTrack @ ${os.hostname()}`,
       type: 'textfromtrack',
       port: config.port,
+      // Own host name for our A/AAAA records: by default bonjour-service
+      // announces os.hostname(), which macOS's mDNSResponder already owns —
+      // it sees a conflict and renames the Mac (Name-2, Name-3…) at every start.
+      host: `tft-${os.hostname().replace(/\.local$/i, '')}.local`,
       txt: { hostname: os.hostname() },
     });
     // e.g. a second instance on the same host — not fatal, the backend still serves

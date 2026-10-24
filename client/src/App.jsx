@@ -434,6 +434,16 @@ export default function App() {
       {/* ── 2-column main ───────────────────────────────────────────────────── */}
       <main className="tft-main">
 
+        {roonStatus?.local_network_blocked && (
+          <div className="alert alert-warning tft-lan-blocked">
+            <strong>{t('roon.lan_blocked_title')}</strong>
+            <div>{t('roon.lan_blocked_body', { host: roonStatus.last_connect_error?.host || '?' })}</div>
+            <button className="btn btn-secondary" onClick={() => fetch('/api/roon/open-local-network-settings', { method: 'POST' })}>
+              {t('roon.lan_blocked_open')}
+            </button>
+          </div>
+        )}
+
         {/* Hero column: Zone bar + HeroCard + JobHistory */}
         <div className="tft-hero-col">
           {/* Zone bar */}

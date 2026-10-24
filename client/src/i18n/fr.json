@@ -30,7 +30,10 @@
     "no_zone": "Aucune zone active",
     "authorize_prompt": "Ouvrir Roon → Paramètres → Extensions et activer",
     "authorize_extension": "\"TextFromTrack Roon Companion\"",
-    "core_name": "Core"
+    "core_name": "Core",
+    "lan_blocked_title": "macOS bloque l'accès au réseau local",
+    "lan_blocked_body": "Le Roon Core a été trouvé ({{host}}), mais macOS n'autorise pas TextFromTrack Companion à s'y connecter. Activez l'app dans Réglages Système → Confidentialité et sécurité → Réseau local : elle se reconnecte en 10 secondes.",
+    "lan_blocked_open": "Ouvrir les réglages Réseau local"
   },
   "now_playing": {
     "no_track": "Aucune piste en cours de lecture",

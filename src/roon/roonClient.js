@@ -1,5 +1,7 @@
 'use strict';
 
+const net = require('net');
+
 const RoonApi = require('node-roon-api');
 const RoonApiTransport = require('node-roon-api-transport');
 const RoonApiBrowse = require('node-roon-api-browse');
@@ -166,6 +168,30 @@ function _handleZonesSeekChanged(seekChanges) {
   if (dirty) _refreshActiveZone();
 }
 
+// ─── Connection diagnostics ───────────────────────────────────────────────────
+
+// node-roon-api drops the socket error ("ERROR undefined"), so a failed Core
+// connection is re-probed with a plain TCP connect to learn why.
+let _lastConnectError = null; // { host, port, code, at }
+let _probeInFlight = false;
+
+function _probeCore(host, port) {
+  if (_probeInFlight || !host || !port) return;
+  _probeInFlight = true;
+  const sock = net.connect({ host, port: Number(port) });
+  sock.setTimeout(3000);
+  const done = (code) => {
+    _probeInFlight = false;
+    sock.destroy();
+    if (_connected) return;
+    _lastConnectError = { host, port: Number(port), code: code || 'WEBSOCKET_FAILED', at: new Date().toISOString() };
+    logger.warn(_lastConnectError, 'Roon Core connection probe');
+  };
+  sock.once('connect', () => done(null));
+  sock.once('timeout', () => done('ETIMEDOUT'));
+  sock.once('error', (err) => done(err.code));
+}
+
 // ─── Direct connect (ROON_CORE_HOST) ──────────────────────────────────────────
 
 const DIRECT_RETRY_MS = 10000;
@@ -183,6 +209,7 @@ function _directConnect() {
 
   const retry = (reason) => {
     if (_directRetryTimer) return;
+    _probeCore(host, port);
     logger.warn({ host, port, reason, retry_in_ms: DIRECT_RETRY_MS }, 'Roon direct connect failed — check ROON_CORE_HOST / ROON_CORE_PORT');
     if (_svcStatus) _svcStatus.set_status(`Cannot reach Roon Core at ${host}:${port}`, true);
     _directRetryTimer = setTimeout(() => {
@@ -224,6 +251,7 @@ function startRoon() {
       for (const [id, conn] of Object.entries(conns)) {
         if (conn === moo) {
           delete conns[id];
+          _probeCore(moo.transport && moo.transport.host, moo.transport && moo.transport.port);
           logger.warn({ core_id: id }, 'Roon connection to discovered Core failed — retrying on next scan');
         }
       }
@@ -237,6 +265,7 @@ function startRoon() {
       _authorized = true;
       _coreName = core.display_name;
       _coreVersion = core.display_version;
+      _lastConnectError = null;
 
       // Capture Roon HTTP server for image proxy.
       // core.moo.transport.host is the actual IP used to connect to this Core
@@ -307,6 +336,11 @@ function getRoonStatus() {
     core_name: _coreName,
     core_version: _coreVersion,
     zone_count: _zones.size,
+    last_connect_error: _connected ? null : _lastConnectError,
+    // macOS Local Network privacy denies LAN sockets with EHOSTUNREACH ("No route
+    // to host") — for a Core that just answered on Sood, that is the tell.
+    local_network_blocked: !_connected && process.platform === 'darwin'
+      && _lastConnectError?.code === 'EHOSTUNREACH',
   };
 }
 

@@ -1,5 +1,6 @@
 'use strict';
 
+const { execFile } = require('child_process');
 const { Router } = require('express');
 const {
   getRoonStatus, getImageBase,
@@ -14,6 +15,8 @@ const {
 const nowPlayingStore = require('../roon/nowPlayingStore');
 const { E, buildError } = require('../utils/normalize');
 
+const LOCAL_NETWORK_SETTINGS_URL = 'x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork';
+
 const router = Router();
 
 /**
@@ -23,6 +26,21 @@ const router = Router();
 router.get('/status', (req, res) => {
   const status = getRoonStatus();
   res.json({ success: true, ...status });
+});
+
+/**
+ * POST /api/roon/open-local-network-settings
+ * macOS only: opens System Settings → Privacy & Security → Local Network on the
+ * machine running the backend (the one that needs the permission).
+ */
+router.post('/open-local-network-settings', (req, res) => {
+  if (process.platform !== 'darwin') {
+    return res.status(400).json(buildError('NOT_MACOS', 'Local Network privacy settings exist only on macOS'));
+  }
+  execFile('open', [LOCAL_NETWORK_SETTINGS_URL], (err) => {
+    if (err) return res.status(500).json(buildError('OPEN_FAILED', err.message));
+    res.json({ success: true });
+  });
 });
 
 /**
