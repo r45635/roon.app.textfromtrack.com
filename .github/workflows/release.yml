@@ -161,6 +161,9 @@ jobs:
     name: Build — Docker image
     runs-on: ubuntu-latest
     continue-on-error: true
+    # The emulated arm64 build sometimes hangs (v0.3.14: 1h23, v0.3.17: 38 min+);
+    # a normal build takes ~3 min — fail fast and rerun the job instead.
+    timeout-minutes: 20
     env:
       DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USERNAME }}
     steps:
