@@ -67,7 +67,7 @@ dmg:
 win:
   target:
     - target: nsis
-      arch: [x64, ia32]
+      arch: [x64]   # Electron 44 ships no win32-ia32 build
     - target: portable
       arch: [x64]
   icon: electron/assets/icon.png
