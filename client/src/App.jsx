@@ -41,8 +41,10 @@ export default function App() {
   async function apiFetch(endpoint) {
     try {
       const res = await fetch(endpoint);
-      // 502/503/504 = proxy/gateway error — backend process is down
-      if (res.status === 502 || res.status === 503 || res.status === 504) {
+      // 502/503/504 without our JSON envelope = proxy/gateway error — backend process is down.
+      // The backend itself answers 503 + JSON (e.g. ROON_NOT_CONNECTED): it is online.
+      const fromBackend = (res.headers.get('content-type') || '').includes('application/json');
+      if (!fromBackend && (res.status === 502 || res.status === 503 || res.status === 504)) {
         setBackendOnline(false);
         backendOnlineRef.current = false;
         return null;
