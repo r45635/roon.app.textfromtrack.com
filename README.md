@@ -95,6 +95,8 @@ roon.app.textfromtrack.com/
 
 ### Development setup
 
+Requires Node.js 22+.
+
 ```bash
 git clone https://github.com/r45635/roon.app.textfromtrack.com.git
 cd roon.app.textfromtrack.com
@@ -116,6 +118,14 @@ npm run dev:client
 npm run build   # builds client/dist/
 npm start       # Express serves API + static frontend at :3888
 ```
+
+```bash
+# Electron app
+npm run electron:dev
+npx electron-builder --mac --arm64 --dir   # packaged app in dist/, ad-hoc signed
+```
+
+> Shells inside VS Code (and other Electron hosts) export `ELECTRON_RUN_AS_NODE=1`: Electron then runs as plain Node (`app` is undefined, the packaged app exits silently). Prefix with `env -u ELECTRON_RUN_AS_NODE`.
 
 ---
 
@@ -297,6 +307,8 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 
 - **No authentication.** The app should only be exposed on `localhost` or a trusted local network.
 
+- **macOS builds are ad-hoc signed, not notarized.** First launch needs *Open Anyway* in *Privacy & Security*, and the app needs *Local Network* access to reach Roon. Builds must stay signed on their own: unsigned Electron apps share Electron's stock cdhash, and Apple revoked Electron 31.7.7's — v0.3.13–0.3.15 were blocked as "Malware" on Apple Silicon.
+
 ---
 
 ### Roadmap
@@ -327,6 +339,12 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - TFT webhook integration — HMAC-SHA256 verified, auto-registered on startup when `WEBHOOK_BASE_URL` is set
 - LRC cache layer — avoids redundant TFT downloads for previously-processed tracks
 - `save_lrc_beside_source` option configurable as a per-operation default
+
+#### v0.3.16 ✓ — Roon 2.x and macOS fixes
+- Direct connect uses Roon 2.x's port `9330` (`ROON_CORE_PORT`), with retries and explicit errors
+- Discovery retries a Core whose first connection failed (it was ignored until restart)
+- Backend exits on SIGTERM (no orphan after quitting the app, fast `docker stop`)
+- Electron 44, ad-hoc signed macOS bundle, Local Network usage declared; Node 22
 
 #### Upcoming
 

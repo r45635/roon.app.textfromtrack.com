@@ -26,7 +26,7 @@ All builds are published automatically from the [GitHub Releases page](https://g
 
 | Platform | Format | Notes |
 |---|---|---|
-| **macOS** | `.dmg` / `.zip` | macOS 11 Big Sur or later · Universal (Apple Silicon + Intel) |
+| **macOS** | `.dmg` / `.zip` | macOS 11 Big Sur or later · Apple Silicon (`-arm64.dmg`) or Intel (`.dmg`) |
 | **Windows** | `.exe` installer / portable `.zip` | Windows 10 or later · x64 |
 | **Linux** | `.AppImage` / `.deb` | x86_64 · Debian/Ubuntu |
 
@@ -54,10 +54,13 @@ All builds are published automatically from the [GitHub Releases page](https://g
 
 1. **Open the `.dmg`** — Double-click the downloaded `.dmg` file. A Finder window opens.
 2. **Drag to Applications** — Drag **TextFromTrack Companion.app** into the **Applications** folder shortcut shown in the window.
-3. **First launch — bypass Gatekeeper** — Since the app is not yet notarized, macOS may block it on first launch. Right-click (or Control-click) the app in *Applications* → **Open** → confirm *Open* in the dialog. You only need to do this once.
-4. **Find it in the menu bar** — The app runs as a tray icon in the macOS menu bar (top-right). Click it to open the context menu.
+3. **First launch — allow the app (Gatekeeper)** — The app is not notarized by Apple yet, so macOS blocks the first launch with *"Apple could not verify…"*. Click **Done**, then open *System Settings → Privacy & Security*, scroll down and click **Open Anyway** next to *TextFromTrack Companion*. (On macOS 14 and earlier, right-click the app → **Open** also works.) You only need to do this once.
+4. **Allow local network access** — macOS asks *"Allow TextFromTrack Companion to find devices on local networks?"*. Click **Allow**: the app needs it to reach your Roon Core. If you dismissed it, enable the app in *System Settings → Privacy & Security → Local Network*.
+5. **Find it in the menu bar** — The app runs as a tray icon in the macOS menu bar (top-right). Click it to open the context menu.
 
-> ⚠️ **Apple Silicon — "damaged and can't be opened"?** Run:
+> ⚠️ **"Malware Blocked" with v0.3.13 – v0.3.15 on Apple Silicon?** Those builds shipped Electron 31.7.7's stock executable, which Apple has since revoked (malware reused it), so macOS blocks them. The app itself is not affected — **install v0.3.16 or later**, which is signed on its own, and delete the old copy.
+
+> ⚠️ **"Damaged and can't be opened"?** Run:
 > ```bash
 > xattr -cr /Applications/TextFromTrack\ Companion.app
 > ```
@@ -304,6 +307,14 @@ Ensure Roon Core and the companion are on the same local network subnet. Go to R
 
 ---
 
+**The extension never appears in Roon (macOS)**
+
+If the server log shows *"Roon connection to discovered Core failed — retrying on next scan"*, macOS is blocking local network access: enable *TextFromTrack Companion* in *System Settings → Privacy & Security → Local Network*. The app reconnects within 10 seconds.
+
+With Docker and `ROON_CORE_HOST`, *"Roon direct connect failed"* means the Core is not reachable at that IP/port — Roon 2.x listens on `9330` (`ROON_CORE_PORT`).
+
+---
+
 **My music files aren't found after scanning**
 
 Check that the path in *Settings → Music Library* points to the **exact location on this machine**. If Roon sees files over SMB but the companion runs on a different machine, add a Path Mapping in settings (e.g. `smb://NAS/Music` → `/Volumes/Music`).
@@ -319,9 +330,9 @@ For the Electron app, edit the `.env` file in the app's user-data folder and set
 **Where are settings and logs stored?**
 
 Desktop app user-data:
-- **macOS**: `~/Library/Application Support/TextFromTrack Companion/`
-- **Windows**: `%APPDATA%\TextFromTrack Companion\`
-- **Linux**: `~/.config/TextFromTrack Companion/`
+- **macOS**: `~/Library/Application Support/roon-companion-textfromtrack/` (server log: `server.log`)
+- **Windows**: `%APPDATA%\roon-companion-textfromtrack\`
+- **Linux**: `~/.config/roon-companion-textfromtrack/`
 
 ---
 

@@ -347,7 +347,7 @@
             <div class="dl-version" id="dl-mac-version">Loading…</div>
           </div>
         </div>
-        <div class="dl-format">macOS 11 Big Sur or later · Universal (Apple Silicon + Intel)</div>
+        <div class="dl-format">macOS 11 Big Sur or later · Apple Silicon (<code>-arm64.dmg</code>) or Intel (<code>.dmg</code>)</div>
         <a class="dl-btn" id="dl-mac-dmg" href="https://github.com/r45635/roon.app.textfromtrack.com/releases/latest" target="_blank">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download .dmg
@@ -469,16 +469,26 @@
         <div class="step">
           <div class="step-num">3</div>
           <div class="step-body">
-            <div class="step-title">First launch — bypass Gatekeeper</div>
+            <div class="step-title">First launch — allow the app (Gatekeeper)</div>
             <div class="step-desc">
-              Since the app is not yet notarized, macOS may block it on first launch.
-              Right-click (or Control-click) the app in <em>Applications</em> → <strong>Open</strong> → confirm <em>Open</em> in the dialog.
-              You only need to do this once.
+              The app is not notarized by Apple yet, so macOS blocks the first launch with <em>"Apple could not verify…"</em>.
+              Click <strong>Done</strong>, then open <em>System Settings → Privacy &amp; Security</em>, scroll down and click <strong>Open Anyway</strong> next to <em>TextFromTrack Companion</em>.
+              (On macOS 14 and earlier, right-click the app → <strong>Open</strong> also works.) You only need to do this once.
             </div>
           </div>
         </div>
         <div class="step">
           <div class="step-num">4</div>
+          <div class="step-body">
+            <div class="step-title">Allow local network access</div>
+            <div class="step-desc">
+              macOS asks <em>"Allow TextFromTrack Companion to find devices on local networks?"</em>. Click <strong>Allow</strong>: the app needs it to reach your Roon Core.
+              If you dismissed it, enable the app in <em>System Settings → Privacy &amp; Security → Local Network</em>.
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">5</div>
           <div class="step-body">
             <div class="step-title">Find it in the menu bar</div>
             <div class="step-desc">The app runs as a tray icon in the macOS menu bar (top-right). Click it to open the context menu.</div>
@@ -488,7 +498,15 @@
       <div class="info-block warning" style="margin-top:20px">
         <span class="info-block-icon">⚠️</span>
         <div>
-          On Apple Silicon Macs, if you see <em>"damaged and can't be opened"</em>, run:
+          <strong>"Malware Blocked" with v0.3.13 – v0.3.15 on Apple Silicon?</strong> Those builds shipped Electron 31.7.7's stock executable,
+          which Apple has since revoked (malware reused it), so macOS blocks them. The app itself is not affected —
+          <strong>install v0.3.16 or later</strong>, which is signed on its own, and delete the old copy.
+        </div>
+      </div>
+      <div class="info-block warning" style="margin-top:12px">
+        <span class="info-block-icon">⚠️</span>
+        <div>
+          If you see <em>"damaged and can't be opened"</em>, run:
           <br><code>xattr -cr /Applications/TextFromTrack\ Companion.app</code>
         </div>
       </div>
@@ -867,6 +885,11 @@ pm2 restart tft-companion</code></pre>
         <div style="font-size:13px;color:var(--tft-ink-3)">Ensure Roon Core and the companion are on the same local network subnet. Go to Roon → <em>Settings → Extensions</em> and manually click <strong>Enable</strong> next to <em>TextFromTrack Roon Companion</em>.</div>
       </div>
       <div>
+        <div style="font-size:14px;font-weight:700;color:var(--tft-ink);margin-bottom:6px">The extension never appears in Roon (macOS)</div>
+        <div style="font-size:13px;color:var(--tft-ink-3)">If the server log shows <em>"Roon connection to discovered Core failed — retrying on next scan"</em>, macOS is blocking local network access: enable <em>TextFromTrack Companion</em> in <em>System Settings → Privacy &amp; Security → Local Network</em>. The app reconnects within 10 seconds.
+        With Docker and <code>ROON_CORE_HOST</code>, <em>"Roon direct connect failed"</em> means the Core is not reachable at that IP/port — Roon 2.x listens on <code>9330</code> (<code>ROON_CORE_PORT</code>).</div>
+      </div>
+      <div>
         <div style="font-size:14px;font-weight:700;color:var(--tft-ink);margin-bottom:6px">My music files aren't found after scanning</div>
         <div style="font-size:13px;color:var(--tft-ink-3)">Check that the path in <em>Settings → Music Library</em> points to the <strong>exact location on this machine</strong>. If Roon sees files over SMB but the companion runs on a different machine, add a Path Mapping in settings (e.g. <code>smb://NAS/Music</code> → <code>/Volumes/Music</code>).</div>
       </div>
@@ -879,9 +902,9 @@ pm2 restart tft-companion</code></pre>
         <div style="font-size:13px;color:var(--tft-ink-3)">
           Desktop app user-data:
           <ul style="margin:6px 0 0 16px;line-height:2">
-            <li>macOS: <code>~/Library/Application Support/TextFromTrack Companion/</code></li>
-            <li>Windows: <code>%APPDATA%\TextFromTrack Companion\</code></li>
-            <li>Linux: <code>~/.config/TextFromTrack Companion/</code></li>
+            <li>macOS: <code>~/Library/Application Support/roon-companion-textfromtrack/</code> (server log: <code>server.log</code>)</li>
+            <li>Windows: <code>%APPDATA%\roon-companion-textfromtrack\</code></li>
+            <li>Linux: <code>~/.config/roon-companion-textfromtrack/</code></li>
           </ul>
         </div>
       </div>

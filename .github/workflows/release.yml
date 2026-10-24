@@ -251,7 +251,7 @@ jobs:
 
             | Platform | File | Notes |
             |---|---|---|
-            | macOS | `.dmg` | Drag to Applications. Requires macOS 11+. |
+            | macOS | `-arm64.dmg` (Apple Silicon) / `.dmg` (Intel) | Drag to Applications. Requires macOS 11+. First launch: *System Settings → Privacy & Security → Open Anyway*, then allow local network access. |
             | Windows | `Setup.exe` | Run the NSIS installer. Requires Windows 10+. |
             | Linux | `.AppImage` | `chmod +x *.AppImage && ./TextFromTrack*.AppImage` |
             | Linux (Debian/Ubuntu) | `.deb` | `sudo dpkg -i *.deb` |
