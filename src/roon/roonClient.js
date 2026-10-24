@@ -214,6 +214,21 @@ function startRoon() {
     email: 'support@textfromtrack.com',
     website: 'https://app.textfromtrack.com',
 
+    // Discovery only: node-roon-api clears a discovered Core from _sood_conns on
+    // close, which never fires when the first connection fails — every later Sood
+    // reply for that Core is then ignored until restart. Drop the stale entry so
+    // the 10 s periodic scan retries.
+    moo_onerror(moo) {
+      const conns = _roon && _roon._sood_conns;
+      if (!conns) return;
+      for (const [id, conn] of Object.entries(conns)) {
+        if (conn === moo) {
+          delete conns[id];
+          logger.warn({ core_id: id }, 'Roon connection to discovered Core failed — retrying on next scan');
+        }
+      }
+    },
+
     core_paired(core) {
       logger.info({ core: core.display_name }, 'Roon core paired');
       _transport = core.services.RoonApiTransport;

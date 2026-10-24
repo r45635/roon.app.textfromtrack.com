@@ -33,3 +33,6 @@ src/storage/lrc-cache/
 
 # ─── Dev tools (local scripts, experiments, not part of the project) ───────────
 dev-tools/
+
+# ─── Electron build output ─────────────────────────────────────────────────────
+dist/

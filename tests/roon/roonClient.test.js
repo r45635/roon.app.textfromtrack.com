@@ -12,9 +12,10 @@ const CLIENT_PATH = path.join(SRC_ROON, 'roonClient.js');
 let wsConnects;
 let discoveryStarts;
 let statuses;
+let lastRoonApi;
 
 class FakeRoonApi {
-  constructor(opts) { this.opts = opts; }
+  constructor(opts) { this.opts = opts; lastRoonApi = this; }
   init_services() {}
   ws_connect(args) { wsConnects.push(args); return {}; }
   start_discovery() { discoveryStarts += 1; }
@@ -100,5 +101,18 @@ describe('startRoon — discovery', () => {
 
     assert.equal(discoveryStarts, 1);
     assert.equal(wsConnects.length, 0);
+  });
+
+  test('forgets a discovered Core whose connection failed, so the next scan retries', () => {
+    config.roonCoreHost = null;
+    loadClient().startRoon();
+
+    const roon = lastRoonApi;
+    const failed = {};
+    const healthy = {};
+    roon._sood_conns = { 'core-a': failed, 'core-b': healthy };
+    roon.opts.moo_onerror(failed);
+
+    assert.deepEqual(Object.keys(roon._sood_conns), ['core-b']);
   });
 });
