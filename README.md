@@ -346,6 +346,13 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - Backend exits on SIGTERM (no orphan after quitting the app, fast `docker stop`)
 - Electron 44, ad-hoc signed macOS bundle, Local Network usage declared; Node 22
 
+#### v0.3.18 ✓ — macOS Local Network and library fixes
+- Unique Mach-O UUIDs (after-pack hook): macOS can now prompt for and list the app under Local Network
+- Local Network denial detected (`local_network_blocked`), with dialog, tray item and UI banner opening the right settings pane
+- The backend no longer renames the Mac at every start (Bonjour host records under `tft-<hostname>.local`)
+- music-metadata 12 (synced FLAC lyrics keep their timestamps, MP3 USLT lyrics found by the job route), `qs` override
+- UI no longer shows "Backend offline" when only Roon is disconnected
+
 #### Upcoming
 
 ##### Local tag editor (mp3tag-style, lyrics-aware)

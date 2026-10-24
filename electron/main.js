@@ -17,7 +17,6 @@ const fs = require('fs');
 const os = require('os');
 const { spawn } = require('child_process');
 const http = require('http');
-const net = require('net');
 const backendPrefs = require('./backendPrefs');
 
 // ── Keep the app alive in the tray when all windows are closed ──────────────
@@ -175,12 +174,14 @@ function pollRoon() {
 
 // ── macOS Local Network privacy ──────────────────────────────────────────────
 // The backend reports local_network_blocked when its connection to a Core it
-// just discovered fails with EHOSTUNREACH. macOS has no API to request this
-// permission: the prompt appears when the app's own GUI process first touches
-// the LAN, so the main process retries the Core itself, then points the user
-// to System Settings in case the prompt was dismissed or never shown.
+// just discovered fails with EHOSTUNREACH. macOS prompts by itself on that first
+// attempt (once the executables have unique UUIDs — see after-pack hook); this
+// dialog only shows if access is still denied after the prompt had time to be
+// answered, i.e. the user clicked "Don't Allow" or ignored it.
 const LOCAL_NETWORK_SETTINGS_URL = 'x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork';
+const LAN_DIALOG_DELAY_MS = 30_000;
 let lanBlocked = null; // { host, port } while macOS denies LAN access
+let lanBlockedSince = 0;
 let lanDialogShown = false;
 
 function openLocalNetworkSettings() {
@@ -192,23 +193,20 @@ function handleLocalNetworkStatus(json) {
   const err = process.platform === 'darwin' && backendMode === 'local' && json.local_network_blocked
     ? json.last_connect_error : null;
   lanBlocked = err ? { host: err.host, port: err.port } : null;
-  if (wasBlocked && !lanBlocked) lanDialogShown = false; // allow a new dialog if access is revoked later
-  if (!lanBlocked || lanDialogShown) return;
+  if (!lanBlocked) {
+    lanBlockedSince = 0;
+    if (wasBlocked) lanDialogShown = false; // allow a new dialog if access is revoked later
+    return;
+  }
+  if (!lanBlockedSince) lanBlockedSince = Date.now();
+  if (lanDialogShown || Date.now() - lanBlockedSince < LAN_DIALOG_DELAY_MS) return;
   lanDialogShown = true;
-
-  const sock = net.connect({ host: lanBlocked.host, port: lanBlocked.port });
-  sock.setTimeout(3000);
-  const close = () => sock.destroy();
-  sock.once('connect', close);
-  sock.once('timeout', close);
-  sock.once('error', close);
 
   dialog.showMessageBox({
     type: 'warning',
     message: 'macOS is blocking local network access',
     detail: `TextFromTrack Companion found your Roon Core (${lanBlocked.host}) but macOS does not let it connect.\n\n`
-      + 'If macOS asks to find devices on your local network, click Allow. Otherwise enable '
-      + 'TextFromTrack Companion in System Settings → Privacy & Security → Local Network. '
+      + 'Enable TextFromTrack Companion in System Settings → Privacy & Security → Local Network. '
       + 'The app reconnects within 10 seconds.',
     buttons: ['Open Settings', 'Later'],
     defaultId: 0,
