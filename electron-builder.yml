@@ -42,7 +42,14 @@ mac:
     NSLocalNetworkUsageDescription: "TextFromTrack Companion connects to your Roon Core and to other TextFromTrack backends on your local network."
     NSBonjourServices:
       - _textfromtrack._tcp
-  # Uncomment and fill in when you have an Apple Developer ID certificate:
+  # Ad-hoc sign the whole bundle until a Developer ID exists. Unsigned builds
+  # keep Electron's stock linker signature, whose cdhash is shared by every
+  # app on that Electron version — Apple revoked Electron 31.7.7's (malware
+  # reuse), so our app was blocked as "Malware". Ad-hoc gives our own cdhash.
+  # Hardened runtime needs disable-library-validation with ad-hoc; off for now.
+  identity: "-"
+  hardenedRuntime: false
+  # Replace with a Developer ID (and notarize) when available:
   # identity: "Developer ID Application: Your Name (XXXXXXXXXX)"
   # hardenedRuntime: true
   # gatekeeperAssess: false
