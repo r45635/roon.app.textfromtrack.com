@@ -36,6 +36,12 @@ mac:
     - dmg
     - zip
   icon: electron/assets/icon.png
+  # macOS 15+ Local Network privacy: without a usage description the system
+  # cannot prompt and silently blocks LAN connections (Roon Core, other backends).
+  extendInfo:
+    NSLocalNetworkUsageDescription: "TextFromTrack Companion connects to your Roon Core and to other TextFromTrack backends on your local network."
+    NSBonjourServices:
+      - _textfromtrack._tcp
   # Uncomment and fill in when you have an Apple Developer ID certificate:
   # identity: "Developer ID Application: Your Name (XXXXXXXXXX)"
   # hardenedRuntime: true
