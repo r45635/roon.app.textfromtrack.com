@@ -47,6 +47,45 @@ function hasEmbeddedLyrics(common) {
   });
 }
 
+function formatLrcTimestamp(ms) {
+  const mins = Math.floor(ms / 60000);
+  const secs = Math.floor((ms % 60000) / 1000);
+  const centis = Math.floor((ms % 1000) / 10);
+  return `[${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(centis).padStart(2, '0')}]`;
+}
+
+/**
+ * Extract embedded lyrics text from a parsed music-metadata result.
+ *
+ * Synchronized lyrics are rebuilt as LRC (`[mm:ss.xx]line`) — music-metadata
+ * ≥ 11 also fills `text` with the bare lines, so `syncText` must win or the
+ * timestamps are lost. Falls back to the raw FLAC `LYRICS` Vorbis comment.
+ *
+ * @param {object} metadata - Full result of music-metadata `parseFile`
+ * @returns {string|null}
+ */
+function extractEmbeddedLyrics(metadata) {
+  const lyricsArr = (metadata && metadata.common && metadata.common.lyrics) || [];
+  const text = lyricsArr
+    .map(l => {
+      if (typeof l === 'string') return l;
+      if (Array.isArray(l?.syncText) && l.syncText.length > 0) {
+        return l.syncText
+          .map(s => `${formatLrcTimestamp(s.timestamp || 0)}${s.text || ''}`)
+          .filter(s => s.trim())
+          .join('\n');
+      }
+      return l?.text || '';
+    })
+    .filter(Boolean)
+    .join('\n');
+  if (text) return text;
+
+  const vorbis = (metadata && metadata.native && (metadata.native.vorbis || metadata.native.VORBIS)) || [];
+  const tag = vorbis.find(t => t.id && t.id.toUpperCase() === 'LYRICS');
+  return (tag && tag.value) || null;
+}
+
 /**
  * Detect lyrics status from a pre-parsed metadata `common` object.
  * Avoids re-reading the file during a scan.
@@ -84,4 +123,4 @@ async function detect(audioPath) {
   }
 }
 
-module.exports = { STATUS, detect, detectFromMetadata, hasLrcFile, hasEmbeddedLyrics, getLrcPath };
+module.exports = { STATUS, detect, detectFromMetadata, hasLrcFile, hasEmbeddedLyrics, extractEmbeddedLyrics, getLrcPath };

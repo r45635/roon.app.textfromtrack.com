@@ -310,20 +310,9 @@ router.get('/job-lyrics', async (req, res) => {
   // 3. Embedded LYRICS tag in the audio file
   if (job.source_file && fs.existsSync(job.source_file)) {
     try {
-      const mm = require('music-metadata');
-      const metadata = await mm.parseFile(job.source_file, { native: true });
-      let lyrics = null;
-      if (metadata.common.lyrics && metadata.common.lyrics.length > 0) {
-        const first = metadata.common.lyrics[0];
-        if (typeof first === 'string' && first.trim()) lyrics = first;
-      }
-      if (!lyrics && metadata.native) {
-        const vorbis = metadata.native['vorbis'] || metadata.native['VORBIS'];
-        if (vorbis) {
-          const tag = vorbis.find(t => t.id && t.id.toUpperCase() === 'LYRICS');
-          if (tag && tag.value) lyrics = tag.value;
-        }
-      }
+      const { parseFile } = await import('music-metadata');
+      const metadata = await parseFile(job.source_file, { skipCovers: true });
+      const lyrics = lyricsDetector.extractEmbeddedLyrics(metadata);
       if (lyrics) return res.json({ success: true, content: lyrics, source: 'embedded' });
     } catch { /* non-fatal */ }
   }

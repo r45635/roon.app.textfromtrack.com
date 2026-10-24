@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { getLrcPath, hasLrcFile, hasEmbeddedLyrics, detectFromMetadata, STATUS } = require('../../src/music/lyricsDetector');
+const { getLrcPath, hasLrcFile, hasEmbeddedLyrics, detectFromMetadata, extractEmbeddedLyrics, STATUS } = require('../../src/music/lyricsDetector');
 
 // ─── Temporary directory ──────────────────────────────────────────────────────
 
@@ -145,5 +145,47 @@ describe('detectFromMetadata', () => {
     const audio = audioFile('null-common.mp3');
     fs.writeFileSync(audio, '', 'utf8');
     assert.equal(detectFromMetadata(audio, null), STATUS.NO_LOCAL_LYRICS);
+  });
+});
+
+// ─── extractEmbeddedLyrics ────────────────────────────────────────────────────
+
+describe('extractEmbeddedLyrics', () => {
+  const syncText = [
+    { timestamp: 500, text: 'Première ligne' },
+    { timestamp: 61750, text: 'Second line' },
+  ];
+  const LRC = '[00:00.50]Première ligne\n[01:01.75]Second line';
+
+  test('rebuilds LRC from syncText (music-metadata 10 FLAC shape)', () => {
+    const metadata = { common: { lyrics: [{ contentType: 1, timeStampFormat: 2, syncText }] } };
+    assert.equal(extractEmbeddedLyrics(metadata), LRC);
+  });
+
+  test('keeps timestamps when text is also filled (music-metadata ≥ 11 FLAC shape)', () => {
+    const metadata = { common: { lyrics: [{ text: 'Première ligne\nSecond line', syncText }] } };
+    assert.equal(extractEmbeddedLyrics(metadata), LRC);
+  });
+
+  test('returns USLT text (MP3 object shape)', () => {
+    const metadata = { common: { lyrics: [{ language: 'eng', descriptor: 'LYRICS', text: '[00:00.50]Hello' }] } };
+    assert.equal(extractEmbeddedLyrics(metadata), '[00:00.50]Hello');
+  });
+
+  test('accepts plain strings', () => {
+    assert.equal(extractEmbeddedLyrics({ common: { lyrics: ['Verse 1'] } }), 'Verse 1');
+  });
+
+  test('falls back to the native Vorbis LYRICS comment', () => {
+    const metadata = {
+      common: { lyrics: [{ syncText: [] }] },
+      native: { vorbis: [{ id: 'TITLE', value: 'x' }, { id: 'lyrics', value: '[00:01.00]Raw' }] },
+    };
+    assert.equal(extractEmbeddedLyrics(metadata), '[00:01.00]Raw');
+  });
+
+  test('returns null when there are no lyrics', () => {
+    assert.equal(extractEmbeddedLyrics({ common: {} }), null);
+    assert.equal(extractEmbeddedLyrics(null), null);
   });
 });

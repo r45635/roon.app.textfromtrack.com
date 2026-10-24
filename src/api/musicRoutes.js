@@ -301,34 +301,7 @@ router.get('/file-lyrics', async (req, res) => {
     // 2. Embedded lyrics
     const { parseFile } = await import('music-metadata');
     const metadata = await parseFile(resolved, { skipCovers: true, duration: false });
-    const lyricsArr = metadata.common.lyrics || [];
-    let text = lyricsArr
-      .map(l => {
-        if (typeof l === 'string') return l;
-        if (l?.text) return l.text;
-        // Synchronized lyrics: reconstruct LRC format with [MM:SS.xx] timestamps
-        if (Array.isArray(l?.syncText) && l.syncText.length > 0) {
-          return l.syncText.map(s => {
-            const ms = s.timestamp || 0;
-            const mins = Math.floor(ms / 60000);
-            const secs = Math.floor((ms % 60000) / 1000);
-            const centis = Math.floor((ms % 1000) / 10);
-            const tag = `[${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}.${String(centis).padStart(2, '0')}]`;
-            return `${tag}${s.text || ''}`;
-          }).filter(s => s.trim()).join('\n');
-        }
-        return '';
-      })
-      .filter(Boolean)
-      .join('\n');
-    // Fallback: music-metadata wraps FLAC LYRICS vorbis comments in a
-    // syncText object with an empty syncText array (no timestamps parsed),
-    // losing the raw text. Read directly from native vorbis tags instead.
-    if (!text) {
-      const vorbis = (metadata.native || {})['vorbis'] || [];
-      const lyricsNative = vorbis.find(t => t.id && t.id.toUpperCase() === 'LYRICS');
-      if (lyricsNative?.value) text = lyricsNative.value;
-    }
+    const text = lyricsDetector.extractEmbeddedLyrics(metadata);
     if (text) return res.json({ success: true, source: 'embedded', text });
 
     // 3. LRC cache (only when include_cache param is set)
