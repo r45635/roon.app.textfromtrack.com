@@ -331,7 +331,12 @@
     "group_outputs": "Grouper des sorties",
     "group_hint": "Sélectionnez les sorties à grouper (au moins 2) :",
     "group_confirm": "Grouper",
-    "ungroup": "Dégrouper"
+    "ungroup": "Dégrouper",
+    "muted": "coupé",
+    "standby": "En veille",
+    "volume": "Volume",
+    "grouped_one": "+ {{count}} enceinte",
+    "grouped_other": "+ {{count}} enceintes"
   },
   "search": {
     "title": "Rechercher dans Roon",

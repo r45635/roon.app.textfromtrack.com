@@ -331,7 +331,12 @@
     "group_outputs": "Group outputs",
     "group_hint": "Select outputs to group (at least 2):",
     "group_confirm": "Group",
-    "ungroup": "Ungroup"
+    "ungroup": "Ungroup",
+    "muted": "muted",
+    "standby": "Standby",
+    "volume": "Volume",
+    "grouped_one": "+ {{count}} speaker",
+    "grouped_other": "+ {{count}} speakers"
   },
   "search": {
     "title": "Search Roon",

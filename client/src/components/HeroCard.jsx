@@ -71,8 +71,10 @@ function ScoreChip({ label, points, max, hint }) {
  * Volume bar: drag with mouse, finger or pen (pointer events), or use the keyboard
  * (arrows = one step, Home/End = min/max).
  */
-function VolumeBar({ value, max, label, onSet, onStep }) {
-  const pct = max ? Math.round((value / max) * 100) : 0;
+function VolumeBar({ value, min = 0, max, label, onSet, onStep }) {
+  // Roon volumes can be dB (e.g. −80…0): scale from min to max, not from 0.
+  const range = max - min;
+  const pct = range > 0 ? Math.round(((value - min) / range) * 100) : 0;
   function startDrag(e) {
     e.preventDefault();
     const bar = e.currentTarget;
@@ -80,7 +82,7 @@ function VolumeBar({ value, max, label, onSet, onStep }) {
     let last = -1;
     const apply = (clientX) => {
       const rect = bar.getBoundingClientRect();
-      const v = Math.round(Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * max);
+      const v = Math.round(min + Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * range);
       if (v === last) return;
       last = v;
       onSet(v);
@@ -99,7 +101,7 @@ function VolumeBar({ value, max, label, onSet, onStep }) {
   function onKeyDown(e) {
     const keys = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 };
     if (keys[e.key]) { e.preventDefault(); onStep(keys[e.key]); }
-    else if (e.key === 'Home') { e.preventDefault(); onSet(0); }
+    else if (e.key === 'Home') { e.preventDefault(); onSet(min); }
     else if (e.key === 'End') { e.preventDefault(); onSet(max); }
   }
   return (
@@ -108,7 +110,7 @@ function VolumeBar({ value, max, label, onSet, onStep }) {
       role="slider"
       tabIndex={0}
       aria-label={label}
-      aria-valuemin={0}
+      aria-valuemin={min}
       aria-valuemax={max}
       aria-valuenow={value}
       onPointerDown={startDrag}
@@ -247,7 +249,8 @@ export default function HeroCard({
   // Volume: collect all outputs with volume data
   const firstOutput = np?.outputs?.[0];
   const volumeVal = firstOutput?.volume?.value ?? null;
-  const volumeOutputs = (np?.outputs ?? []).filter(o => o.volume != null);
+  // Outputs with a value to show (incremental volumes only have +/-).
+  const volumeOutputs = (np?.outputs ?? []).filter(o => o.volume != null && o.volume.type !== 'incremental');
   const multiVolume = volumeOutputs.length > 1;
 
   const loopLabel = {
@@ -392,8 +395,19 @@ export default function HeroCard({
 
           {/* Volume */}
           <div className="tft-volume-card">
-            {!multiVolume && volumeVal != null && firstOutput && (() => {
+            {!multiVolume && firstOutput?.volume?.type === 'incremental' && (
+              // +/- only (e.g. an IR blaster): Roon asks for relative steps of 1.
+              <div className="tft-volume">
+                <span className="tft-volume-name tft-mono">{firstOutput.display_name}</span>
+                <button type="button" className="tft-round-btn tft-round-btn--small" aria-label={t('now_playing.vol_down')}
+                  onClick={() => onVolume?.(firstOutput.output_id, 'relative', -1)}>−</button>
+                <button type="button" className="tft-round-btn tft-round-btn--small" aria-label={t('now_playing.vol_up')}
+                  onClick={() => onVolume?.(firstOutput.output_id, 'relative', 1)}>+</button>
+              </div>
+            )}
+            {!multiVolume && volumeVal != null && firstOutput && firstOutput.volume?.type !== 'incremental' && (() => {
               const vMax = firstOutput.volume?.soft_limit ?? firstOutput.volume?.max ?? 100;
+              const vMin = firstOutput.volume?.min ?? 0;
               const muted = !!firstOutput.volume?.is_muted;
               return (
                 <div className="tft-volume">
@@ -406,12 +420,13 @@ export default function HeroCard({
                   >{muted ? <IconVolumeMuted /> : <IconVolume />}</button>
                   <VolumeBar
                     value={volumeVal}
+                    min={vMin}
                     max={vMax}
                     label={firstOutput.display_name}
                     onSet={(v) => onVolume?.(firstOutput.output_id, 'absolute', v)}
                     onStep={(dir) => onVolume?.(firstOutput.output_id, 'relative', dir * volumeStep)}
                   />
-                  <div className="tft-volume-val tft-mono">{volumeVal}</div>
+                  <div className="tft-volume-val tft-mono">{volumeVal}{firstOutput.volume?.type === 'db' ? ' dB' : ''}</div>
                   <button
                     type="button"
                     className="tft-round-btn tft-round-btn--small"
@@ -430,6 +445,7 @@ export default function HeroCard({
             {multiVolume && (() => {
               const avgVal = Math.round(volumeOutputs.reduce((s, o) => s + o.volume.value, 0) / volumeOutputs.length);
               const globalMax = Math.max(...volumeOutputs.map(o => o.volume.soft_limit ?? o.volume.max ?? 100));
+              const globalMin = Math.min(...volumeOutputs.map(o => o.volume.min ?? 0));
               const allMuted = volumeOutputs.every(o => o.volume.is_muted);
               return (
                 <div className="tft-volume-group">
@@ -450,6 +466,7 @@ export default function HeroCard({
                     >{allMuted ? <IconVolumeMuted /> : <IconVolume />}</button>
                     <VolumeBar
                       value={avgVal}
+                      min={globalMin}
                       max={globalMax}
                       label={t('now_playing.master')}
                       onSet={(v) => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'absolute', v))}
@@ -473,6 +490,7 @@ export default function HeroCard({
                     <div className="tft-volume-rows">
                       {volumeOutputs.map(o => {
                         const vMax = o.volume.soft_limit ?? o.volume.max ?? 100;
+                        const vMin = o.volume.min ?? 0;
                         return (
                           <div className="tft-volume-row" key={o.output_id}>
                             <span className="tft-volume-name tft-mono" title={o.display_name}>
@@ -480,6 +498,7 @@ export default function HeroCard({
                             </span>
                             <VolumeBar
                               value={o.volume.value}
+                              min={vMin}
                               max={vMax}
                               label={o.display_name}
                               onSet={(v) => onVolume?.(o.output_id, 'absolute', v)}

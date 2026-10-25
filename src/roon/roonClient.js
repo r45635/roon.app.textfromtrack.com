@@ -100,7 +100,7 @@ function _extractNowPlaying(zone) {
       output_id: o.output_id,
       display_name: o.display_name,
       volume: o.volume
-        ? { value: o.volume.value, min: o.volume.min, max: o.volume.max,
+        ? { type: o.volume.type || 'number', value: o.volume.value, min: o.volume.min, max: o.volume.max,
             step: o.volume.step, is_muted: o.volume.is_muted }
         : null,
     })),
@@ -455,7 +455,11 @@ function getAllZones() {
     outputs: (z.outputs || []).map(o => ({
       output_id: o.output_id,
       display_name: o.display_name,
-      volume: o.volume ? { value: o.volume.value, min: o.volume.min, max: o.volume.max, is_muted: o.volume.is_muted } : null,
+      volume: o.volume
+        ? { type: o.volume.type || 'number', value: o.volume.value, min: o.volume.min, max: o.volume.max, is_muted: o.volume.is_muted }
+        : null,
+      // Roon gives no device type or icon; standby comes from the output's source control.
+      standby: (o.source_controls || []).some(sc => sc.status === 'standby'),
     })),
     is_active: _activeZoneId ? z.zone_id === _activeZoneId : z.state === 'playing',
   }));
