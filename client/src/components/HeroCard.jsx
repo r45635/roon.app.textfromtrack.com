@@ -269,9 +269,9 @@ export default function HeroCard({
               type="checkbox"
               checked={autoSync}
               onChange={e => setAutoSync(e.target.checked)}
-              aria-label={t('now_playing.auto_sync', 'Auto Sync')}
+              aria-label={t('now_playing.auto_sync')}
             />
-            {t('now_playing.auto_sync', 'Auto Sync')}
+            {t('now_playing.auto_sync')}
           </label>
         </div>
 
@@ -548,6 +548,16 @@ export default function HeroCard({
 
       {/* Library tools only make sense once a music folder is configured. */}
       {libraryConfigured && np && <>
+      {!autoSync && (
+        <div className="tft-frozen-banner" role="status">
+          <span>{effectiveFilename
+            ? t('now_playing.frozen_banner', { file: effectiveFilename })
+            : t('now_playing.frozen_banner_nofile')}</span>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAutoSync(true)}>
+            {t('now_playing.follow_again')}
+          </button>
+        </div>
+      )}
       {/* ═══ LOCAL MATCH STRIP ══════════════════════════════════════════════════ */}
       <div className={`tft-match-strip${!match?.matched ? ' no-match' : ''}`}>
         {!match?.matched ? (

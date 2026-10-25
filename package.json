@@ -19,7 +19,7 @@
     "electron:publish": "electron-builder --publish always",
     "scan": "node scripts/scan-library.js",
     "test:tft": "node scripts/test-tft-api.js",
-    "test": "node --test --test-reporter spec tests/utils/normalize.test.js tests/utils/fileUtils.test.js tests/music/matcher.test.js tests/music/lyricsDetector.test.js tests/music/lyricsEmbedder.test.js tests/music/flacTagger.test.js tests/textfromtrack/jobStore.test.js tests/roon/roonClient.test.js tests/lyrics/lyricsResolver.test.js tests/client/i18n.test.js tests/library/lrclibBatch.test.js tests/utils/requestGuards.test.js",
+    "test": "node --test --test-reporter spec tests/utils/normalize.test.js tests/utils/fileUtils.test.js tests/music/matcher.test.js tests/music/lyricsDetector.test.js tests/music/lyricsEmbedder.test.js tests/music/flacTagger.test.js tests/textfromtrack/jobStore.test.js tests/roon/roonClient.test.js tests/lyrics/lyricsResolver.test.js tests/client/i18n.test.js tests/library/lrclibBatch.test.js tests/utils/desktop.test.js tests/utils/updateCheck.test.js tests/utils/requestGuards.test.js",
     "lint": "eslint src scripts"
   },
   "dependencies": {

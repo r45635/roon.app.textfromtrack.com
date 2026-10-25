@@ -170,6 +170,7 @@ Copy `.env.example` to `.env` and fill in the values.
 | `WEBHOOK_BASE_URL` | _(empty)_ | Public base URL for TFT webhook delivery. When set, the app auto-registers a webhook with TFT on startup |
 | `TFT_POLL_INTERVAL_MS` | `2000` | How often to poll for job status |
 | `TFT_POLL_TIMEOUT_MS` | `600000` | Maximum polling duration (10 min) |
+| `UPDATE_CHECK` | `true` | `false` stops the backend from asking GitHub (at most every 6 h) whether a newer release exists |
 | `LOG_LEVEL` | `info` | Pino log level (`fatal`/`error`/`warn`/`info`/`debug`/`trace`) |
 
 **Runtime user settings** (`src/storage/user-settings.json`) — editable from the UI (**Library Settings** card), override the matching `.env` values when set:

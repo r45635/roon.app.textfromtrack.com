@@ -40,6 +40,7 @@ const PORT = process.env.PORT || 3888;
 const UI_URL = `http://localhost:${PORT}`;
 const POLL_ROON_MS = 5_000;
 const POLL_CREDITS_MS = 60_000;
+const POLL_UPDATE_MS = 60 * 60_000; // the backend itself asks GitHub at most every 6 h
 
 // ── State ────────────────────────────────────────────────────────────────────
 let tray = null;
@@ -220,6 +221,24 @@ function handleLocalNetworkStatus(json) {
   });
 }
 
+// ── Polling: newer release on GitHub (asked through the backend) ─────────────
+let updateInfo = null;
+function pollUpdate() {
+  if (!serverReady) return;
+  http.get(`${activeBackendURL}/api/update`, (res) => {
+    let data = '';
+    res.on('data', (c) => (data += c));
+    res.on('end', () => {
+      try {
+        const json = JSON.parse(data);
+        const changed = !!json.update_available !== !!updateInfo?.update_available;
+        updateInfo = json;
+        if (changed) rebuildMenu();
+      } catch { /* keep the previous state */ }
+    });
+  }).on('error', () => { /* backend not reachable: the Roon status line already says so */ });
+}
+
 // ── Polling: TFT credits ─────────────────────────────────────────────────────
 function pollCredits() {
   if (!serverReady) return;
@@ -250,12 +269,15 @@ function pollCredits() {
 
 let roonTimer = null;
 let creditsTimer = null;
+let updateTimer = null; // never cleared: it always asks the current activeBackendURL
 
 function startPolling() {
   pollRoon();
   pollCredits();
+  pollUpdate();
   if (!roonTimer) roonTimer = setInterval(pollRoon, POLL_ROON_MS);
   if (!creditsTimer) creditsTimer = setInterval(pollCredits, POLL_CREDITS_MS);
+  if (!updateTimer) updateTimer = setInterval(pollUpdate, POLL_UPDATE_MS);
 }
 
 // ── Remote backend ping ───────────────────────────────────────────────────────
@@ -591,6 +613,9 @@ function rebuildMenu() {
     items.push({ label: `Remote: ${remoteDisplayName}`, enabled: false });
     items.push({ label: serverReady ? roonLabel : 'Connecting…', enabled: false });
     if (creditsLabel) items.push({ label: creditsLabel, enabled: false });
+    if (updateInfo?.update_available && updateInfo.url) {
+      items.push({ label: `Update to v${updateInfo.latest} available…`, click: () => shell.openExternal(updateInfo.url) });
+    }
     items.push({ type: 'separator' });
     items.push({
       label: 'Open Remote UI',
@@ -628,6 +653,9 @@ function rebuildMenu() {
       items.push({ label: 'Allow Local Network Access…', click: () => openLocalNetworkSettings() });
     }
     if (creditsLabel) items.push({ label: creditsLabel, enabled: false });
+    if (updateInfo?.update_available && updateInfo.url) {
+      items.push({ label: `Update to v${updateInfo.latest} available…`, click: () => shell.openExternal(updateInfo.url) });
+    }
     items.push({ type: 'separator' });
     items.push({
       label: 'Open UI',

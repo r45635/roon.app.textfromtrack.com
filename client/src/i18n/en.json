@@ -7,7 +7,9 @@
     "credits_refresh": "Click to refresh the credit balance",
     "zones_one": "{{count}} zone",
     "zones_other": "{{count}} zones",
-    "top_up": "Top up credits"
+    "top_up": "Top up credits",
+    "update_available": "v{{version}} available",
+    "update_title": "You run v{{current}}. Open the release notes and downloads (Docker: pull the new image)."
   },
   "nav": {
     "lang_en": "EN",
@@ -57,7 +59,7 @@
     "refresh": "Refresh",
     "shuffle": "Shuffle",
     "auto_radio": "Auto Radio",
-    "auto_sync": "Auto Match File",
+    "auto_sync": "Follow playing track",
     "loop_all": "Loop",
     "loop_one": "Loop ×1",
     "loop_off": "Loop off",
@@ -87,7 +89,10 @@
     "empty_roon_not_found_title": "Looking for your Roon Core…",
     "empty_roon_not_found_hint": "Make sure Roon is running on this network. If the Core is on another subnet or in Docker, set ROON_CORE_HOST.",
     "empty_waiting_auth_title": "Enable the extension in Roon",
-    "empty_waiting_auth_hint": "Open Roon → Settings → Extensions and enable “TextFromTrack Roon Companion”."
+    "empty_waiting_auth_hint": "Open Roon → Settings → Extensions and enable “TextFromTrack Roon Companion”.",
+    "frozen_banner": "Working on {{file}} — the panels below no longer follow the track playing now.",
+    "frozen_banner_nofile": "The panels below no longer follow the track playing now.",
+    "follow_again": "Follow playing track"
   },
   "match": {
     "no_index": "Library not scanned yet",
@@ -262,7 +267,7 @@
     "credits": "Credits",
     "lrc_path": "LRC path",
     "track_path": "Track path",
-    "reveal": "Reveal in Finder",
+    "reveal": "Show in its folder",
     "no_timestamps": "No sync",
     "no_timestamps_tip": "Timestamps unavailable — fallback model was used. Use the ↻ button to retry.",
     "no_timestamps_tip_with_mode": "Timestamps unavailable — TFT applied mode \"{{mode}}\" (requested \"{{requested}}\"). Use the ↻ button to retry.",

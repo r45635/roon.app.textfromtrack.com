@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execFile } = require('child_process');
 const { Router } = require('express');
 const express = require('express');
 const config = require('../config');
@@ -20,6 +19,8 @@ const lyricsDetector = require('../music/lyricsDetector');
 const userSettings = require('../storage/userSettings');
 const sseService = require('../utils/sseService');
 const webhookService = require('../textfromtrack/webhookService');
+const musicRoots = require('../music/musicRoots');
+const desktop = require('../utils/desktop');
 
 const router = Router();
 
@@ -369,15 +370,18 @@ router.post('/embed', async (req, res) => {
 router.post('/reveal', (req, res) => {
   const rawPath = req.body && req.body.path;
   if (!rawPath || typeof rawPath !== 'string') {
-    return res.status(400).json(buildError(E.UNKNOWN_ERROR, 'path is required'));
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'path is required'));
   }
   const filePath = path.resolve(rawPath); // absolute: can't be read as an `open` option
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).json(buildError(E.TFT_NOT_FOUND, 'File not found'));
+  if (!musicRoots.isUnderMusicRoot(filePath)) {
+    return res.status(403).json(buildError(E.FORBIDDEN, 'Path is not under a configured music root'));
   }
-  execFile('open', ['-R', filePath], err => {
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json(buildError(E.SOURCE_FILE_NOT_FOUND, 'File not found'));
+  }
+  desktop.revealFile(filePath, err => {
     if (err) {
-      logger.error({ err: err.message, filePath }, 'reveal: open -R failed');
+      logger.error({ err: err.message, filePath }, 'reveal failed');
       return res.status(500).json(buildError(E.UNKNOWN_ERROR, err.message));
     }
     res.json({ success: true });

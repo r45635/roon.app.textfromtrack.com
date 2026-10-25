@@ -28,6 +28,7 @@ export default function App() {
   const [tftAccount, setTftAccount] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [libraryConfigured, setLibraryConfigured] = useState(true);
+  const [updateInfo, setUpdateInfo] = useState(null);
   const prevTrackKeyRef = useRef(null);
   const zoneSelectorRef = useRef(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -120,6 +121,7 @@ export default function App() {
     fetchIndexStatus();
     fetchLibraryConfig();
     fetchTftAccount();
+    apiFetch('/api/update').then(d => { if (d?.success) setUpdateInfo(d); });
     fetchJobs();
 
     // Continuous polling — tick every 500 ms, actual fetch rate governed by roonPollMsRef.
@@ -356,6 +358,11 @@ export default function App() {
               <span className="backend-offline-dot" />
               <span>{t('status.backend_offline')}</span>
             </div>
+          )}
+          {updateInfo?.update_available && updateInfo.url && (
+            <a className="tft-update-pill" href={updateInfo.url} target="_blank" rel="noreferrer" title={t('app.update_title', { current: updateInfo.current })}>
+              {t('app.update_available', { version: updateInfo.latest })}
+            </a>
           )}
           {roonStatus && (
             <button className="tft-roon-strip tft-roon-strip-btn" onClick={() => setRoonModalOpen(true)} title={t('section.roon_connection')}>

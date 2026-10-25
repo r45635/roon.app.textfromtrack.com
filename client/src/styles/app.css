@@ -182,13 +182,16 @@ body {
 @media (min-width: 768px) and (max-width: 1279px) {
   .tft-main { padding: 20px 24px 60px; }
   .tft-topbar { padding: 0 24px; }
-  .tft-roon-strip { display: none; }
+  /* Keep the Roon status: just the dot, the popup has the details. */
+  .tft-roon-strip .tft-mono { display: none; }
 }
 
 @media (max-width: 767px) {
   .tft-main { padding: 16px 16px 100px; }
   .tft-topbar { padding: 0 16px; height: 48px; }
-  .tft-roon-strip, .tft-credit-pill, .tft-avatar { display: none; }
+  .tft-roon-strip .tft-mono, .tft-avatar { display: none; }
+  .tft-credit-pill .tft-mono { font-size: 11px !important; }
+  .tft-update-pill { padding: 3px 8px; font-size: 11px; }
 }
 
 .tft-hero-col   { display: flex; flex-direction: column; gap: 20px; }
@@ -2742,3 +2745,13 @@ button.synced-line:hover { opacity: 0.9; background: var(--tft-hover); }
 .tft-topup-link { font-size: 12px; color: var(--tft-error-ink); white-space: nowrap; }
 .tft-lyrics-err-detail { font-size: 12px; color: var(--tft-error-ink); margin-left: 6px; }
 .file-tabs-error { font-size: 12px; }
+.tft-update-pill {
+  font-size: 12px; padding: 4px 10px; border-radius: 999px; white-space: nowrap; text-decoration: none;
+  background: var(--tft-info-soft); color: var(--tft-info-ink);
+}
+.tft-update-pill:hover { background: var(--tft-info); color: #fff; }
+.tft-frozen-banner {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 28px; background: var(--tft-amber-soft); color: var(--tft-amber-ink); font-size: 13px;
+}
+.tft-frozen-banner span { flex: 1; min-width: 200px; }

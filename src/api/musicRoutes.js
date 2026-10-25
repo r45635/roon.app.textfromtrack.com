@@ -2,7 +2,6 @@
 
 const path = require('path');
 const fs = require('fs');
-const { execFile } = require('child_process');
 const { Router } = require('express');
 const config = require('../config');
 const logger = require('../utils/logger');
@@ -18,6 +17,7 @@ const { getRoonStatus } = require('../roon/roonClient');
 const userSettings = require('../storage/userSettings');
 const lrcCache = require('../utils/lrcCache');
 const musicRoots = require('../music/musicRoots');
+const desktop = require('../utils/desktop');
 
 const router = Router();
 
@@ -522,8 +522,7 @@ router.get('/open-folder', (req, res) => {
   const resolved = resolveAndValidatePath(req, res);
   if (!resolved) return;
   const dir = path.dirname(resolved);
-  // execFile, not exec: a folder name like "$(cmd)" must never reach a shell
-  execFile('open', [dir], err => {
+  desktop.openFolder(dir, err => {
     if (err) {
       logger.warn({ dir, err: err.message }, 'open-folder failed');
       return res.status(500).json(buildError('OPEN_FOLDER_ERROR', err.message));

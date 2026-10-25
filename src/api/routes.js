@@ -9,6 +9,7 @@ const lyricsRoutes = require('./lyricsRoutes');
 const libraryRoutes = require('./libraryRoutes');
 const debugRoutes = require('./debugRoutes');
 const qrRoutes = require('./qrRoutes');
+const { getUpdateInfo } = require('../utils/updateCheck');
 
 const router = Router();
 
@@ -20,5 +21,12 @@ router.use('/lyrics', lyricsRoutes);
 router.use('/library', libraryRoutes);
 router.use('/debug', debugRoutes);
 router.use('/qr', qrRoutes);
+
+/**
+ * GET /api/update — is a newer release published on GitHub? (cached 6 h, UPDATE_CHECK=false disables)
+ */
+router.get('/update', async (req, res) => {
+  res.json({ success: true, ...(await getUpdateInfo()) });
+});
 
 module.exports = router;

@@ -7,7 +7,9 @@
     "credits_refresh": "Cliquez pour actualiser le solde de crédits",
     "zones_one": "{{count}} zone",
     "zones_other": "{{count}} zones",
-    "top_up": "Recharger des crédits"
+    "top_up": "Recharger des crédits",
+    "update_available": "v{{version}} disponible",
+    "update_title": "Vous utilisez la v{{current}}. Ouvrir les notes de version et téléchargements (Docker : récupérez la nouvelle image)."
   },
   "nav": {
     "lang_en": "EN",
@@ -57,7 +59,7 @@
     "refresh": "Actualiser",
     "shuffle": "Aléatoire",
     "auto_radio": "Radio auto",
-    "auto_sync": "Associer fichier auto",
+    "auto_sync": "Suivre le titre en cours",
     "loop_all": "Boucle",
     "loop_one": "Boucle ×1",
     "loop_off": "Boucle désactivée",
@@ -87,7 +89,10 @@
     "empty_roon_not_found_title": "Recherche de votre Roon Core…",
     "empty_roon_not_found_hint": "Vérifiez que Roon tourne sur ce réseau. Si le Core est sur un autre sous-réseau ou dans Docker, renseignez ROON_CORE_HOST.",
     "empty_waiting_auth_title": "Activez l’extension dans Roon",
-    "empty_waiting_auth_hint": "Ouvrez Roon → Paramètres → Extensions et activez « TextFromTrack Roon Companion »."
+    "empty_waiting_auth_hint": "Ouvrez Roon → Paramètres → Extensions et activez « TextFromTrack Roon Companion ».",
+    "frozen_banner": "Travail sur {{file}} — les panneaux ci-dessous ne suivent plus le titre en cours.",
+    "frozen_banner_nofile": "Les panneaux ci-dessous ne suivent plus le titre en cours.",
+    "follow_again": "Suivre le titre en cours"
   },
   "match": {
     "no_index": "Bibliothèque non encore indexée",
@@ -262,7 +267,7 @@
     "credits": "Crédits",
     "lrc_path": "Chemin LRC",
     "track_path": "Chemin Track",
-    "reveal": "Afficher dans le Finder",
+    "reveal": "Afficher dans son dossier",
     "no_timestamps": "Sans sync",
     "no_timestamps_tip": "Timestamps indisponibles — modèle de repli utilisé. Utilisez le bouton ↻ pour relancer.",
     "no_timestamps_tip_with_mode": "Timestamps indisponibles — TFT a appliqué le mode « {{mode}} » (demandé « {{requested}} »). Utilisez le bouton ↻ pour relancer.",
