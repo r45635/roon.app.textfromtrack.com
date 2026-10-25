@@ -380,6 +380,9 @@ export default function App() {
               </span>
             </button>
           )}
+          {(tftAccount?.credit_available ?? tftAccount?.credit_balance) === 0 && tftAccount?.top_up_url && (
+            <a className="tft-topup-link" href={tftAccount.top_up_url} target="_blank" rel="noreferrer">{t('app.top_up')}</a>
+          )}
 
           <div className="lang-switcher">
             {['en', 'fr'].map(lang => (

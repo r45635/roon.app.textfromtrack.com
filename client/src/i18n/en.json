@@ -6,7 +6,8 @@
     "credits_other": "{{count}} credits",
     "credits_refresh": "Click to refresh the credit balance",
     "zones_one": "{{count}} zone",
-    "zones_other": "{{count}} zones"
+    "zones_other": "{{count}} zones",
+    "top_up": "Top up credits"
   },
   "nav": {
     "lang_en": "EN",
@@ -359,7 +360,12 @@
     "saving": "Saving…",
     "saved_ok": "Key saved — credits will refresh",
     "clear": "Remove key",
-    "clear_title": "Clear the saved API key"
+    "clear_title": "Clear the saved API key",
+    "checking": "Checking the key with TextFromTrack…",
+    "check_invalid": "✗ TextFromTrack rejected this key — paste a new one.",
+    "check_ok_one": "✓ Valid — {{email}} · {{count}} credit",
+    "check_ok_other": "✓ Valid — {{email}} · {{count}} credits",
+    "check_unreachable": "Could not check the key: {{msg}}"
   },
   "settings": {
     "files_mgmt_title": "Files Management",
@@ -555,5 +561,33 @@
     "batch_counts": "Saved {{saved}} · not on LRCLIB {{not_found}} · without timestamps {{plain}} · already had lyrics {{had}} · failed {{failed}}",
     "batch_errors_one": "{{count}} error",
     "batch_errors_other": "{{count}} errors"
+  },
+  "errors": {
+    "TFT_TOKEN_MISSING": "No TextFromTrack API key — add one in Settings.",
+    "TFT_UNAUTHORIZED": "TextFromTrack rejected the API key — check it in Settings.",
+    "TFT_INSUFFICIENT_CREDITS": "Not enough TextFromTrack credits for this track.",
+    "TFT_RATE_LIMITED": "TextFromTrack is limiting requests — try again in a minute.",
+    "TFT_TRACK_TOO_LONG": "This track is too long for TextFromTrack.",
+    "TFT_UNSUPPORTED_FORMAT": "TextFromTrack only accepts MP3, FLAC and WAV files.",
+    "TFT_EXPORT_EXPIRED": "The transcription export has expired — generate it again.",
+    "TFT_INTERNAL_ERROR": "TextFromTrack had an internal error — try again later.",
+    "NO_LOCAL_MATCH": "No file in your music folder matches this track.",
+    "LOW_CONFIDENCE_MATCH": "The file match is uncertain — confirm it before generating.",
+    "LYRICS_ALREADY_EXIST": "This track already has lyrics.",
+    "SOURCE_FILE_NOT_FOUND": "The audio file was not found — was it moved, or is the drive unmounted?",
+    "FORBIDDEN": "This file is outside your music folders.",
+    "OUTSIDE_MUSIC_ROOT": "This file is outside your music folders.",
+    "LYRICS_EMBED_UNSUPPORTED": "Lyrics can only be embedded in MP3 and FLAC files.",
+    "LYRICS_EMBED_FAILED": "Could not write the lyrics into the file ({{msg}}).",
+    "LRC_WRITE_FAILED": "Could not write the .lrc file ({{msg}}).",
+    "BACKUP_EXISTS": "A backup (.org) of this file already exists.",
+    "ROON_NOT_CONNECTED": "Roon is not connected.",
+    "NO_CURRENT_TRACK": "Nothing is playing.",
+    "LRCLIB_ERROR": "LRCLIB is unreachable or busy ({{msg}}).",
+    "READ_ONLY": "The music folder is read-only. In Docker, mount it with “:rw” to save lyrics.",
+    "NO_PERMISSION": "No permission to write this file ({{msg}}).",
+    "DISK_FULL": "The disk is full.",
+    "BACKEND_UNREACHABLE": "The companion server is not answering.",
+    "UNKNOWN_ERROR": "Something went wrong."
   }
 }

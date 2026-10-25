@@ -4,6 +4,7 @@ import SyncedLyrics from './SyncedLyrics.jsx';
 import LyricsFullscreen from './LyricsFullscreen.jsx';
 import { useTrackLyrics } from '../hooks/useTrackLyrics.js';
 import { shiftLrc } from '../lib/lrc.js';
+import { describeError } from '../lib/errors.js';
 
 const OFFSET_STEP_MS = 500;
 const HINT_DISMISSED_KEY = 'tft:libraryHintDismissed';
@@ -114,14 +115,14 @@ export default function LyricsStage({
         }),
       });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok || body.success === false) throw new Error(body.error?.message || `HTTP ${res.status}`);
+      if (!res.ok || body.success === false) throw Object.assign(new Error(body.error?.message || `HTTP ${res.status}`), { code: body.error?.code });
       // The offset is now baked into the file: drop it so it doesn't apply twice.
       if (offsetMs) await setOffset(0);
       flash('ok', body.lyrics_embedded ? t('stage.saved_embedded') : t('stage.saved_sidecar'));
       reload();
       onSaved?.();
     } catch (err) {
-      flash('error', t('stage.save_failed', { msg: err.message }));
+      flash('error', t('stage.save_failed', { msg: describeError(err) }));
     } finally {
       setSaving(false);
     }

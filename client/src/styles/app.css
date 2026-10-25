@@ -2734,3 +2734,11 @@ button.synced-line:hover { opacity: 0.9; background: var(--tft-hover); }
 .lib-batch p { margin: 0; }
 .lib-batch-errors { margin: 6px 0 0 16px; color: var(--tft-error-ink); }
 .settings-scan-status { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--tft-ink-3); }
+
+/* TFT key check and credit top-up */
+.tft-key-check { font-size: 12px; margin-top: 6px; color: var(--tft-ink-3); }
+.tft-key-check.ok  { color: var(--tft-signal-ink); }
+.tft-key-check.bad { color: var(--tft-error-ink); }
+.tft-topup-link { font-size: 12px; color: var(--tft-error-ink); white-space: nowrap; }
+.tft-lyrics-err-detail { font-size: 12px; color: var(--tft-error-ink); margin-left: 6px; }
+.file-tabs-error { font-size: 12px; }

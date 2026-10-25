@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { describeError } from '../lib/errors.js';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 import SyncedLyrics from './SyncedLyrics.jsx';
 
@@ -114,7 +115,7 @@ function LyricsPanel({ filePath, active, onDelete, seekSeconds = 0, isPlaying = 
       setDeleteConfirm(false);
       onDelete?.();
     } catch (err) {
-      setDeleteError(err.message);
+      setDeleteError(describeError(err));
     } finally {
       setDeleting(false);
     }
@@ -148,7 +149,7 @@ function LyricsPanel({ filePath, active, onDelete, seekSeconds = 0, isPlaying = 
       setEditMode(false);
       setSaveConfirm(false);
     } catch (err) {
-      setSaveError(err.message);
+      setSaveError(describeError(err));
     } finally {
       setSaving(false);
     }
@@ -181,7 +182,7 @@ function LyricsPanel({ filePath, active, onDelete, seekSeconds = 0, isPlaying = 
             </>
           ) : (
             <>
-              {saveError && <span className="file-tabs-error file-tags-save-hint" style={{ fontSize: 10 }}>{saveError}</span>}
+              {saveError && <span className="file-tabs-error file-tags-save-hint" >{saveError}</span>}
               <button className="file-tags-action-btn primary" onClick={() => { setSaveError(null); setSaveConfirm(true); }}>
                 {t('file_tags.save')}
               </button>
@@ -232,7 +233,7 @@ function LyricsPanel({ filePath, active, onDelete, seekSeconds = 0, isPlaying = 
             <button className="file-tags-action-btn" onClick={() => { setDeleteConfirm(false); setDeleteError(null); }}>
               {t('file_tags.confirm_no')}
             </button>
-            {deleteError && <span className="file-tabs-error" style={{ fontSize: 10 }}>{deleteError}</span>}
+            {deleteError && <span className="file-tabs-error" >{deleteError}</span>}
           </>
         ) : (
           <button className="file-tags-action-btn danger-text" onClick={() => setDeleteConfirm(true)}>
@@ -333,7 +334,7 @@ export default function FileTagsCard({ filePath, refreshKey = 0, nowPlaying = nu
       setSaveConfirm(false);
       refresh();
     } catch (err) {
-      setSaveError(err.message);
+      setSaveError(describeError(err));
     } finally {
       setSaving(false);
     }
@@ -418,7 +419,7 @@ export default function FileTagsCard({ filePath, refreshKey = 0, nowPlaying = nu
                         </>
                       ) : (
                         <>
-                          {saveError && <span className="file-tabs-error file-tags-save-hint" style={{ fontSize: 10 }}>{saveError}</span>}
+                          {saveError && <span className="file-tabs-error file-tags-save-hint" >{saveError}</span>}
                           <button className="file-tags-action-btn primary" onClick={() => { setSaveError(null); setSaveConfirm(true); }}>
                             {t('file_tags.save')}
                           </button>

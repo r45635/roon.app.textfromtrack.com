@@ -6,7 +6,8 @@
     "credits_other": "{{count}} crédits",
     "credits_refresh": "Cliquez pour actualiser le solde de crédits",
     "zones_one": "{{count}} zone",
-    "zones_other": "{{count}} zones"
+    "zones_other": "{{count}} zones",
+    "top_up": "Recharger des crédits"
   },
   "nav": {
     "lang_en": "EN",
@@ -359,7 +360,12 @@
     "saving": "Enregistrement…",
     "saved_ok": "Clé enregistrée — les crédits vont se rafraîchir",
     "clear": "Supprimer la clé",
-    "clear_title": "Effacer la clé API enregistrée"
+    "clear_title": "Effacer la clé API enregistrée",
+    "checking": "Vérification de la clé auprès de TextFromTrack…",
+    "check_invalid": "✗ TextFromTrack a refusé cette clé — collez-en une nouvelle.",
+    "check_ok_one": "✓ Valide — {{email}} · {{count}} crédit",
+    "check_ok_other": "✓ Valide — {{email}} · {{count}} crédits",
+    "check_unreachable": "Impossible de vérifier la clé : {{msg}}"
   },
   "settings": {
     "files_mgmt_title": "Gestion des fichiers",
@@ -555,5 +561,33 @@
     "batch_counts": "Enregistrées {{saved}} · absentes de LRCLIB {{not_found}} · sans horodatage {{plain}} · déjà présentes {{had}} · échecs {{failed}}",
     "batch_errors_one": "{{count}} erreur",
     "batch_errors_other": "{{count}} erreurs"
+  },
+  "errors": {
+    "TFT_TOKEN_MISSING": "Aucune clé API TextFromTrack — ajoutez-en une dans les Réglages.",
+    "TFT_UNAUTHORIZED": "TextFromTrack a refusé la clé API — vérifiez-la dans les Réglages.",
+    "TFT_INSUFFICIENT_CREDITS": "Pas assez de crédits TextFromTrack pour ce titre.",
+    "TFT_RATE_LIMITED": "TextFromTrack limite les requêtes — réessayez dans une minute.",
+    "TFT_TRACK_TOO_LONG": "Ce titre est trop long pour TextFromTrack.",
+    "TFT_UNSUPPORTED_FORMAT": "TextFromTrack n’accepte que les fichiers MP3, FLAC et WAV.",
+    "TFT_EXPORT_EXPIRED": "L’export de la transcription a expiré — relancez la génération.",
+    "TFT_INTERNAL_ERROR": "TextFromTrack a rencontré une erreur interne — réessayez plus tard.",
+    "NO_LOCAL_MATCH": "Aucun fichier de votre dossier musical ne correspond à ce titre.",
+    "LOW_CONFIDENCE_MATCH": "L’association du fichier est incertaine — confirmez-la avant de générer.",
+    "LYRICS_ALREADY_EXIST": "Ce titre a déjà des paroles.",
+    "SOURCE_FILE_NOT_FOUND": "Fichier audio introuvable — a-t-il été déplacé, ou le disque est-il démonté ?",
+    "FORBIDDEN": "Ce fichier est en dehors de vos dossiers musicaux.",
+    "OUTSIDE_MUSIC_ROOT": "Ce fichier est en dehors de vos dossiers musicaux.",
+    "LYRICS_EMBED_UNSUPPORTED": "Les paroles ne peuvent être intégrées que dans les fichiers MP3 et FLAC.",
+    "LYRICS_EMBED_FAILED": "Impossible d’écrire les paroles dans le fichier ({{msg}}).",
+    "LRC_WRITE_FAILED": "Impossible d’écrire le fichier .lrc ({{msg}}).",
+    "BACKUP_EXISTS": "Une sauvegarde (.org) de ce fichier existe déjà.",
+    "ROON_NOT_CONNECTED": "Roon n’est pas connecté.",
+    "NO_CURRENT_TRACK": "Rien en lecture.",
+    "LRCLIB_ERROR": "LRCLIB est injoignable ou surchargé ({{msg}}).",
+    "READ_ONLY": "Le dossier musical est en lecture seule. Dans Docker, montez-le avec « :rw » pour enregistrer les paroles.",
+    "NO_PERMISSION": "Pas le droit d’écrire ce fichier ({{msg}}).",
+    "DISK_FULL": "Le disque est plein.",
+    "BACKEND_UNREACHABLE": "Le serveur du compagnon ne répond pas.",
+    "UNKNOWN_ERROR": "Une erreur est survenue."
   }
 }

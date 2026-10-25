@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCollapsed } from '../hooks/useCollapsed.js';
+import { describeError } from '../lib/errors.js';
 
 export default function TftApiKey({ onTokenSaved }) {
   const { t } = useTranslation();
@@ -13,6 +14,27 @@ export default function TftApiKey({ onTokenSaved }) {
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState(null); // 'ok' | 'error'
   const [error, setError] = useState(null);
+  // Result of asking TextFromTrack about the stored key:
+  // null (not checked) | 'checking' | { valid, email, credits, top_up_url } | { unreachable: msg }
+  const [check, setCheck] = useState(null);
+
+  async function verifyKey() {
+    setCheck('checking');
+    try {
+      const res = await fetch('/api/tft/me');
+      const data = await res.json();
+      if (!res.ok || data.success === false) throw Object.assign(new Error(data.error?.message || `HTTP ${res.status}`), { code: data.error?.code });
+      if (!data.token_configured) { setCheck(null); return; }
+      setCheck({
+        valid: data.token_valid !== false,
+        email: data.email,
+        credits: data.credit_available ?? data.credit_balance,
+        top_up_url: data.top_up_url,
+      });
+    } catch (err) {
+      setCheck({ unreachable: describeError(err) });
+    }
+  }
 
   useEffect(() => {
     fetch('/api/tft/config')
@@ -21,12 +43,14 @@ export default function TftApiKey({ onTokenSaved }) {
         if (data.success) {
           setTokenConfigured(data.token_configured);
           setTokenSource(data.token_source || 'none');
+          if (data.token_configured) verifyKey();
         }
       })
       .catch(() => {});
   }, []);
 
-  async function handleSave() {
+  // value: the key to store; '' removes the saved key.
+  async function handleSave(value = inputValue) {
     setSaving(true);
     setSaveResult(null);
     setError(null);
@@ -34,7 +58,7 @@ export default function TftApiKey({ onTokenSaved }) {
       const res = await fetch('/api/tft/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tft_token: inputValue }),
+        body: JSON.stringify({ tft_token: value }),
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error?.message || 'Save failed');
@@ -44,6 +68,8 @@ export default function TftApiKey({ onTokenSaved }) {
       setShowToken(false);
       setSaveResult('ok');
       if (onTokenSaved) onTokenSaved();
+      if (data.token_configured) verifyKey();
+      else setCheck(null);
       setTimeout(() => setSaveResult(null), 3000);
     } catch (err) {
       setError(err.message);
@@ -130,7 +156,7 @@ export default function TftApiKey({ onTokenSaved }) {
                 className="tft-round-btn"
                 style={{ height: 30, padding: '0 14px', fontSize: 12, borderRadius: 6, whiteSpace: 'nowrap' }}
                 disabled={saving || !inputValue.trim()}
-                onClick={handleSave}
+                onClick={() => handleSave()}
               >
                 {saving ? t('tft_key.saving', 'Saving…') : t('tft_key.save', 'Save')}
               </button>
@@ -140,7 +166,7 @@ export default function TftApiKey({ onTokenSaved }) {
                   className="tft-round-btn"
                   style={{ height: 30, padding: '0 14px', fontSize: 12, borderRadius: 6, whiteSpace: 'nowrap', color: 'var(--tft-red, #e55)' }}
                   disabled={saving}
-                  onClick={() => { setInputValue(''); handleSave(); }}
+                  onClick={() => { setInputValue(''); handleSave(''); }}
                   title={t('tft_key.clear_title', 'Remove the saved API key')}
                 >
                   {t('tft_key.clear', 'Remove key')}
@@ -152,6 +178,17 @@ export default function TftApiKey({ onTokenSaved }) {
             {saveResult === 'ok' && (
               <p style={{ fontSize: 12, color: 'var(--tft-green, #4caf50)', marginTop: 6 }}>
                 ✓ {t('tft_key.saved_ok', 'Key saved successfully')}
+              </p>
+            )}
+            {tokenConfigured && check && (
+              <p className={`tft-key-check${check.valid ? ' ok' : check === 'checking' ? '' : ' bad'}`} role="status">
+                {check === 'checking' ? t('tft_key.checking')
+                  : check.unreachable ? t('tft_key.check_unreachable', { msg: check.unreachable })
+                  : !check.valid ? t('tft_key.check_invalid')
+                  : t('tft_key.check_ok', { email: check.email || '?', count: check.credits ?? 0 })}
+                {check.valid && check.credits === 0 && check.top_up_url && (
+                  <> · <a href={check.top_up_url} target="_blank" rel="noreferrer">{t('app.top_up')}</a></>
+                )}
               </p>
             )}
             {saveResult === 'error' && error && (

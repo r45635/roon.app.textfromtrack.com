@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import SyncedLyrics from './SyncedLyrics.jsx';
 import { useCollapsed } from '../hooks/useCollapsed.js';
+import { describeError } from '../lib/errors.js';
 
 // ── Custom Hits Dropdown ──────────────────────────────────────────────────
 // Native <select> can't be styled on iOS — use a custom accessible dropdown.
@@ -141,6 +142,8 @@ export default function LyricsSection({
   const [tftLyrics, setTftLyrics] = useState(null); // fetched after job done
   const [tftTransfer, setTftTransfer] = useState('idle'); // idle|checking|confirm|saving|saved|error
   const [tftGenError, setTftGenError] = useState(null);
+  // Why the last "Transfer to File Tags" failed (shown next to the Retry button).
+  const [transferErrorMsg, setTransferErrorMsg] = useState(null);
   const pollingRef = useRef(null);
 
   // ── File metadata for search (decoupled from Roon nowPlaying) ──────────────
@@ -523,7 +526,8 @@ export default function LyricsSection({
         return;
       }
       await (doFn || doTransfer)(lrcContent, setTransfer);
-    } catch {
+    } catch (err) {
+      setTransferErrorMsg(describeError(err));
       setTransfer('error');
     }
   }
@@ -538,10 +542,11 @@ export default function LyricsSection({
         body: JSON.stringify({ path: targetPath, lrc_content: lrcContent, embed: true }),
       });
       const data = await res.json();
-      if (!data.success) { setTransfer('error'); return; }
+      if (!data.success) { setTransferErrorMsg(describeError(data.error)); setTransfer('error'); return; }
       setTransfer('saved');
       if (onTagsRefresh) onTagsRefresh();
-    } catch {
+    } catch (err) {
+      setTransferErrorMsg(describeError(err));
       setTransfer('error');
     }
   }
@@ -564,10 +569,11 @@ export default function LyricsSection({
         }),
       });
       const data = await res.json();
-      if (!data.success) { setTransfer('error'); return; }
+      if (!data.success) { setTransferErrorMsg(describeError(data.error)); setTransfer('error'); return; }
       setTransfer('saved');
       if (onTagsRefresh) onTagsRefresh();
-    } catch {
+    } catch (err) {
+      setTransferErrorMsg(describeError(err));
       setTransfer('error');
     }
   }
@@ -598,7 +604,9 @@ export default function LyricsSection({
     if (transferState === 'error') {
       return (
         <div className="tft-transfer-row">
-          <span className="tft-transfer-err">{t('lyrics.transfer_error')}</span>
+          <span className="tft-transfer-err" role="alert">
+            {t('lyrics.transfer_error')}{transferErrorMsg ? ` — ${transferErrorMsg}` : ''}
+          </span>
           <button className="btn btn-secondary tft-transfer-btn"
             onClick={() => setTransfer('idle')}
           >{t('common.retry')}</button>
@@ -630,7 +638,12 @@ export default function LyricsSection({
     if (lrclibStatus === 'not_found')
       return <span className="tft-lyrics-badge tft-lyrics-badge--miss">{t('lyrics.not_found')}</span>;
     if (lrclibStatus === 'error')
-      return <span className="tft-lyrics-badge tft-lyrics-badge--err" title={lrclibError?.message}>{t('lyrics.lrclib_error')}</span>;
+      return (
+        <>
+          <span className="tft-lyrics-badge tft-lyrics-badge--err">{t('lyrics.lrclib_error')}</span>
+          {lrclibError && <span className="tft-lyrics-err-detail" role="alert">{describeError(lrclibError)}</span>}
+        </>
+      );
     return null;
   }
 
@@ -863,7 +876,7 @@ export default function LyricsSection({
       {/* ── TFT pre-submit error ─────────────────────────────────────────────── */}
       {tftGenError && !tftJob && (
         <div className="alert alert-error" style={{ margin: 0 }}>
-          <strong>[{tftGenError.code}]</strong> {tftGenError.message}
+          {describeError(tftGenError)}
         </div>
       )}
 
@@ -994,7 +1007,7 @@ export default function LyricsSection({
             {/* Error detail */}
             {tftJob?.status === 'error' && tftJob.error && (
               <div className="tft-lyrics-job-error">
-                [{tftJob.error.code}] {tftJob.error.message}
+                {describeError(tftJob.error)}
               </div>
             )}
             {/* Done with lyrics preview */}

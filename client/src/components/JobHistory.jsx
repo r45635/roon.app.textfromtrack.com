@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCollapsed } from '../hooks/useCollapsed.js';
+import { describeError } from '../lib/errors.js';
 
 async function revealInFinder(filePath) {
   await fetch('/api/tft/reveal', {
@@ -119,10 +120,10 @@ export default function JobHistory({ jobs, onJobRetried }) {
         });
         if (onJobRetried) onJobRetried(jobId);
       } else {
-        setEmbedError(prev => ({ ...prev, [jobId]: data.error?.message || 'Error' }));
+        setEmbedError(prev => ({ ...prev, [jobId]: describeError(data.error) }));
       }
     } catch (err) {
-      setEmbedError(prev => ({ ...prev, [jobId]: err.message }));
+      setEmbedError(prev => ({ ...prev, [jobId]: describeError(err) }));
     } finally {
       setEmbedding(null);
     }
@@ -173,12 +174,12 @@ export default function JobHistory({ jobs, onJobRetried }) {
       });
       const data = await res.json();
       if (!data.success) {
-        setRetryError(prev => ({ ...prev, [jobId]: data.error?.message || 'Error' }));
+        setRetryError(prev => ({ ...prev, [jobId]: describeError(data.error) }));
       } else if (onJobRetried) {
         onJobRetried(data.job_id);
       }
     } catch (err) {
-      setRetryError(prev => ({ ...prev, [jobId]: err.message }));
+      setRetryError(prev => ({ ...prev, [jobId]: describeError(err) }));
     } finally {
       setRetrying(null);
     }
