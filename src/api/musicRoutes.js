@@ -533,4 +533,20 @@ router.get('/open-folder', (req, res) => {
   });
 });
 
+/**
+ * GET /api/music/stream?path=...
+ * Stream a local audio file (HTTP Range supported) so the user can listen to the matched
+ * file in the browser before spending credits. Same root check as every file route.
+ */
+router.get('/stream', (req, res) => {
+  const resolved = resolveAndValidatePath(req, res);
+  if (!resolved) return;
+  res.sendFile(resolved, { dotfiles: 'allow', headers: { 'Cache-Control': 'no-store' } }, (err) => {
+    if (err && !res.headersSent) {
+      logger.warn({ path: resolved, err: err.message }, 'stream failed');
+      res.status(500).json(buildError(E.SOURCE_FILE_UNREADABLE, err.message));
+    }
+  });
+});
+
 module.exports = router;

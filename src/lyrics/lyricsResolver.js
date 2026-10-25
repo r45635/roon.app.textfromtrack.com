@@ -203,6 +203,21 @@ function setOffset(track, offsetMs) {
   return clamped;
 }
 
+/**
+ * Store lyrics the user edited (e.g. timestamps stamped in the LRC editor) as this track's
+ * lyrics: they replace the cached copy, and the picked LRCLIB version and offset are reset
+ * (the timing is now in the text itself).
+ * @param {{ title, artist, album }} track
+ * @param {string} text
+ */
+function saveCustom(track, text) {
+  const trackId = _trackId(track);
+  lrcCache.setByMeta(track.artist, track.title, track.album, text);
+  lyricsPrefs.set(trackId, { lrclib_id: null, offset_ms: null });
+  _memo.delete(trackId);
+  return { ..._fromText(text), source: 'cache', track_id: trackId, lrclib_id: null, offset_ms: 0 };
+}
+
 /** Test hook: forget remembered LRCLIB results. */
 function _resetMemo() {
   _memo.clear();
@@ -218,4 +233,4 @@ function lookupLrclib(track) {
   return _fetchFromLrclib(track);
 }
 
-module.exports = { resolve, choose, setOffset, lookupLrclib, isSynced, pickHit, simplify, _resetMemo };
+module.exports = { resolve, choose, setOffset, saveCustom, lookupLrclib, isSynced, pickHit, simplify, _resetMemo };

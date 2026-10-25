@@ -105,4 +105,20 @@ router.post('/offset', (req, res) => {
   res.json({ success: true, offset_ms: lyricsResolver.setOffset(track, offsetMs) });
 });
 
+const MAX_LYRICS_CHARS = 200_000;
+
+/**
+ * POST /api/lyrics/custom
+ * Save edited lyrics (LRC editor) as this track's lyrics in the local cache.
+ * Body: { title, artist, album?, lrc }
+ */
+router.post('/custom', (req, res) => {
+  const track = trackFromBody(req.body);
+  const lrc = req.body && req.body.lrc;
+  if (!track || typeof lrc !== 'string' || !lrc.trim() || lrc.length > MAX_LYRICS_CHARS) {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'title, artist and a non-empty lrc (max 200 000 characters) are required'));
+  }
+  res.json({ success: true, lyrics: lyricsResolver.saveCustom(track, lrc) });
+});
+
 module.exports = router;

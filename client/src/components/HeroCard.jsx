@@ -636,6 +636,18 @@ export default function HeroCard({
               >📂</button>
               {effectiveDir}
             </div>
+            {effectivePath && (
+              <div className="tft-preview">
+                <span className="tft-eyebrow">{t('match.preview')}</span>
+                <audio
+                  key={effectivePath}
+                  controls
+                  preload="none"
+                  src={`/api/music/stream?path=${encodeURIComponent(effectivePath)}`}
+                  aria-label={t('match.preview')}
+                />
+              </div>
+            )}
             {!confirmedPath && match.score_detail && (
               <div className="tft-match-chips">
                 {scoreFields.map(({ key, label, hint }) => {

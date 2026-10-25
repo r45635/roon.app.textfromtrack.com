@@ -18,7 +18,7 @@ async function postJson(url, body) {
  * @param {object|null} np        now-playing state (zone_id, title, artist, album)
  * @param {{ path?: string|null, refreshKey?: number }} [opts] path = file picked by the user
  * @returns {{ status: 'idle'|'loading'|'ready'|'error', data: object|null, error: string|null,
- *   reload: Function, setOffset: Function, choose: Function }}
+ *   reload: Function, setOffset: Function, choose: Function, saveCustom: Function }}
  */
 export function useTrackLyrics(np, { path = null, refreshKey = 0 } = {}) {
   const [state, setState] = useState({ status: 'idle', key: null, data: null, error: null });
@@ -85,5 +85,12 @@ export function useTrackLyrics(np, { path = null, refreshKey = 0 } = {}) {
     patchLyrics(res.lyrics);
   }, [key]);
 
-  return { status: state.status, data: state.data, error: state.error, reload, setOffset, choose };
+  /** Store edited lyrics (LRC editor) as this track's lyrics. */
+  const saveCustom = useCallback(async (lrc) => {
+    if (!track) return;
+    const res = await postJson('/api/lyrics/custom', { ...track, lrc });
+    patchLyrics(res.lyrics);
+  }, [key]);
+
+  return { status: state.status, data: state.data, error: state.error, reload, setOffset, choose, saveCustom };
 }

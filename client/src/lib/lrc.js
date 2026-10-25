@@ -64,7 +64,7 @@ export function parseLrc(text) {
   return out;
 }
 
-function formatStamp(seconds) {
+export function formatStamp(seconds) {
   const cs = Math.max(0, Math.round(seconds * 100));
   const mm = Math.floor(cs / 6000);
   const ss = Math.floor((cs % 6000) / 100);

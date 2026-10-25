@@ -133,7 +133,8 @@
     "hint_filename": "Le nom de fichier contient le titre · max 10",
     "hint_isrc": "International Standard Recording Code · correspondance exacte · max 60",
     "no_match_hint": "Aucun fichier de votre dossier musical ne correspond à ce titre. Les paroles ci-dessus fonctionnent quand même ; relancez l’analyse si le fichier existe.",
-    "open_folder": "Ouvrir le dossier"
+    "open_folder": "Ouvrir le dossier",
+    "preview": "Écouter le fichier"
   },
   "file_tags": {
     "section_title": "Tags du fichier",
@@ -605,5 +606,20 @@
     "DISK_FULL": "Le disque est plein.",
     "BACKEND_UNREACHABLE": "Le serveur du compagnon ne répond pas.",
     "UNKNOWN_ERROR": "Une erreur est survenue."
+  },
+  "editor": {
+    "sync_lyrics": "Synchroniser ces paroles",
+    "edit_timing": "Modifier le timing",
+    "stamp": "Horodater la ligne (Espace)",
+    "undo": "Annuler (⌫)",
+    "save": "Enregistrer le timing",
+    "progress": "{{timed}} / {{total}} lignes horodatées",
+    "help": "Lancez le titre dans Roon et appuyez sur Espace au début de chaque ligne. Retour arrière annule, [ et ] décalent la ligne en cours de 0,1 s, un double-clic joue depuis une ligne.",
+    "not_playing": "Roon n’est pas en lecture — lancez le titre pour horodater les lignes.",
+    "untimed_dropped_one": "{{count}} ligne n’a pas encore d’horodatage et sera laissée de côté.",
+    "untimed_dropped_other": "{{count}} lignes n’ont pas encore d’horodatage et seront laissées de côté.",
+    "lines_label": "Lignes des paroles",
+    "saved": "Timing enregistré — ces paroles défilent maintenant en rythme.",
+    "saved_file_hint": "Timing enregistré. Utilisez « Enregistrer dans le fichier » pour l’écrire dans le titre."
   }
 }

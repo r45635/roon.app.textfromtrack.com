@@ -2862,3 +2862,24 @@ button.synced-line:hover { opacity: 0.9; background: var(--tft-hover); }
 
 .search-input { min-width: 0; }
 .jobs-more { display: flex; justify-content: center; padding: 10px 0 4px; }
+
+/* ── LRC editor ─────────────────────────────────────────────────────────────── */
+.lrc-editor { display: flex; flex-direction: column; gap: 8px; }
+.lrc-editor-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lrc-editor-actions { margin-left: auto; display: flex; gap: 6px; }
+.lrc-editor-pos { font-size: 13px; color: var(--tft-ink-2); }
+.lrc-editor-warn { color: var(--tft-amber-ink); margin: 0; }
+.lrc-editor-lines {
+  list-style: none; max-height: 420px; overflow-y: auto; padding: 4px;
+  border: 1px solid var(--tft-line); border-radius: var(--tft-r-md); background: var(--tft-card);
+}
+.lrc-editor-line {
+  display: flex; gap: 12px; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 14px;
+}
+.lrc-editor-line:hover { background: var(--tft-hover); }
+.lrc-editor-line.current { background: var(--tft-info-soft); color: var(--tft-info-ink); font-weight: 600; }
+.lrc-editor-line.untimed .lrc-editor-time { color: var(--tft-mute); }
+.lrc-editor-time { flex-shrink: 0; width: 64px; font-size: 12px; color: var(--tft-ink-3); padding-top: 2px; }
+.lrc-editor-text { flex: 1; min-width: 0; }
+.tft-preview { display: flex; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.tft-preview audio { height: 34px; max-width: 100%; flex: 1; min-width: 220px; }

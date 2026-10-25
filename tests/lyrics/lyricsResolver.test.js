@@ -200,6 +200,17 @@ describe('choose and setOffset', () => {
     await assert.rejects(() => resolver.choose(TRACK, 123), { code: 'NOT_FOUND' });
   });
 
+  test('saveCustom replaces the cached lyrics and resets version and offset', async () => {
+    lrcCache.setByMeta(TRACK.artist, TRACK.title, TRACK.album, PLAIN);
+    resolver.setOffset(TRACK, 800);
+    const saved = resolver.saveCustom(TRACK, SYNCED);
+    assert.equal(saved.synced, true);
+    const r = await resolver.resolve(TRACK);
+    assert.equal(r.text, SYNCED);
+    assert.equal(r.offset_ms, 0);
+    assert.equal(r.lrclib_id, null);
+  });
+
   test('offset is clamped, rounded and returned by resolve', async () => {
     lrcCache.setByMeta(TRACK.artist, TRACK.title, TRACK.album, SYNCED);
     assert.equal(resolver.setOffset(TRACK, 1234), 1230);

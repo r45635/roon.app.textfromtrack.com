@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import SyncedLyrics from './SyncedLyrics.jsx';
 import LyricsFullscreen from './LyricsFullscreen.jsx';
+import LrcEditor from './LrcEditor.jsx';
 import { useTrackLyrics } from '../hooks/useTrackLyrics.js';
 import { shiftLrc } from '../lib/lrc.js';
 import { describeError } from '../lib/errors.js';
@@ -36,10 +37,11 @@ export default function LyricsStage({
 }) {
   const { t } = useTranslation();
   const np = nowPlaying;
-  const { status, data, error, reload, setOffset, choose } = useTrackLyrics(np, { path, refreshKey });
+  const { status, data, error, reload, setOffset, choose, saveCustom } = useTrackLyrics(np, { path, refreshKey });
   const lyrics = data?.lyrics || null;
 
   const [fullscreen, setFullscreen] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [notice, setNotice] = useState(null); // { tone: 'ok'|'error', text }
   const [saving, setSaving] = useState(false);
@@ -47,12 +49,16 @@ export default function LyricsStage({
 
   // New track: close the versions picker and clear notices.
   const trackKey = np ? `${np.zone_id}|${np.title}|${np.artist}|${np.album}` : '';
-  useEffect(() => { setVersionsOpen(false); setNotice(null); }, [trackKey]);
+  useEffect(() => { setVersionsOpen(false); setNotice(null); setEditing(false); }, [trackKey]);
 
-  // "F" toggles full screen (ignored while typing).
+  const editingRef = useRef(false);
+  editingRef.current = editing;
+
+  // "F" toggles full screen (ignored while typing or editing timestamps).
   useEffect(() => {
     const onKey = (e) => {
       if (e.key !== 'f' && e.key !== 'F') return;
+      if (editingRef.current) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const el = e.target;
       if (el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName))) return;
@@ -128,6 +134,9 @@ export default function LyricsStage({
     }
   }
 
+  // After editing, the lyrics live in the local cache: "Save to file" writes them when a file matched.
+  const canSaveAfterEdit = !!data?.audio_path;
+
   const seekLine = canSeek ? (secs) => onSeek?.('absolute', Math.max(0, secs)) : null;
 
   let body;
@@ -191,6 +200,11 @@ export default function LyricsStage({
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setVersionsOpen(v => !v)} aria-expanded={versionsOpen}>
             {t('stage.versions')}
           </button>
+          {found && !editing && (
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>
+              {lyrics.synced ? t('editor.edit_timing') : t('editor.sync_lyrics')}
+            </button>
+          )}
           {found && <button type="button" className="btn btn-ghost btn-sm" onClick={handleCopy}>{t('stage.copy')}</button>}
           {found && <button type="button" className="btn btn-ghost btn-sm" onClick={handleDownload}>{t('stage.download')}</button>}
           {canSave && (
@@ -223,7 +237,22 @@ export default function LyricsStage({
         />
       )}
 
-      <div className="tft-lyrics-stage-body">{body}</div>
+      <div className="tft-lyrics-stage-body">
+        {editing && found ? (
+          <LrcEditor
+            np={np}
+            text={lyrics.text}
+            offsetMs={offsetMs}
+            onSeek={onSeek}
+            onCancel={() => setEditing(false)}
+            onSave={async (lrc) => {
+              await saveCustom(lrc);
+              setEditing(false);
+              flash('ok', canSaveAfterEdit ? t('editor.saved_file_hint') : t('editor.saved'));
+            }}
+          />
+        ) : body}
+      </div>
 
       {found && lyrics.synced && canSeek && <p className="tft-lyrics-stage-tip">{t('stage.tip_click_line')}</p>}
 

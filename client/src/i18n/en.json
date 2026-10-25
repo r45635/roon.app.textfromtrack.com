@@ -133,7 +133,8 @@
     "hint_filename": "File name contains the title · max 10",
     "hint_isrc": "International Standard Recording Code · exact match · max 60",
     "no_match_hint": "No file in your music folder matches this track. Lyrics above still work; rescan your library if the file exists.",
-    "open_folder": "Open the folder"
+    "open_folder": "Open the folder",
+    "preview": "Listen to the file"
   },
   "file_tags": {
     "section_title": "File Tags",
@@ -605,5 +606,20 @@
     "DISK_FULL": "The disk is full.",
     "BACKEND_UNREACHABLE": "The companion server is not answering.",
     "UNKNOWN_ERROR": "Something went wrong."
+  },
+  "editor": {
+    "sync_lyrics": "Sync these lyrics",
+    "edit_timing": "Edit timing",
+    "stamp": "Stamp line (Space)",
+    "undo": "Undo (⌫)",
+    "save": "Save timing",
+    "progress": "{{timed}} / {{total}} lines timed",
+    "help": "Play the track in Roon and press Space at the start of each line. Backspace undoes, [ and ] shift the current line by 0.1 s, a double-click plays from a line.",
+    "not_playing": "Roon is not playing — start the track to stamp lines.",
+    "untimed_dropped_one": "{{count}} line has no time yet and will be left out.",
+    "untimed_dropped_other": "{{count}} lines have no time yet and will be left out.",
+    "lines_label": "Lyrics lines",
+    "saved": "Timing saved — these lyrics now play in sync.",
+    "saved_file_hint": "Timing saved. Use “Save to file” to write it into the track."
   }
 }
