@@ -62,6 +62,10 @@ services:
       # Roon Core extension port (Roon 2.x: 9330; legacy 1.x cores: 9100).
       # ROON_CORE_PORT: 9330
 
+      # Behind a reverse proxy with your own domain, allow that host name
+      # (LAN names and IP addresses are always allowed).
+      # ALLOWED_HOSTS: lyrics.example.com
+
       # Path mappings: translate Roon's view of a file path to the local path.
       # Useful when Roon sees SMB/NFS paths that differ from /music inside Docker.
       # Format: <roon_path>=<container_path>,<roon_path2>=<container_path2>

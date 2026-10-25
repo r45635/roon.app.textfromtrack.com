@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const path = require('path');
 const { execFile } = require('child_process');
 const { Router } = require('express');
 const express = require('express');
@@ -386,10 +387,11 @@ router.post('/embed', async (req, res) => {
  * Body: { path: string }
  */
 router.post('/reveal', (req, res) => {
-  const filePath = req.body && req.body.path;
-  if (!filePath || typeof filePath !== 'string') {
+  const rawPath = req.body && req.body.path;
+  if (!rawPath || typeof rawPath !== 'string') {
     return res.status(400).json(buildError(E.UNKNOWN_ERROR, 'path is required'));
   }
+  const filePath = path.resolve(rawPath); // absolute: can't be read as an `open` option
   if (!fs.existsSync(filePath)) {
     return res.status(404).json(buildError(E.TFT_NOT_FOUND, 'File not found'));
   }

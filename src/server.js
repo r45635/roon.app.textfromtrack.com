@@ -9,12 +9,20 @@ const logger = require('./utils/logger');
 const apiRouter = require('./api/routes');
 const { startRoon } = require('./roon/roonClient');
 const { buildError, E } = require('./utils/normalize');
+const { hostGuard, originGuard } = require('./utils/requestGuards');
 
 const app = express();
 
+// ─── Request guards (no auth, LAN-exposed API) ────────────────────────────────
+app.use(hostGuard(config.allowedHosts));
+app.use(originGuard);
+
 // ─── Body parsing ─────────────────────────────────────────────────────────────
+// The TFT webhook needs its raw body for HMAC verification: parse it first so
+// express.json() leaves it alone. No urlencoded parser: browsers can send HTML
+// forms cross-site without a preflight, and the UI only posts JSON.
+app.use('/api/tft/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 // ─── Request logging ──────────────────────────────────────────────────────────
 app.use((req, _res, next) => {
@@ -48,6 +56,13 @@ if (fs.existsSync(clientDist)) {
 app.use((err, req, res, _next) => {
   logger.error({ err: err.message, stack: err.stack }, 'Unhandled error');
   res.status(500).json(buildError(E.UNKNOWN_ERROR, err.message || 'An unexpected error occurred'));
+});
+
+// Express 4 does not catch errors thrown by async route handlers: they surface
+// as unhandled rejections, which terminate Node by default — one bad request
+// would take the whole backend down. Log them instead.
+process.on('unhandledRejection', (err) => {
+  logger.error({ err: err && err.message, stack: err && err.stack }, 'Unhandled promise rejection');
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────

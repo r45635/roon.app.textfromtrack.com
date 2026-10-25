@@ -894,6 +894,10 @@ pm2 restart tft-companion</code></pre>
         <div style="font-size:13px;color:var(--tft-ink-3)">Check that the path in <em>Settings → Music Library</em> points to the <strong>exact location on this machine</strong>. If Roon sees files over SMB but the companion runs on a different machine, add a Path Mapping in settings (e.g. <code>smb://NAS/Music</code> → <code>/Volumes/Music</code>).</div>
       </div>
       <div>
+        <div style="font-size:14px;font-weight:700;color:var(--tft-ink);margin-bottom:6px">"Host … is not allowed" (403)</div>
+        <div style="font-size:13px;color:var(--tft-ink-3)">The app only answers to <code>localhost</code>, IP addresses and LAN names (<code>*.local</code>, <code>*.lan</code>, <code>nas</code>…), which protects it from malicious websites. If you reach it through your own domain (reverse proxy), set <code>ALLOWED_HOSTS=your.domain</code> (Docker: in <code>docker-compose.yml</code>).</div>
+      </div>
+      <div>
         <div style="font-size:14px;font-weight:700;color:var(--tft-ink);margin-bottom:6px">Port 3888 is already in use</div>
         <div style="font-size:13px;color:var(--tft-ink-3)">For the Electron app, edit the <code>.env</code> file in the app's user-data folder and set <code>PORT=xxxx</code>. For the self-hosted install, set <code>PORT=xxxx</code> in your <code>.env</code> before starting the server.</div>
       </div>

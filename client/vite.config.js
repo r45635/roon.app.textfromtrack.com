@@ -8,8 +8,11 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:3888',
+        target: process.env.VITE_API_TARGET || 'http://localhost:3888',
         changeOrigin: true,
+        // The backend rejects cross-origin writes (originGuard); the dev proxy
+        // is same-machine tooling, so drop the :5173 Origin it would forward.
+        configure: (proxy) => proxy.on('proxyReq', (proxyReq) => proxyReq.removeHeader('origin')),
       },
     },
   },

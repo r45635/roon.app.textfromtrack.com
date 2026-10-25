@@ -110,7 +110,7 @@ cp .env.example .env   # fill in TFT_TOKEN and MUSIC_ROOTS
 npm run dev
 
 # Terminal 2 — Vite dev server (port 5173, proxies /api to 3888)
-npm run dev:client
+npm run dev:client   # VITE_API_TARGET=http://host:port to proxy /api elsewhere
 ```
 
 ```bash
@@ -143,6 +143,7 @@ Copy `.env.example` to `.env` and fill in the values.
 | `ROON_PUBLISHER` | `TextFromTrack` | Publisher shown in Roon Settings |
 | `ROON_CORE_HOST` | _(empty)_ | Direct Roon Core IP — skips auto-discovery (required in Docker on macOS/Windows) |
 | `ROON_CORE_PORT` | `9330` | Roon Core extension port used with `ROON_CORE_HOST` (Roon 2.x: `9330`; legacy 1.x: `9100`) |
+| `ALLOWED_HOSTS` | _(empty)_ | Extra host names allowed to reach the UI/API, comma-separated (e.g. a reverse-proxy domain). `localhost`, IP addresses and LAN names (`*.local`, `*.lan`, single-label like `nas`) are always allowed; `*` disables the check |
 | `MUSIC_ROOTS` | _(empty)_ | Comma-separated absolute paths to scan |
 | `PATH_MAPPINGS` | _(empty)_ | `from=to` pairs for SMB/NAS path translation (comma-separated) |
 | `TFT_BASE_URL` | `https://app.textfromtrack.com/api/v1` | TextFromTrack API base URL |
@@ -305,7 +306,7 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 
 - **`metaflac-js2` is intentionally NOT used.** Calling `save()` after `setTag()` silently drops every other Vorbis comment AND every PICTURE block. The app ships [src/music/flacTagger.js](src/music/flacTagger.js) — a self-contained FLAC editor that preserves all blocks byte-for-byte and verifies tag count post-write.
 
-- **No authentication.** The app should only be exposed on `localhost` or a trusted local network.
+- **No authentication.** The app should only be exposed on `localhost` or a trusted local network — anyone who can reach port 3888 can use it. Browser-based attacks from other websites are blocked: state-changing requests from another origin are rejected (CSRF), and so are requests whose `Host` is a public domain (DNS rebinding; see `ALLOWED_HOSTS`). Do not publish the port to the Internet.
 
 - **macOS builds are ad-hoc signed, not notarized.** First launch needs *Open Anyway* in *Privacy & Security*, and the app needs *Local Network* access to reach Roon. Builds must stay signed on their own: unsigned Electron apps share Electron's stock cdhash, and Apple revoked Electron 31.7.7's — v0.3.13–0.3.15 were blocked as "Malware" on Apple Silicon.
 

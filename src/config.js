@@ -27,6 +27,8 @@ const config = {
   // ── Server ──────────────────────────────────────────────────────────────────
   port: parseInt(process.env.PORT || '3888', 10),
   appBaseUrl: process.env.APP_BASE_URL || 'http://localhost:3888',
+  // Extra Host names accepted besides localhost, IPs and LAN names (comma-separated; '*' = any).
+  allowedHosts: process.env.ALLOWED_HOSTS || '',
   nodeEnv: process.env.NODE_ENV || 'development',
 
   // ── Roon ────────────────────────────────────────────────────────────────────

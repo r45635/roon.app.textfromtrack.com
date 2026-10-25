@@ -24,7 +24,7 @@ const logger = require('../utils/logger');
  * @returns {boolean}
  */
 function verifySignature(secret, rawBody, header) {
-  if (!secret || !header) return false;
+  if (!secret || !header || !Buffer.isBuffer(rawBody)) return false;
   const expected = 'sha256=' + crypto.createHmac('sha256', secret).update(rawBody).digest('hex');
   try {
     return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(header));

@@ -315,6 +315,12 @@ With Docker and `ROON_CORE_HOST`, *"Roon direct connect failed"* means the Core 
 
 ---
 
+**"Host … is not allowed" (403)**
+
+The app only answers to `localhost`, IP addresses and LAN names (`*.local`, `*.lan`, `nas`…), which protects it from malicious websites. If you reach it through your own domain (reverse proxy), set `ALLOWED_HOSTS=your.domain` (Docker: in `docker-compose.yml`).
+
+---
+
 **My music files aren't found after scanning**
 
 Check that the path in *Settings → Music Library* points to the **exact location on this machine**. If Roon sees files over SMB but the companion runs on a different machine, add a Path Mapping in settings (e.g. `smb://NAS/Music` → `/Volumes/Music`).

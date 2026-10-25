@@ -2,7 +2,7 @@
 
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
+const { execFile } = require('child_process');
 const { Router } = require('express');
 const config = require('../config');
 const logger = require('../utils/logger');
@@ -550,7 +550,8 @@ router.get('/open-folder', (req, res) => {
   const resolved = resolveAndValidatePath(req, res);
   if (!resolved) return;
   const dir = path.dirname(resolved);
-  exec(`open ${JSON.stringify(dir)}`, err => {
+  // execFile, not exec: a folder name like "$(cmd)" must never reach a shell
+  execFile('open', [dir], err => {
     if (err) {
       logger.warn({ dir, err: err.message }, 'open-folder failed');
       return res.status(500).json(buildError('OPEN_FOLDER_ERROR', err.message));

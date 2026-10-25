@@ -62,6 +62,8 @@ The top bar gives you quick access to language switching, Roon connection status
 | 🎵 Logo / Title | App name — decorative. |
 | EN / FR toggle | Switch the entire interface between English and French. The preference is saved in your browser. |
 | Roon status dot | Green = connected and authorized. Red = disconnected or not yet authorized. Hover for details. |
+| *Backend offline* pill | The companion server itself is not responding (stopped or restarting). It is **not** shown when only Roon is disconnected. |
+| macOS Local Network banner | macOS is blocking the app from reaching your Roon Core. The button opens *System Settings → Privacy & Security → Local Network*; enable *TextFromTrack Companion* and it reconnects within 10 seconds. |
 | ⚙️ Configuration | Opens the configuration drawer on the right side of the screen. |
 
 ---
