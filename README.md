@@ -354,6 +354,11 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - music-metadata 12 (synced FLAC lyrics keep their timestamps, MP3 USLT lyrics found by the job route), `qs` override
 - UI no longer shows "Backend offline" when only Roon is disconnected
 
+#### v0.3.19 ✓ — Security fixes
+- Open-folder no longer goes through a shell (folder names like `$(cmd)` executed `cmd`)
+- Cross-origin writes rejected (CSRF) and public Host names rejected (DNS rebinding; `ALLOWED_HOSTS`)
+- TFT webhook verifies the raw body (it never worked and could crash the backend); async route errors no longer kill the server
+
 #### Upcoming
 
 ##### Local tag editor (mp3tag-style, lyrics-aware)
