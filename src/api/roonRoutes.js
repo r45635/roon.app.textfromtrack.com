@@ -4,7 +4,7 @@ const { execFile } = require('child_process');
 const { Router } = require('express');
 const {
   getRoonStatus, getImageBase,
-  getAllZones, setActiveZone,
+  getAllZones, setActiveZone, getNowPlaying,
   controlZone, seekZone,
   changeVolume, muteOutput, muteAll, pauseAll,
   changeSettings,
@@ -43,12 +43,17 @@ router.post('/open-local-network-settings', (req, res) => {
   });
 });
 
+/** Now-playing of the zone a viewer follows (zone_id), else of the shared active zone. */
+function nowPlayingFor(zoneId) {
+  return zoneId ? getNowPlaying(String(zoneId)) : nowPlayingStore.get();
+}
+
 /**
  * GET /api/roon/now-playing
- * Returns the latest now-playing state from the active zone.
+ * Returns the latest now-playing state of the active zone, or of `?zone_id=`.
  */
 router.get('/now-playing', (req, res) => {
-  const state = nowPlayingStore.get();
+  const state = nowPlayingFor(req.query.zone_id);
   if (!state) {
     const roon = getRoonStatus();
     if (!roon.connected) {
@@ -98,18 +103,18 @@ router.get('/image/:key', async (req, res) => {
 
 /**
  * POST /api/roon/control
- * Send a playback control command to the active zone.
- * Body: { action: 'play' | 'pause' | 'playpause' | 'stop' | 'next' | 'previous' }
+ * Send a playback control command to the active zone, or to `zone_id`.
+ * Body: { action: 'play' | 'pause' | 'playpause' | 'stop' | 'next' | 'previous', zone_id? }
  */
 router.post('/control', async (req, res) => {
   const VALID_ACTIONS = ['play', 'pause', 'playpause', 'stop', 'next', 'previous'];
-  const { action } = req.body || {};
+  const { action, zone_id: zoneId } = req.body || {};
 
   if (!VALID_ACTIONS.includes(action)) {
     return res.status(400).json(buildError(E.INVALID_REQUEST, `Invalid action. Must be one of: ${VALID_ACTIONS.join(', ')}`));
   }
 
-  const state = nowPlayingStore.get();
+  const state = nowPlayingFor(zoneId);
   if (!state) {
     return res.status(404).json(buildError(E.NO_CURRENT_TRACK, 'No active zone'));
   }

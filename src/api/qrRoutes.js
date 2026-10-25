@@ -95,7 +95,9 @@ router.get('/', async (req, res) => {
 
     ${qrDataUrl
       ? `<div class="qr-wrap"><img src="${qrDataUrl}" width="248" height="248" alt="QR code" /></div>
-         <a class="url" href="${networkUrl}" target="_blank">${networkUrl}</a>`
+         <a class="url" href="${networkUrl}" target="_blank">${networkUrl}</a>
+         <p class="sub">Lyrics display for a tablet or TV:<br/>
+           <a class="url" href="${networkUrl}/#/lyrics" target="_blank">${networkUrl}/#/lyrics</a></p>`
       : `<p class="error">No local network interface found.<br/>Make sure Wi-Fi or Ethernet is connected.</p>`
     }
 

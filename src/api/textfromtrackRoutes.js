@@ -23,15 +23,7 @@ const webhookService = require('../textfromtrack/webhookService');
 
 const router = Router();
 
-/**
- * Returns the effective TFT token: user settings takes priority, env var is the fallback.
- * This allows the UI to always override the env var without restarting the server.
- */
-function getEffectiveToken() {
-  const settings = userSettings.get();
-  if (settings.tft_token) return settings.tft_token;
-  return config.tftToken || '';
-}
+const { getEffectiveToken } = tftClient;
 
 /**
  * GET /api/tft/config
@@ -192,19 +184,7 @@ router.post('/generate-current', async (req, res) => {
   }
 
   // 5. Resolve embed + backup + saveBeside flags: explicit body value wins, else user setting default
-  const settings = userSettings.get();
-  const bodyEmbed = req.body && Object.prototype.hasOwnProperty.call(req.body, 'embed')
-    ? !!req.body.embed
-    : null;
-  const embed = bodyEmbed !== null ? bodyEmbed : !!settings.embed_lyrics_default;
-  const bodyBackup = req.body && Object.prototype.hasOwnProperty.call(req.body, 'backup')
-    ? !!req.body.backup
-    : null;
-  const backup = bodyBackup !== null ? bodyBackup : !!settings.backup_before_embed_default;
-  const bodySaveBeside = req.body && Object.prototype.hasOwnProperty.call(req.body, 'save_beside')
-    ? !!req.body.save_beside
-    : null;
-  const saveBeside = bodySaveBeside !== null ? bodySaveBeside : !!settings.save_lrc_beside_source_default;
+  const { embed, backup, saveBeside } = userSettings.resolveWriteFlags(req.body);
   // For the auto-flow we don't have a way to surface a 409 modal mid-job, so
   // when a backup conflict happens we KEEP the existing .org by default.
   const onConflict = (req.body && req.body.backup_conflict) || 'keep';

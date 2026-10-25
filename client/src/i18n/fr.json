@@ -1,7 +1,12 @@
 {
   "app": {
     "title": "TextFromTrack Roon Companion",
-    "subtitle": "Paroles LRC automatisées pour votre bibliothèque Roon"
+    "subtitle": "Paroles LRC automatisées pour votre bibliothèque Roon",
+    "credits_one": "{{count}} crédit",
+    "credits_other": "{{count}} crédits",
+    "credits_refresh": "Cliquez pour actualiser le solde de crédits",
+    "zones_one": "{{count}} zone",
+    "zones_other": "{{count}} zones"
   },
   "nav": {
     "lang_en": "EN",
@@ -16,7 +21,8 @@
     "now_playing": "En cours de lecture",
     "local_match": "Fichier local associé",
     "textfromtrack": "TextFromTrack",
-    "job_history": "Historique des tâches"
+    "job_history": "Historique des tâches",
+    "zones": "Zones"
   },
   "roon": {
     "core_status": "Roon Core",
@@ -64,7 +70,23 @@
     "volume_up": "+5",
     "volume_down": "−5",
     "volume_mute": "Muet / Son",
-    "master": "Master"
+    "master": "Master",
+    "vol_down": "Baisser le volume",
+    "vol_up": "Monter le volume",
+    "previous": "Titre précédent",
+    "pause": "Pause",
+    "play": "Lecture",
+    "next": "Titre suivant",
+    "empty_idle_title": "Rien en lecture",
+    "empty_idle_hint": "Lancez un titre dans Roon — ses paroles s’afficheront ici.",
+    "empty_backend_offline_title": "Serveur injoignable",
+    "empty_backend_offline_hint": "Le serveur du compagnon ne répond pas. Vérifiez que l’app (ou son conteneur Docker) tourne.",
+    "empty_lan_blocked_title": "macOS bloque la connexion",
+    "empty_lan_blocked_hint": "Autorisez l’app dans Réglages Système → Confidentialité et sécurité → Réseau local.",
+    "empty_roon_not_found_title": "Recherche de votre Roon Core…",
+    "empty_roon_not_found_hint": "Vérifiez que Roon tourne sur ce réseau. Si le Core est sur un autre sous-réseau ou dans Docker, renseignez ROON_CORE_HOST.",
+    "empty_waiting_auth_title": "Activez l’extension dans Roon",
+    "empty_waiting_auth_hint": "Ouvrez Roon → Paramètres → Extensions et activez « TextFromTrack Roon Companion »."
   },
   "match": {
     "no_index": "Bibliothèque non encore indexée",
@@ -94,7 +116,15 @@
     "detail_duration": "Durée",
     "detail_filename": "Fichier",
     "other_candidates": "autre(s) candidat(s)",
-    "override_active": "sélection manuelle"
+    "override_active": "sélection manuelle",
+    "hint_title": "Titre · exact = 50, similaire ≥ 0,85 = 35, ≥ 0,70 = 20 · max 50",
+    "hint_artist": "Artiste · exact = 30, similaire ≥ 0,85 = 21, ≥ 0,70 = 12 · max 30",
+    "hint_album": "Album · exact = 20, similaire ≥ 0,85 = 14, ≥ 0,70 = 8 · max 20",
+    "hint_duration": "Durée · à 2 s près = 20, à 5 s près = 10 · max 20",
+    "hint_filename": "Le nom de fichier contient le titre · max 10",
+    "hint_isrc": "International Standard Recording Code · correspondance exacte · max 60",
+    "no_match_hint": "Aucun fichier de votre dossier musical ne correspond à ce titre. Les paroles ci-dessus fonctionnent quand même ; relancez l’analyse si le fichier existe.",
+    "open_folder": "Ouvrir le dossier"
   },
   "file_tags": {
     "section_title": "Tags du fichier",
@@ -219,7 +249,8 @@
     "help_language": "Code ISO 639-1 (ex. fr, en, ja). Laisser vide pour la détection automatique.",
     "help_vintage_title": "Mode vintage",
     "help_vintage": "Force le modèle large-v3 et la séparation Demucs. Bien plus lent (~6×), mais peut donner de meilleurs résultats sur des pistes difficiles.",
-    "elapsed": "{{s}} s"
+    "elapsed": "{{s}} s",
+    "regenerate_anyway": "Régénérer quand même…"
   },
   "jobs": {
     "empty": "Aucune tâche pour l'instant",
@@ -232,8 +263,8 @@
     "track_path": "Chemin Track",
     "reveal": "Afficher dans le Finder",
     "no_timestamps": "Sans sync",
-    "no_timestamps_tip": "Timestamps indisponibles — modèle de repli utilisé. Cliquez 🔄 pour relancer.",
-    "no_timestamps_tip_with_mode": "Timestamps indisponibles — TFT a appliqué le mode « {{mode}} » (demandé « {{requested}} »). Cliquez 🔄 pour relancer.",
+    "no_timestamps_tip": "Timestamps indisponibles — modèle de repli utilisé. Utilisez le bouton ↻ pour relancer.",
+    "no_timestamps_tip_with_mode": "Timestamps indisponibles — TFT a appliqué le mode « {{mode}} » (demandé « {{requested}} »). Utilisez le bouton ↻ pour relancer.",
     "no_timestamps_tip_v17_missing": "Timestamps indisponibles. Mode « {{requested}} » demandé, mais la réponse TFT ne contient pas timestamps_mode — l'API déployée est probablement antérieure à la v1.7 et a silencieusement ignoré le paramètre. Relancer ne servira à rien tant que TFT v1.7 n'est pas déployé.",
     "retry": "Relancer",
     "retry_tip": "Supprimer ce LRC et soumettre à nouveau",
@@ -257,7 +288,11 @@
     "view_lyrics": "Voir les paroles",
     "lyrics_modal_title": "Paroles",
     "lyrics_not_available": "Paroles non disponibles pour ce job",
-    "backup_conflict_no_backup": "Intégrer sans sauvegarde"
+    "backup_conflict_no_backup": "Intégrer sans sauvegarde",
+    "source_lrclib_tip": "Paroles obtenues depuis LRCLIB (gratuit)",
+    "source_cache_tip": "Servi depuis le cache local (0 crédit)",
+    "prev": "← Précédent",
+    "next": "Suivant →"
   },
   "common": {
     "yes": "Oui",
@@ -267,8 +302,8 @@
     "error": "Erreur",
     "retry": "Réessayer",
     "cancel": "Annuler",
-    "expand": "D\u00e9plier",
-    "collapse": "R\u00e9duire",
+    "expand": "Déplier",
+    "collapse": "Réduire",
     "close": "Fermer",
     "seconds_abbr": "s",
     "mb_abbr": "Mo"
@@ -322,7 +357,7 @@
     "hide": "Masquer",
     "save": "Enregistrer",
     "saving": "Enregistrement…",
-    "saved_ok": "Clé enregistrée — le panneau TFT va se rafraîchir",
+    "saved_ok": "Clé enregistrée — les crédits vont se rafraîchir",
     "clear": "Supprimer la clé",
     "clear_title": "Effacer la clé API enregistrée"
   },
@@ -369,7 +404,11 @@
     "sys_info_node": "Node",
     "sys_info_platform": "Plateforme",
     "sys_info_version": "Version",
-    "sys_info_unavailable": "Indisponible (mode dev — Electron non actif)"
+    "sys_info_unavailable": "Indisponible (mode dev — Electron non actif)",
+    "title": "Réglages",
+    "saving": "Enregistrement…",
+    "saved": "✓ Enregistré",
+    "save_failed": "Non enregistré — le serveur a refusé la modification. Rechargez la page et réessayez."
   },
   "lrclib": {
     "check_button": "Chercher sur LRCLIB",
@@ -428,6 +467,55 @@
     "unsaved_countdown": "Abandon dans {{seconds}}s si aucune action…",
     "unsaved_save": "Oui, sauvegarder maintenant",
     "unsaved_discard": "Non, ignorer",
-    "unsaved_stay": "Annuler la synch — rester ici"
+    "unsaved_stay": "Annuler la synch — rester ici",
+    "seek_to_line": "Aller à cette ligne"
+  },
+  "stage": {
+    "title": "Paroles",
+    "source_lrclib": "LRCLIB",
+    "source_cache": "Copie enregistrée",
+    "source_sidecar": "Fichier .lrc",
+    "source_embedded": "Dans les tags",
+    "synced": "Synchronisées",
+    "not_synced": "Non synchronisées",
+    "offset_label": "Décalage",
+    "offset_earlier": "Afficher plus tôt (−0,5 s)",
+    "offset_later": "Afficher plus tard (+0,5 s)",
+    "offset_reset": "Réinitialiser le décalage",
+    "offset_failed": "Décalage non enregistré : {{msg}}",
+    "versions": "Autres versions",
+    "copy": "Copier",
+    "download": "Télécharger",
+    "save_to_file": "Enregistrer dans le fichier",
+    "saving": "Enregistrement…",
+    "saved_embedded": "Enregistrées dans les tags du fichier.",
+    "saved_sidecar": "Enregistrées dans un fichier .lrc à côté du titre.",
+    "save_failed": "Non enregistrées : {{msg}}",
+    "fullscreen": "Plein écran",
+    "copied": "Copiées dans le presse-papiers.",
+    "copy_failed": "Le navigateur a bloqué le presse-papiers.",
+    "choose_failed": "Impossible d’utiliser cette version : {{msg}}",
+    "loading": "Recherche des paroles…",
+    "load_failed": "Impossible de charger les paroles : {{msg}}",
+    "instrumental": "Instrumental — pas de paroles.",
+    "instrumental_short": "Instrumental",
+    "lrclib_unreachable": "LRCLIB est injoignable ({{msg}}). Nouvel essai dans une minute.",
+    "not_found": "Aucune parole trouvée pour ce titre. Essayez « Autres versions » avec un titre simplifié.",
+    "tip_click_line": "Cliquez sur une ligne pour y aller.",
+    "library_hint": "Ajoutez votre dossier musical pour enregistrer les paroles dans vos fichiers et générer des paroles par IA avec TextFromTrack.",
+    "library_hint_open": "Ouvrir les réglages",
+    "dismiss": "Masquer",
+    "search_title": "Titre",
+    "search_artist": "Artiste",
+    "search": "Rechercher",
+    "no_versions": "LRCLIB n’a aucune version de ce titre.",
+    "not_found_short": "Aucune parole trouvée pour ce titre."
+  },
+  "kiosk": {
+    "idle": "Rien en lecture dans cette zone.",
+    "change_zone": "Zone",
+    "pick_zone": "Afficher les paroles de",
+    "follow_active": "La zone active",
+    "back_to_app": "Retour à l’app"
   }
 }

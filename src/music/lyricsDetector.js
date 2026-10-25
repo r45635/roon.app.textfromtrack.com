@@ -123,4 +123,20 @@ async function detect(audioPath) {
   }
 }
 
-module.exports = { STATUS, detect, detectFromMetadata, hasLrcFile, hasEmbeddedLyrics, extractEmbeddedLyrics, getLrcPath };
+/**
+ * Read the lyrics stored with an audio file: the .lrc sidecar first, then embedded tags.
+ * @param {string} audioPath
+ * @returns {Promise<{ source: 'lrc'|'embedded', text: string }|null>}
+ */
+async function readLocalLyrics(audioPath) {
+  const lrcPath = getLrcPath(audioPath);
+  if (fs.existsSync(lrcPath)) {
+    return { source: 'lrc', text: fs.readFileSync(lrcPath, 'utf8') };
+  }
+  const { parseFile } = await import('music-metadata');
+  const metadata = await parseFile(audioPath, { skipCovers: true, duration: false });
+  const text = extractEmbeddedLyrics(metadata);
+  return text ? { source: 'embedded', text } : null;
+}
+
+module.exports = { STATUS, detect, readLocalLyrics, detectFromMetadata, hasLrcFile, hasEmbeddedLyrics, extractEmbeddedLyrics, getLrcPath };

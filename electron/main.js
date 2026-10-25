@@ -30,6 +30,10 @@ if (!gotLock) {
   app.quit();
   process.exit(0);
 }
+// Launching the app again (Dock, Start menu, double-click) opens the UI of the running instance.
+app.on('second-instance', () => {
+  if (serverReady) shell.openExternal(activeBackendURL);
+});
 
 // ── Constants ────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3888;
@@ -227,8 +231,10 @@ function pollCredits() {
         const json = JSON.parse(data);
         if (json.token_configured === false) {
           creditsLabel = null; // hide the credits item if no token
-        } else if (json.account?.credit_balance != null) {
-          creditsLabel = `Credits: ${json.account.credit_balance}`;
+        } else if (json.token_valid === false) {
+          creditsLabel = 'Credits: invalid API key';
+        } else if (json.credit_available != null || json.credit_balance != null) {
+          creditsLabel = `Credits: ${json.credit_available ?? json.credit_balance}`;
         } else {
           creditsLabel = null;
         }
@@ -705,7 +711,7 @@ function createTray() {
 
   // Left-click on macOS shows context menu; double-click on Windows opens UI.
   tray.on('double-click', () => {
-    if (serverReady) shell.openExternal(UI_URL);
+    if (serverReady) shell.openExternal(activeBackendURL);
   });
 
   rebuildMenu(); // initial state: Starting…

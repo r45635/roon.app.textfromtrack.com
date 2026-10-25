@@ -1,7 +1,12 @@
 {
   "app": {
     "title": "TextFromTrack Roon Companion",
-    "subtitle": "Automated LRC lyrics for your Roon library"
+    "subtitle": "Automated LRC lyrics for your Roon library",
+    "credits_one": "{{count}} credit",
+    "credits_other": "{{count}} credits",
+    "credits_refresh": "Click to refresh the credit balance",
+    "zones_one": "{{count}} zone",
+    "zones_other": "{{count}} zones"
   },
   "nav": {
     "lang_en": "EN",
@@ -16,7 +21,8 @@
     "now_playing": "Now Playing",
     "local_match": "Local File Match",
     "textfromtrack": "TextFromTrack",
-    "job_history": "Job History"
+    "job_history": "Job History",
+    "zones": "Zones"
   },
   "roon": {
     "core_status": "Roon Core",
@@ -64,7 +70,23 @@
     "volume_up": "+5",
     "volume_down": "−5",
     "volume_mute": "Mute / Unmute",
-    "master": "Master"
+    "master": "Master",
+    "vol_down": "Decrease volume",
+    "vol_up": "Increase volume",
+    "previous": "Previous track",
+    "pause": "Pause",
+    "play": "Play",
+    "next": "Next track",
+    "empty_idle_title": "Nothing playing",
+    "empty_idle_hint": "Play something in Roon — its lyrics will show up here.",
+    "empty_backend_offline_title": "Server unreachable",
+    "empty_backend_offline_hint": "The companion server is not answering. Check that the app (or its Docker container) is running.",
+    "empty_lan_blocked_title": "macOS is blocking the connection",
+    "empty_lan_blocked_hint": "Allow the app in System Settings → Privacy & Security → Local Network.",
+    "empty_roon_not_found_title": "Looking for your Roon Core…",
+    "empty_roon_not_found_hint": "Make sure Roon is running on this network. If the Core is on another subnet or in Docker, set ROON_CORE_HOST.",
+    "empty_waiting_auth_title": "Enable the extension in Roon",
+    "empty_waiting_auth_hint": "Open Roon → Settings → Extensions and enable “TextFromTrack Roon Companion”."
   },
   "match": {
     "no_index": "Library not scanned yet",
@@ -94,7 +116,15 @@
     "detail_duration": "Dur.",
     "detail_filename": "File",
     "other_candidates": "other candidate(s)",
-    "override_active": "manual selection"
+    "override_active": "manual selection",
+    "hint_title": "Title · exact = 50, similar ≥ 0.85 = 35, ≥ 0.70 = 20 · max 50",
+    "hint_artist": "Artist · exact = 30, similar ≥ 0.85 = 21, ≥ 0.70 = 12 · max 30",
+    "hint_album": "Album · exact = 20, similar ≥ 0.85 = 14, ≥ 0.70 = 8 · max 20",
+    "hint_duration": "Duration · within 2 s = 20, within 5 s = 10 · max 20",
+    "hint_filename": "File name contains the title · max 10",
+    "hint_isrc": "International Standard Recording Code · exact match · max 60",
+    "no_match_hint": "No file in your music folder matches this track. Lyrics above still work; rescan your library if the file exists.",
+    "open_folder": "Open the folder"
   },
   "file_tags": {
     "section_title": "File Tags",
@@ -219,7 +249,8 @@
     "help_language": "ISO 639-1 code (e.g. fr, en, ja). Leave blank for automatic detection.",
     "help_vintage_title": "Vintage mode",
     "help_vintage": "Forces large-v3 model and Demucs separation. Much slower (~6×) but may give better results for difficult tracks.",
-    "elapsed": "{{s}} s"
+    "elapsed": "{{s}} s",
+    "regenerate_anyway": "Regenerate anyway…"
   },
   "jobs": {
     "empty": "No jobs yet",
@@ -232,8 +263,8 @@
     "track_path": "Track path",
     "reveal": "Reveal in Finder",
     "no_timestamps": "No sync",
-    "no_timestamps_tip": "Timestamps unavailable — fallback model was used. Click 🔄 to retry.",
-    "no_timestamps_tip_with_mode": "Timestamps unavailable — TFT applied mode \"{{mode}}\" (requested \"{{requested}}\"). Click 🔄 to retry.",
+    "no_timestamps_tip": "Timestamps unavailable — fallback model was used. Use the ↻ button to retry.",
+    "no_timestamps_tip_with_mode": "Timestamps unavailable — TFT applied mode \"{{mode}}\" (requested \"{{requested}}\"). Use the ↻ button to retry.",
     "no_timestamps_tip_v17_missing": "Timestamps unavailable. Requested \"{{requested}}\" but the TFT response did not echo timestamps_mode — the deployed API likely pre-dates v1.7 and silently ignored the param. Retry will not help until TFT v1.7 is deployed.",
     "retry": "Retry",
     "retry_tip": "Delete this LRC and re-submit for transcription",
@@ -257,7 +288,11 @@
     "copied": "Copied!",
     "view_lyrics": "View lyrics",
     "lyrics_modal_title": "Lyrics",
-    "lyrics_not_available": "Lyrics not available for this job"
+    "lyrics_not_available": "Lyrics not available for this job",
+    "source_lrclib_tip": "Lyrics from LRCLIB (free)",
+    "source_cache_tip": "Served from the local cache (0 credits)",
+    "prev": "← Previous",
+    "next": "Next →"
   },
   "common": {
     "yes": "Yes",
@@ -312,17 +347,17 @@
   "tft_key": {
     "title": "TextFromTrack API Key",
     "status": "API Key",
-    "configured": "\u2713 Configured",
-    "not_configured": "\u2717 Not set",
-    "env_fallback": "(from .env \u2014 enter a key below to override)",
+    "configured": "✓ Configured",
+    "not_configured": "✗ Not set",
+    "env_fallback": "(from .env — enter a key below to override)",
     "hint": "Get your key at",
-    "placeholder_enter": "Paste your API key here\u2026",
-    "placeholder_replace": "Enter new key to replace\u2026",
+    "placeholder_enter": "Paste your API key here…",
+    "placeholder_replace": "Enter new key to replace…",
     "show": "Show",
     "hide": "Hide",
     "save": "Save",
-    "saving": "Saving\u2026",
-    "saved_ok": "Key saved \u2014 the TFT panel will refresh",
+    "saving": "Saving…",
+    "saved_ok": "Key saved — credits will refresh",
     "clear": "Remove key",
     "clear_title": "Clear the saved API key"
   },
@@ -369,7 +404,11 @@
     "sys_info_node": "Node",
     "sys_info_platform": "Platform",
     "sys_info_version": "Version",
-    "sys_info_unavailable": "Unavailable (dev mode — Electron not running)"
+    "sys_info_unavailable": "Unavailable (dev mode — Electron not running)",
+    "title": "Settings",
+    "saving": "Saving…",
+    "saved": "✓ Saved",
+    "save_failed": "Not saved — the server rejected the change. Reload the page and try again."
   },
   "lrclib": {
     "check_button": "Check LRCLIB Lyrics",
@@ -428,6 +467,55 @@
     "unsaved_countdown": "Discarding in {{seconds}}s if no action…",
     "unsaved_save": "Yes, save now",
     "unsaved_discard": "No, discard",
-    "unsaved_stay": "Cancel sync — stay here"
+    "unsaved_stay": "Cancel sync — stay here",
+    "seek_to_line": "Jump to this line"
+  },
+  "stage": {
+    "title": "Lyrics",
+    "source_lrclib": "LRCLIB",
+    "source_cache": "Saved copy",
+    "source_sidecar": ".lrc file",
+    "source_embedded": "In file tags",
+    "synced": "Synced",
+    "not_synced": "Not time-synced",
+    "offset_label": "Timing",
+    "offset_earlier": "Show lyrics earlier (−0.5 s)",
+    "offset_later": "Show lyrics later (+0.5 s)",
+    "offset_reset": "Reset timing",
+    "offset_failed": "Timing not saved: {{msg}}",
+    "versions": "Other versions",
+    "copy": "Copy",
+    "download": "Download",
+    "save_to_file": "Save to file",
+    "saving": "Saving…",
+    "saved_embedded": "Saved into the file tags.",
+    "saved_sidecar": "Saved as a .lrc file next to the track.",
+    "save_failed": "Not saved: {{msg}}",
+    "fullscreen": "Full screen",
+    "copied": "Copied to the clipboard.",
+    "copy_failed": "The browser blocked the clipboard.",
+    "choose_failed": "Could not use this version: {{msg}}",
+    "loading": "Looking for lyrics…",
+    "load_failed": "Could not load lyrics: {{msg}}",
+    "instrumental": "Instrumental — no lyrics.",
+    "instrumental_short": "Instrumental",
+    "lrclib_unreachable": "LRCLIB is unreachable ({{msg}}). Retrying in a minute.",
+    "not_found": "No lyrics found for this track. Try “Other versions” with a simpler title.",
+    "tip_click_line": "Click a line to jump there.",
+    "library_hint": "Add your music folder to save lyrics into your files and generate AI lyrics with TextFromTrack.",
+    "library_hint_open": "Open settings",
+    "dismiss": "Dismiss",
+    "search_title": "Title",
+    "search_artist": "Artist",
+    "search": "Search",
+    "no_versions": "LRCLIB has no version of this title.",
+    "not_found_short": "No lyrics found for this track."
+  },
+  "kiosk": {
+    "idle": "Nothing playing in this zone.",
+    "change_zone": "Zone",
+    "pick_zone": "Show lyrics for",
+    "follow_active": "The active zone",
+    "back_to_app": "Back to the app"
   }
 }

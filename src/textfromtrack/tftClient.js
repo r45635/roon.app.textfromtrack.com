@@ -8,12 +8,13 @@ const { AppError, E, mapTftError } = require('../utils/normalize');
 const userSettings = require('../storage/userSettings');
 
 /**
- * Returns the effective TFT token: env var takes priority, then user settings.
+ * Returns the effective TFT token: user settings take priority, the TFT_TOKEN env var is the
+ * fallback. The UI can therefore always override the env var without a restart.
  */
 function getEffectiveToken() {
-  if (config.tftToken) return config.tftToken;
   const settings = userSettings.get();
-  return settings.tft_token || '';
+  if (settings.tft_token) return settings.tft_token;
+  return config.tftToken || '';
 }
 
 // ─── Supported extensions for upload ─────────────────────────────────────────
@@ -288,6 +289,7 @@ async function deleteWebhook(id) {
 }
 
 module.exports = {
+  getEffectiveToken,
   getMe,
   submitTranscription,
   getTranscription,

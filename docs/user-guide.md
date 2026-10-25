@@ -12,6 +12,7 @@
   - [Top Bar](#top-bar)
   - [Zone Selector](#zone-selector)
   - [Now Playing](#now-playing)
+  - [Lyrics Stage](#lyrics-stage)
   - [Local File Match](#local-file-match)
   - [File Tags](#file-tags)
 - [Lyrics](#lyrics)
@@ -90,9 +91,31 @@ The main card shows everything about the track currently playing on your selecte
 | 🖼️ Album Artwork | Displayed from Roon's own artwork store. Updates as soon as the track changes. |
 | ⏯️ Transport Controls | Previous, Play/Pause, Next. Sends commands directly to your Roon zone. |
 | 🔁 Repeat & Shuffle | Toggle repeat (off → all → one) and shuffle modes. State mirrors Roon in real time. |
-| 🔊 Volume Control | +/− buttons adjust volume by the configured step (default 3). Shows master volume with a visual bar. |
+| 🔊 Volume Control | +/− buttons adjust volume by the configured step (default 1). Shows master volume with a visual bar. |
 | ⏱️ Progress Bar | Scrubable progress bar. Click anywhere on the bar to seek to that position in the track. |
 | 🔗 Artist / Album Links | Click the artist or album name to immediately search for that artist/album in the Search panel. |
+
+When nothing is playing, the card says why and what to do: the companion server is unreachable, the Roon Core is not found, the extension is waiting to be enabled in Roon → Settings → Extensions, or macOS is blocking Local Network access.
+
+---
+
+### Lyrics Stage
+
+Right under the player, the lyrics of the playing track, **with or without a music folder**. Without one (streaming, a NAS this machine doesn't mount, Docker without a music volume) the companion works as a lyrics-only player; lyrics come from [LRCLIB](https://lrclib.net) and are kept in a local cache.
+
+| Feature | Description |
+|---|---|
+| 🎤 Synced lyrics | The current line is highlighted and kept in the middle. Lyrics without timestamps are shown as plain text with a "Not time-synced" label. |
+| 👆 Click a line | Roon jumps to that line (when the zone allows seeking). |
+| ⏱️ Timing − / + | Shifts the lyrics by 0.5 s steps for this track; remembered next time. Click the value to reset. |
+| 🔎 Other versions | Search LRCLIB by title and artist and pick another version for this track. |
+| 📋 Copy / ⬇️ Download | Copy the lyrics, or download a `.lrc` with your timing offset applied. |
+| 💾 Save to file | Shown when the track matched a local file: writes the lyrics using your Files Management defaults (embeds them if both defaults are off). |
+| 🖥️ Full screen | Big lyrics over the blurred cover, with transport controls. Press `F`; `Esc` closes. |
+
+The source badge says where the lyrics come from: *LRCLIB*, *Saved copy* (local cache), *.lrc file* or *In file tags*.
+
+**Lyrics on a tablet or TV:** open `http://<companion-ip>:3888/#/lyrics` (also linked from *Show QR Code for Phone* in the tray). Pick a zone with the *Zone* button; each display follows its own zone and keeps the screen awake.
 
 ---
 

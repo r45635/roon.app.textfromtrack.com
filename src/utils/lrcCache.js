@@ -22,9 +22,13 @@ function _pathKey(sourceFile) {
   return _sha256(sourceFile) + '.lrc';
 }
 
+/** Stable id of a track's metadata (artist + title + album), shared with lyricsPrefs. */
+function metaId(artist, title, album) {
+  return _sha256([_normalize(artist), _normalize(title), _normalize(album)].join('|'));
+}
+
 function _metaKey(artist, title, album) {
-  const key = [_normalize(artist), _normalize(title), _normalize(album)].join('|');
-  return 'meta_' + _sha256(key) + '.lrc';
+  return 'meta_' + metaId(artist, title, album) + '.lrc';
 }
 
 function _read(filename) {
@@ -78,4 +82,4 @@ function setAll(sourceFile, artist, title, album, lrcContent) {
   }
 }
 
-module.exports = { get, set, getByMeta, setByMeta, setAll };
+module.exports = { get, set, getByMeta, setByMeta, setAll, metaId };

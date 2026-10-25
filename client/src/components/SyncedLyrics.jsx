@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { parseLrc } from '../lib/lrc.js';
 
 /**
  * SyncedLyrics — drop-in replacement for a static `<pre>` that displays LRC
@@ -18,6 +19,11 @@ import { useTranslation } from 'react-i18next';
  *   defaultSync  — initial state of the Sync toggle.
  *   compactHeader — when true, render the toggle inline-compact (used in
  *                  TFT/LRCLIB preview blocks where vertical space is tight).
+ *   alwaysSync   — no toggle: sync whenever the text has timestamps (lyrics stage).
+ *   offsetMs     — user timing offset; positive shows each line later.
+ *   onLineClick  — called with the line's playback time (seconds, offset
+ *                  applied) when a timed line is clicked — used to seek Roon.
+ *   className    — extra class on the root (e.g. 'synced-lyrics--stage').
  */
 export default function SyncedLyrics({
   lrcText,
@@ -25,9 +31,14 @@ export default function SyncedLyrics({
   isPlaying = false,
   defaultSync = false,
   compactHeader = false,
+  alwaysSync = false,
+  offsetMs = 0,
+  onLineClick = null,
+  className = '',
 }) {
   const { t } = useTranslation();
-  const [sync, setSync] = useState(defaultSync);
+  const [syncToggle, setSync] = useState(defaultSync);
+  const sync = alwaysSync || syncToggle;
 
   // ── Parse LRC ──────────────────────────────────────────────────────────────
   // Lines are sorted by time; non-timed header tags ([ti:…], [ar:…], etc.) are
@@ -53,9 +64,9 @@ export default function SyncedLyrics({
     return () => clearInterval(id);
   }, [sync, isPlaying]);
 
-  const smoothSeek = sync && isPlaying
+  const smoothSeek = (sync && isPlaying
     ? baseRef.current.seek + (Date.now() - baseRef.current.time) / 1000
-    : seekSeconds;
+    : seekSeconds) - offsetMs / 1000;
 
   // ── Active line lookup (binary search) ─────────────────────────────────────
   const activeIndex = useMemo(() => {
@@ -81,7 +92,8 @@ export default function SyncedLyrics({
     const containerTop = container.getBoundingClientRect().top;
     const elTop = el.getBoundingClientRect().top;
     const offset = elTop - containerTop - container.clientHeight / 2 + el.clientHeight / 2;
-    container.scrollBy({ top: offset, behavior: 'smooth' });
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    container.scrollBy({ top: offset, behavior: reduceMotion ? 'auto' : 'smooth' });
   }, [activeIndex, sync]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -97,32 +109,41 @@ export default function SyncedLyrics({
     </label>
   );
 
+  const rootClass = className ? ` ${className}` : '';
+
   if (!sync || !hasTimestamps) {
     return (
-      <div className="synced-lyrics">
-        <div className="synced-header">{toggle}</div>
-        <pre className="synced-static">{lrcText}</pre>
+      <div className={`synced-lyrics${rootClass}`}>
+        {!alwaysSync && <div className="synced-header">{toggle}</div>}
+        <pre className="synced-static">{alwaysSync ? stripTags(lrcText) : lrcText}</pre>
       </div>
     );
   }
 
+  const LineTag = onLineClick ? 'button' : 'div';
   return (
-    <div className="synced-lyrics syncing">
-      <div className="synced-header">{toggle}</div>
-      <div className="synced-stream" ref={streamRef} aria-live="polite">
+    <div className={`synced-lyrics syncing${rootClass}`}>
+      {!alwaysSync && <div className="synced-header">{toggle}</div>}
+      {/* No aria-live: a screen reader would announce every line change. */}
+      <div className="synced-stream" ref={streamRef}>
         {parsed.map((line, i) => {
           const isActive = i === activeIndex;
           // Skip untimed lines in sync mode so the highlight is always meaningful
           if (line.time == null) return null;
           return (
-            <div
+            <LineTag
               key={i}
               ref={isActive ? activeRef : null}
               className={`synced-line${isActive ? ' active' : ''}${i < activeIndex ? ' past' : ''}`}
               data-t={line.time.toFixed(2)}
+              {...(onLineClick ? {
+                type: 'button',
+                onClick: () => onLineClick(line.time + offsetMs / 1000),
+                title: t('lyrics.seek_to_line'),
+              } : {})}
             >
-              {line.text || '​'}
-            </div>
+              {line.text || '\u200b'}
+            </LineTag>
           );
         })}
       </div>
@@ -130,54 +151,9 @@ export default function SyncedLyrics({
   );
 }
 
-// ─── LRC parsing ────────────────────────────────────────────────────────────
-
-// Matches one or more leading timestamps: [mm:ss.xx] or [mm:ss]
-// Allowing multiple is the LRC standard for repeating the same line text.
-const TIMESTAMP_RE = /\[(\d+):(\d+(?:\.\d+)?)\]/g;
-
-// LRC header/metadata tag names (3-letter lowercase keys). We drop these.
-const HEADER_TAG_RE = /^\[(ti|ar|al|au|by|length|offset|re|ve|tool|encoding|lang):/i;
-
-function parseLrc(text) {
-  const out = [];
-  if (!text || typeof text !== 'string') return out;
-  for (const raw of text.split(/\r?\n/)) {
-    if (!raw.trim()) continue;
-    if (HEADER_TAG_RE.test(raw)) continue;
-
-    // Sentinel inserted by older TFT versions when no real timestamps were
-    // available. We want to surface it as a single untimed informational line
-    // so the user understands why sync is disabled.
-    if (raw.includes('--- Timestamps not available for this model ---')) {
-      out.push({ time: null, text: raw });
-      continue;
-    }
-
-    TIMESTAMP_RE.lastIndex = 0;
-    const stamps = [];
-    let m;
-    let lastEnd = 0;
-    while ((m = TIMESTAMP_RE.exec(raw)) !== null) {
-      stamps.push(parseInt(m[1], 10) * 60 + parseFloat(m[2]));
-      lastEnd = TIMESTAMP_RE.lastIndex;
-    }
-    const lineText = raw.slice(lastEnd).trim();
-
-    if (stamps.length === 0) {
-      out.push({ time: null, text: raw });
-    } else {
-      for (const t of stamps) out.push({ time: t, text: lineText });
-    }
-  }
-  // Stable-sort by time, untimed lines preserved in input order at the front
-  out.sort((a, b) => {
-    if (a.time == null && b.time == null) return 0;
-    if (a.time == null) return -1;
-    if (b.time == null) return 1;
-    return a.time - b.time;
-  });
-  return out;
+// Plain-lyrics display: drop LRC header tags like [ar:…] that some sources keep.
+function stripTags(text) {
+  return (text || '').split(/\r?\n/).filter(l => !/^\[[a-z]+:.*\]\s*$/i.test(l.trim())).join('\n');
 }
 
 // Exported for unit testing / re-use

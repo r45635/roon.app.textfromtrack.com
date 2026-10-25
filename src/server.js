@@ -7,7 +7,8 @@ const fs = require('fs');
 const config = require('./config');
 const logger = require('./utils/logger');
 const apiRouter = require('./api/routes');
-const { startRoon } = require('./roon/roonClient');
+const roonClient = require('./roon/roonClient');
+const { watchRoon } = require('./lyrics/nowPlayingLyrics');
 const { buildError, E } = require('./utils/normalize');
 const { hostGuard, originGuard } = require('./utils/requestGuards');
 
@@ -104,7 +105,8 @@ app.listen(config.port, () => {
 
 // Initialise Roon discovery (non-blocking)
 try {
-  startRoon();
+  roonClient.startRoon();
+  watchRoon(roonClient);
 } catch (err) {
   logger.error({ err: err.message }, 'Failed to start Roon discovery');
 }

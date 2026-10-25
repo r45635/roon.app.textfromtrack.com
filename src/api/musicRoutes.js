@@ -17,6 +17,7 @@ const nowPlayingStore = require('../roon/nowPlayingStore');
 const { getRoonStatus } = require('../roon/roonClient');
 const userSettings = require('../storage/userSettings');
 const lrcCache = require('../utils/lrcCache');
+const musicRoots = require('../music/musicRoots');
 
 const router = Router();
 
@@ -54,74 +55,55 @@ router.post('/index/rescan', (req, res) => {
   res.json({ success: true, message: 'Scan started in background' });
 });
 
-/**
- * GET /api/music/config
- * Returns the current music library configuration (roots, path mappings).
- */
-router.get('/config', (req, res) => {
+function musicConfigResponse() {
   const settings = userSettings.get();
-  const roots = settings.music_roots.length ? settings.music_roots : config.musicRoots;
-  const mappings = settings.path_mappings.length ? settings.path_mappings : config.pathMappings;
-  res.json({
+  return {
     success: true,
-    music_roots: roots,
-    path_mappings: mappings,
+    music_roots: settings.music_roots.length ? settings.music_roots : config.musicRoots,
     embed_lyrics_default: !!settings.embed_lyrics_default,
     backup_before_embed_default: settings.backup_before_embed_default !== false,
     save_lrc_beside_source_default: !!settings.save_lrc_beside_source_default,
-  });
+  };
+}
+
+/**
+ * GET /api/music/config
+ * Returns the current music library configuration (roots and write defaults).
+ */
+router.get('/config', (req, res) => {
+  res.json(musicConfigResponse());
 });
+
+const BOOLEAN_CONFIG_KEYS = [
+  'embed_lyrics_default',
+  'backup_before_embed_default',
+  'save_lrc_beside_source_default',
+];
 
 /**
  * POST /api/music/config
- * Update music library configuration and persist to user-settings.json.
- * Body: { music_roots: string[], path_mappings?: {from:string,to:string}[] }
+ * Partial update of the music library configuration, persisted to user-settings.json.
+ * Body: any of { music_roots: string[], embed_lyrics_default, backup_before_embed_default,
+ * save_lrc_beside_source_default }. Keys left out keep their stored value.
  */
 router.post('/config', (req, res) => {
-  const {
-    music_roots,
-    path_mappings,
-    embed_lyrics_default,
-    backup_before_embed_default,
-    save_lrc_beside_source_default,
-  } = req.body || {};
-  if (!Array.isArray(music_roots)) {
-    return res.status(400).json(buildError(E.INVALID_REQUEST, 'music_roots must be an array'));
+  const body = req.body || {};
+  const update = {};
+  if (Object.prototype.hasOwnProperty.call(body, 'music_roots')) {
+    if (!Array.isArray(body.music_roots)) {
+      return res.status(400).json(buildError(E.INVALID_REQUEST, 'music_roots must be an array'));
+    }
+    update.music_roots = body.music_roots.map(s => String(s).trim()).filter(Boolean);
   }
-  const cleanRoots = music_roots.map(s => String(s).trim()).filter(Boolean);
-  const cleanMappings = Array.isArray(path_mappings)
-    ? path_mappings.filter(m => m && typeof m.from === 'string' && typeof m.to === 'string')
-    : [];
-  const embedDefault = !!embed_lyrics_default;
-  // backup default: if undefined, leave at storage default (true)
-  const backupDefault = backup_before_embed_default === undefined
-    ? undefined
-    : !!backup_before_embed_default;
-
-  const saveLrcBeside = save_lrc_beside_source_default === undefined
-    ? undefined
-    : !!save_lrc_beside_source_default;
-
-  const update = {
-    music_roots: cleanRoots,
-    path_mappings: cleanMappings,
-    embed_lyrics_default: embedDefault,
-  };
-  if (backupDefault !== undefined) update.backup_before_embed_default = backupDefault;
-  if (saveLrcBeside !== undefined) update.save_lrc_beside_source_default = saveLrcBeside;
+  for (const key of BOOLEAN_CONFIG_KEYS) {
+    if (Object.prototype.hasOwnProperty.call(body, key)) update[key] = !!body[key];
+  }
+  if (Object.keys(update).length === 0) {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'Nothing to update'));
+  }
   userSettings.set(update);
-  logger.info(
-    { music_roots: cleanRoots, embed_lyrics_default: embedDefault, backup_before_embed_default: backupDefault },
-    'Music library config updated'
-  );
-  res.json({
-    success: true,
-    music_roots: cleanRoots,
-    path_mappings: cleanMappings,
-    embed_lyrics_default: embedDefault,
-    backup_before_embed_default: backupDefault === undefined ? true : backupDefault,
-    save_lrc_beside_source_default: saveLrcBeside === undefined ? false : saveLrcBeside,
-  });
+  logger.info(update, 'Music library config updated');
+  res.json(musicConfigResponse());
 });
 
 /**
@@ -211,10 +193,7 @@ function resolveAndValidatePath(req, res) {
     return null;
   }
   const resolved = path.resolve(rawPath);
-  const settings = userSettings.get();
-  const roots = settings.music_roots.length ? settings.music_roots : config.musicRoots;
-  const allowed = roots.some(r => resolved.startsWith(path.resolve(r) + path.sep) || resolved === path.resolve(r));
-  if (!allowed) {
+  if (!musicRoots.isUnderMusicRoot(resolved)) {
     res.status(403).json(buildError('FORBIDDEN', 'Path is not under a configured music root'));
     return null;
   }
@@ -292,17 +271,9 @@ router.get('/file-lyrics', async (req, res) => {
   if (!resolved) return;
 
   try {
-    // 1. .lrc sidecar
-    const lrcPath = lyricsDetector.getLrcPath(resolved);
-    if (fs.existsSync(lrcPath)) {
-      const text = fs.readFileSync(lrcPath, 'utf8');
-      return res.json({ success: true, source: 'lrc', text });
-    }
-    // 2. Embedded lyrics
-    const { parseFile } = await import('music-metadata');
-    const metadata = await parseFile(resolved, { skipCovers: true, duration: false });
-    const text = lyricsDetector.extractEmbeddedLyrics(metadata);
-    if (text) return res.json({ success: true, source: 'embedded', text });
+    // 1. .lrc sidecar, 2. embedded lyrics
+    const local = await lyricsDetector.readLocalLyrics(resolved);
+    if (local) return res.json({ success: true, source: local.source, text: local.text });
 
     // 3. LRC cache (only when include_cache param is set)
     if (req.query.include_cache === '1' || req.query.include_cache === 'true') {
@@ -400,10 +371,7 @@ router.post('/file-lyrics', async (req, res) => {
     return res.status(404).json(buildError('FILE_NOT_FOUND', 'File not found'));
   }
 
-  const bodyHas = (key) => req.body && Object.prototype.hasOwnProperty.call(req.body, key);
-  const doEmbed      = bodyHas('embed')       ? !!req.body.embed       : !!settings.embed_lyrics_default;
-  const doBackup     = bodyHas('backup')      ? !!req.body.backup      : (settings.backup_before_embed_default !== false);
-  const doSaveBeside = bodyHas('save_beside') ? !!req.body.save_beside : !!settings.save_lrc_beside_source_default;
+  const { embed: doEmbed, backup: doBackup, saveBeside: doSaveBeside } = userSettings.resolveWriteFlags(req.body);
 
   const result = { success: true, lrc_file: null, lyrics_embedded: false, backup_path: null };
 

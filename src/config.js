@@ -4,25 +4,6 @@ require('dotenv').config();
 const path = require('path');
 const os = require('os');
 
-/**
- * Parse PATH_MAPPINGS env var into an array of {from, to} objects.
- * Format: "from1=to1,from2=to2"
- */
-function parseMappings(raw) {
-  if (!raw) return [];
-  return raw
-    .split(',')
-    .map(pair => {
-      const idx = pair.indexOf('=');
-      if (idx <= 0) return null;
-      return {
-        from: pair.slice(0, idx).trim(),
-        to: pair.slice(idx + 1).trim(),
-      };
-    })
-    .filter(Boolean);
-}
-
 const config = {
   // ── Server ──────────────────────────────────────────────────────────────────
   port: parseInt(process.env.PORT || '3888', 10),
@@ -49,7 +30,6 @@ const config = {
     .split(',')
     .map(s => s.trim())
     .filter(Boolean),
-  pathMappings: parseMappings(process.env.PATH_MAPPINGS),
 
   // ── TextFromTrack API ───────────────────────────────────────────────────────
   tftBaseUrl:
@@ -85,6 +65,9 @@ const config = {
   lrcCacheDir: process.env.TFT_USER_DATA_DIR
     ? path.join(process.env.TFT_USER_DATA_DIR, 'storage', 'lrc-cache')
     : path.join(__dirname, 'storage', 'lrc-cache'),
+  lyricsPrefsPath: process.env.TFT_USER_DATA_DIR
+    ? path.join(process.env.TFT_USER_DATA_DIR, 'storage', 'lyrics-prefs.json')
+    : path.join(__dirname, 'storage', 'lyrics-prefs.json'),
 
   // ── Logging ─────────────────────────────────────────────────────────────────
   logLevel: process.env.LOG_LEVEL || 'info',

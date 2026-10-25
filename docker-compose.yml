@@ -1,10 +1,12 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # TextFromTrack Roon Companion — Docker Compose
 #
-# Quick start (Linux / NAS / VPS / Raspberry Pi):
-#   1. Edit the two required values below: TFT_TOKEN and the music volume path
-#   2. docker compose up -d
-#   3. Open http://localhost:3888 — authorize with Roon → done
+# Quick start (Linux / NAS / Raspberry Pi):
+#   1. docker compose up -d
+#   2. Open http://localhost:3888 and enable the extension in Roon → Settings → Extensions
+#   That's enough for live synced lyrics of whatever Roon plays (lyrics-only mode).
+#   To save lyrics into your files and generate AI lyrics, also mount your music
+#   folder and set TFT_TOKEN (both below, or in the app's settings).
 #
 # Image: ghcr.io/r45635/roon-companion  (also on Docker Hub: r45635/roon-companion)
 # GitHub: https://github.com/r45635/roon.app.textfromtrack.com
@@ -33,23 +35,22 @@ services:
       # A ./data/ directory will be created automatically on first run.
       - ./data:/app/src/storage
 
-      # Your music library — read-only inside the container.
-      # Change the LEFT side to the actual path on your host machine.
-      # Inside the container the library is always at /music.
-      - /path/to/your/music:/music:ro
+      # Optional: your music library. Change the LEFT side to the path on your host.
+      # Without it the app runs in lyrics-only mode (no file access needed).
+      # Keep ":rw" to let the app write .lrc files and embed lyrics; ":ro" only
+      # reads existing lyrics and tags (saving then fails).
+      # - /path/to/your/music:/music:rw
 
     environment:
-      # ── Required ─────────────────────────────────────────────────────────────
+      # ── Optional ─────────────────────────────────────────────────────────────
 
-      # Your TextFromTrack Personal Access Token.
-      # Create one at https://app.textfromtrack.com/account/tokens
+      # Your TextFromTrack Personal Access Token, for AI lyrics generation.
+      # Create one at https://app.textfromtrack.com/account/tokens (or paste it in the app).
       TFT_TOKEN: ""
 
-      # Absolute path(s) to your music inside the container.
-      # Must match the container path in the volume mount above.
-      MUSIC_ROOTS: /music
-
-      # ── Optional ─────────────────────────────────────────────────────────────
+      # Path(s) to your music inside the container — must match the volume above.
+      # Uncomment together with the music volume.
+      # MUSIC_ROOTS: /music
 
       PORT: 3888
 
@@ -65,11 +66,5 @@ services:
       # Behind a reverse proxy with your own domain, allow that host name
       # (LAN names and IP addresses are always allowed).
       # ALLOWED_HOSTS: lyrics.example.com
-
-      # Path mappings: translate Roon's view of a file path to the local path.
-      # Useful when Roon sees SMB/NFS paths that differ from /music inside Docker.
-      # Format: <roon_path>=<container_path>,<roon_path2>=<container_path2>
-      # Example: PATH_MAPPINGS: "smb://NAS.local/Music=/music"
-      PATH_MAPPINGS: ""
 
     restart: unless-stopped

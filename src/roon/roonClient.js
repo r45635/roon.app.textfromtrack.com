@@ -1,6 +1,7 @@
 'use strict';
 
 const net = require('net');
+const EventEmitter = require('events');
 
 const RoonApi = require('node-roon-api');
 const RoonApiTransport = require('node-roon-api-transport');
@@ -34,6 +35,34 @@ let _autoZoneId = null;
 
 // Roon HTTP server base URL (for image proxy)
 let _roonImageBase = null;
+
+// 'zones_changed' (zoneIds: string[]) after a zone's state or track changed (not on seek ticks).
+const events = new EventEmitter();
+
+// True while a Core has been reached but the user has not enabled the extension yet.
+// node-roon-api has no hook for that state: its registry "register" request simply stays
+// unanswered until the user clicks Enable in Roon → Settings → Extensions. So we watch
+// that request on the Moo prototype (answered or connection closed = no longer waiting).
+let _awaitingAuth = false;
+
+function _watchRegistration() {
+  let Moo;
+  try { Moo = require('node-roon-api/moo.js'); } catch { return; }
+  if (!Moo || !Moo.prototype || Moo.prototype._tftRegistrationWatched) return;
+  const original = Moo.prototype.send_request;
+  Moo.prototype.send_request = function (name, ...rest) {
+    if (name === 'com.roonlabs.registry:1/register') {
+      _awaitingAuth = true;
+      const i = rest.findIndex(a => typeof a === 'function');
+      if (i >= 0) {
+        const cb = rest[i];
+        rest[i] = function (...args) { _awaitingAuth = false; return cb.apply(this, args); };
+      }
+    }
+    return original.call(this, name, ...rest);
+  };
+  Moo.prototype._tftRegistrationWatched = true;
+}
 
 // ─── Helper: extract now-playing state from a Roon zone object ────────────────
 
@@ -144,11 +173,13 @@ function _handleZones(zones) {
   for (const z of zones) _zones.set(z.zone_id, z);
   _refreshActiveZone();
   logger.debug({ zoneCount: zones.length }, 'Roon zones subscribed');
+  events.emit('zones_changed', zones.map(z => z.zone_id));
 }
 
 function _handleZonesChanged(changed) {
   for (const z of changed) _zones.set(z.zone_id, z);
   _refreshActiveZone();
+  events.emit('zones_changed', changed.map(z => z.zone_id));
 }
 
 function _handleZonesRemoved(removed) {
@@ -233,6 +264,7 @@ function _directConnect() {
  * Call once at server startup.
  */
 function startRoon() {
+  _watchRegistration();
   _roon = new RoonApi({
     extension_id: config.roonExtensionId,
     display_name: config.roonDisplayName,
@@ -333,6 +365,8 @@ function getRoonStatus() {
   return {
     connected: _connected,
     authorized: _authorized,
+    // Core reached, extension waiting to be enabled in Roon → Settings → Extensions.
+    awaiting_authorization: !_connected && _awaitingAuth,
     core_name: _coreName,
     core_version: _coreVersion,
     zone_count: _zones.size,
@@ -425,6 +459,16 @@ function getAllZones() {
     })),
     is_active: _activeZoneId ? z.zone_id === _activeZoneId : z.state === 'playing',
   }));
+}
+
+/**
+ * Now-playing state of one zone (same shape as nowPlayingStore), or null.
+ * Lets each viewer follow its own zone without changing the shared active zone.
+ * @param {string} zoneId
+ */
+function getNowPlaying(zoneId) {
+  const zone = _zones.get(zoneId);
+  return zone ? _extractNowPlaying(zone) : null;
 }
 
 /** Set the zone the user wants to control. Immediately refreshes the now-playing store. */
@@ -736,7 +780,7 @@ async function playOnZone(itemKey, hierarchy, zoneOrOutputId) {
 
 module.exports = {
   startRoon, getRoonStatus, getImageBase,
-  getAllZones, setActiveZone,
+  getAllZones, setActiveZone, getNowPlaying, events,
   controlZone, seekZone,
   changeVolume, muteOutput, muteAll, pauseAll,
   changeSettings,

@@ -614,6 +614,7 @@
     <li><a href="#topbar"><span class="nav-icon">🔝</span> Top Bar</a></li>
     <li><a href="#zone-selector"><span class="nav-icon">🔊</span> Zone Selector</a></li>
     <li><a href="#now-playing"><span class="nav-icon">🎵</span> Now Playing</a></li>
+    <li><a href="#lyrics-stage"><span class="nav-icon">🎤</span> Lyrics Stage</a></li>
     <li><a href="#local-match"><span class="nav-icon">📂</span> Local File Match</a></li>
     <li><a href="#file-tags"><span class="nav-icon">🏷️</span> File Tags</a></li>
     <div class="nav-section-label">Lyrics</div>
@@ -793,7 +794,7 @@
         <div class="feature-card">
           <div class="icon">🔊</div>
           <h3>Volume Control</h3>
-          <p>+/− buttons adjust volume by the configured step (default 3). Shows master volume with a visual bar.</p>
+          <p>+/− buttons adjust volume by the configured step (default 1). Shows master volume with a visual bar.</p>
         </div>
         <div class="feature-card">
           <div class="icon">⏱️</div>
@@ -804,6 +805,50 @@
           <div class="icon">🔗</div>
           <h3>Artist / Album Links</h3>
           <p>Click the artist or album name to immediately search for that artist/album in the Search panel.</p>
+        </div>
+      </div>
+      <p class="section-subtitle">When nothing is playing, the card says why and what to do: the companion server is unreachable, the Roon Core is not found, the extension is waiting to be enabled in Roon → Settings → Extensions, or macOS is blocking Local Network access.</p>
+    </section>
+
+    <!-- LYRICS STAGE -->
+    <section class="section" id="lyrics-stage">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon purple">🎤</div>
+        <h2 class="section-title">Lyrics Stage</h2>
+      </div>
+      <p class="section-subtitle">Right under the player, the lyrics of the playing track — <strong>with or without a music folder</strong>. Without one (streaming, a NAS this machine doesn't mount, Docker without a music volume) the companion works as a lyrics-only player: lyrics come from <a href="https://lrclib.net">LRCLIB</a> and are kept in a local cache.</p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">🎤</div>
+          <h3>Synced lyrics</h3>
+          <p>The current line is highlighted and kept in the middle. Lyrics without timestamps show as plain text, labelled "Not time-synced".</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">👆</div>
+          <h3>Click a line</h3>
+          <p>Roon jumps to that line, when the zone allows seeking.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">⏱️</div>
+          <h3>Timing − / +</h3>
+          <p>Shifts the lyrics by 0.5 s steps for this track, remembered next time. Click the value to reset.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🔎</div>
+          <h3>Other versions</h3>
+          <p>Search LRCLIB by title and artist and pick another version for this track.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">⬇️</div>
+          <h3>Copy, Download, Save to file</h3>
+          <p>Copy the lyrics or download a <code>.lrc</code> with your offset applied. "Save to file" appears when the track matched a local file and follows your Files Management defaults (embeds when both are off).</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🖥️</div>
+          <h3>Full screen &amp; TV display</h3>
+          <p>Press <code>F</code> for big lyrics over the blurred cover (<code>Esc</code> closes). For a tablet or TV, open <code>http://&lt;companion-ip&gt;:3888/#/lyrics</code> (also linked from the tray's QR code page): each display follows its own zone and keeps the screen awake.</p>
         </div>
       </div>
     </section>

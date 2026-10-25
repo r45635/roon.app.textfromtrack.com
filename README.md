@@ -6,6 +6,8 @@ Roon doesn't expose synchronized lyrics from your local audio files. This compan
 
 Beyond generation, the companion lets you browse, inspect, and embed lyrics from multiple sources (TextFromTrack AI, LRCLIB, your existing file tags) from a single web UI — with karaoke-style synchronized display.
 
+**No music folder? It still works.** Without any access to your files (streaming from Qobuz or TIDAL, a library on a NAS this machine doesn't mount, Docker without a music volume), the companion runs as a **lyrics-only player**: synced lyrics from [LRCLIB](https://lrclib.net) for whatever Roon plays, click a line to jump there, per-track timing offset, full-screen view, and a kiosk page for a tablet or TV (`http://<host>:3888/#/lyrics`). Adding your music folder unlocks saving lyrics into your files and AI generation with TextFromTrack.
+
 This is **not** an official Roon plugin. It is a standalone Node.js service that runs on the same machine (or local network) as your Roon Core.
 
 ![TextFromTrack Roon Companion — app preview](screenshoots/app-preview.png)
@@ -37,13 +39,17 @@ roon.app.textfromtrack.com/
 │   ├── roon/
 │   │   ├── roonClient.js       Roon API extension (discovery, pairing, zone subscription)
 │   │   └── nowPlayingStore.js  In-memory now-playing state
+│   ├── lyrics/
+│   │   ├── lyricsResolver.js   Lyrics for a track: local file → cache → LRCLIB (works without files)
+│   │   ├── nowPlayingLyrics.js Local match + prefetch on every track change
+│   │   └── lrclibClient.js     LRCLIB HTTP client (busy/5xx raise, 404 = not found)
 │   ├── music/
+│   │   ├── musicRoots.js       Configured music roots + path containment check
 │   │   ├── scanner.js          Recursive library scan → music-index.json
 │   │   ├── matcher.js          Score-based metadata matching
 │   │   ├── lyricsDetector.js   LRC sidecar + embedded lyrics detection
 │   │   ├── lyricsEmbedder.js   Embed LRC into MP3/FLAC tags + .org backup orchestration
-│   │   ├── flacTagger.js       Self-contained FLAC metadata editor (replaces broken metaflac-js2)
-│   │   └── pathMapper.js       PATH_MAPPINGS resolution (SMB / NAS)
+│   │   └── flacTagger.js       Self-contained FLAC metadata editor (replaces broken metaflac-js2)
 │   ├── textfromtrack/
 │   │   ├── tftClient.js        TextFromTrack REST API client
 │   │   ├── transcriptionService.js  Full orchestration (validate → submit → poll → save)
@@ -54,9 +60,11 @@ roon.app.textfromtrack.com/
 │   │   ├── roonRoutes.js       /api/roon/*
 │   │   ├── musicRoutes.js      /api/music/*
 │   │   ├── lrclibRoutes.js     /api/lrclib/*
+│   │   ├── lyricsRoutes.js     /api/lyrics/* (lyrics stage, kiosk)
 │   │   └── textfromtrackRoutes.js  /api/tft/*
 │   ├── storage/
 │   │   ├── userSettings.js     Read/write user-settings.json (music roots, embed/backup defaults)
+│   │   ├── lyricsPrefs.js      Per-track timing offset and picked LRCLIB version (lyrics-prefs.json)
 │   │   ├── music-index.json    Local music library index (runtime)
 │   │   ├── user-settings.json  Persistent user preferences (runtime, created on first save)
 │   │   └── jobs.json           Transcription job history (runtime)
@@ -70,10 +78,11 @@ roon.app.textfromtrack.com/
 │   ├── src/
 │   │   ├── App.jsx             Main layout, polling, state management
 │   │   ├── i18n/               English + French translations (i18next)
-│   │   └── components/         RoonStatus, NowPlaying, ZoneSelector, SearchPanel,
-│                           LocalMatch, LrclibPanel, FileTagsCard, TftPanel,
-│                           JobHistory, LibrarySettings, LyricsSection,
-│                           SyncedLyrics, AppPrefs, FilesManagement, TftApiKey
+│   │   ├── lib/lrc.js          LRC parsing ([offset:] aware) and timestamp shifting
+│   │   └── components/         HeroCard, LyricsStage, LyricsFullscreen, LyricsKiosk,
+│                           SyncedLyrics, ZoneSelector, SearchPanel, FileTagsCard,
+│                           LyricsSection, JobHistory, RoonStatus, LibrarySettings,
+│                           AppPrefs, FilesManagement, TftApiKey
 │   └── dist/                   Built frontend (served by Express in production)
 └── scripts/
     ├── scan-library.js         CLI: npm run scan
@@ -127,6 +136,12 @@ npx electron-builder --mac --arm64 --dir   # packaged app in dist/, ad-hoc signe
 
 > Shells inside VS Code (and other Electron hosts) export `ELECTRON_RUN_AS_NODE=1`: Electron then runs as plain Node (`app` is undefined, the packaged app exits silently). Prefix with `env -u ELECTRON_RUN_AS_NODE`.
 
+> On a machine that already runs the installed app, give the dev backend its own port, storage and **Roon name** — otherwise Roon → Settings → Extensions lists two identical entries and you can't tell which one to remove:
+>
+> ```bash
+> ROON_DISPLAY_NAME="TFT Companion DEV :3991" PORT=3991 TFT_USER_DATA_DIR=/tmp/tft-dev ROON_CORE_HOST=<core ip> npm run dev
+> ```
+
 ---
 
 ### Environment variables
@@ -145,7 +160,6 @@ Copy `.env.example` to `.env` and fill in the values.
 | `ROON_CORE_PORT` | `9330` | Roon Core extension port used with `ROON_CORE_HOST` (Roon 2.x: `9330`; legacy 1.x: `9100`) |
 | `ALLOWED_HOSTS` | _(empty)_ | Extra host names allowed to reach the UI/API, comma-separated (e.g. a reverse-proxy domain). `localhost`, IP addresses and LAN names (`*.local`, `*.lan`, single-label like `nas`) are always allowed; `*` disables the check |
 | `MUSIC_ROOTS` | _(empty)_ | Comma-separated absolute paths to scan |
-| `PATH_MAPPINGS` | _(empty)_ | `from=to` pairs for SMB/NAS path translation (comma-separated) |
 | `TFT_BASE_URL` | `https://app.textfromtrack.com/api/v1` | TextFromTrack API base URL |
 | `TFT_TOKEN` | _(empty)_ | Your Personal Access Token |
 | `TFT_DEFAULT_EXPORT_FORMAT` | `lrc` | Export format (`lrc`, `srt`, `txt`, `json`) |
@@ -163,19 +177,10 @@ Copy `.env.example` to `.env` and fill in the values.
 | Key | Default | Description |
 |---|---|---|
 | `music_roots` | `[]` | Music root paths (overrides `MUSIC_ROOTS`) |
-| `path_mappings` | `[]` | Path mappings (overrides `PATH_MAPPINGS`) |
 | `embed_lyrics_default` | `false` | Default state of the **embed `[LYRICS]` tag** checkbox |
 | `backup_before_embed_default` | `true` | Default state of the **save `.org` backup** checkbox |
 | `save_lrc_beside_source_default` | `false` | Default state of the **save LRC beside source** checkbox |
 | `tft_token` | `""` | TFT Personal Access Token set via the UI (overrides `TFT_TOKEN` env var) |
-
-**Path mappings** (SMB / NAS):
-
-```env
-# Roon sees: smb://NAS.local/Music/Artist/Track.flac
-# Locally mounted at: /Volumes/Music/Artist/Track.flac
-PATH_MAPPINGS=smb://NAS.local/Music=/Volumes/Music
-```
 
 ---
 
@@ -186,10 +191,10 @@ PATH_MAPPINGS=smb://NAS.local/Music=/Volumes/Music
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/roon/status` | Roon connection and authorization status |
-| `GET` | `/api/roon/now-playing` | Current now-playing state |
+| `GET` | `/api/roon/now-playing` | Current now-playing state of the active zone, or of `?zone_id=` |
 | `GET` | `/api/roon/zones` | List of all Roon zones and outputs |
 | `POST` | `/api/roon/active-zone` | Switch the extension's "active" zone |
-| `POST` | `/api/roon/control` | Play / pause / next / previous |
+| `POST` | `/api/roon/control` | Play / pause / next / previous (optional `zone_id`, else the active zone) |
 | `POST` | `/api/roon/seek` | Seek the current track |
 | `POST` | `/api/roon/volume` | Change output volume (absolute or relative) |
 | `POST` | `/api/roon/mute` | Mute / unmute an output |
@@ -207,8 +212,8 @@ PATH_MAPPINGS=smb://NAS.local/Music=/Volumes/Music
 |---|---|---|
 | `GET` | `/api/music/index/status` | Track count, last scan time, configured roots |
 | `POST` | `/api/music/index/rescan` | Trigger a background library rescan |
-| `GET` | `/api/music/config` | User-settings (music roots, path mappings, embed/backup defaults) |
-| `POST` | `/api/music/config` | Persist user-settings |
+| `GET` | `/api/music/config` | User-settings (music roots, embed/backup defaults) |
+| `POST` | `/api/music/config` | Partial update: send only the keys to change |
 | `GET` | `/api/music/match-current` | Match current Roon track to local file (lyrics status re-detected live) |
 | `GET` | `/api/music/file-cover` | Return the embedded album art for a local file. Query: `?path=...` |
 | `GET` | `/api/music/file-lyrics` | Read the embedded `LYRICS` tag and any sidecar `.lrc`. Query: `?path=...` |
@@ -223,6 +228,14 @@ PATH_MAPPINGS=smb://NAS.local/Music=/Volumes/Music
 |---|---|---|
 | `GET` | `/api/lrclib/lookup` | Look up lyrics from [lrclib.net](https://lrclib.net). Query: `?title=...&artist=...&album=...&duration=...&path=...` |
 | `POST` | `/api/lrclib/save` | Save an LRCLIB result to disk and/or embed it. Body: `{ path, lrc_content, embed, backup, save_beside }` |
+
+#### Lyrics endpoints (with or without a music folder)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/lyrics/current` | Lyrics of the track playing in a zone: matched file (sidecar, embedded), cache, then LRCLIB. Query: `?zone_id=...&path=...` (both optional; `path` must be under a music root). Returns `{ track, library_configured, audio_path, lyrics: { found, source, text, synced, instrumental, lrclib_id, offset_ms, error? } }` |
+| `POST` | `/api/lyrics/choose` | Use a specific LRCLIB record for a track. Body: `{ title, artist, album?, lrclib_id }` |
+| `POST` | `/api/lyrics/offset` | Save a track's timing offset (positive = later). Body: `{ title, artist, album?, offset_ms }` |
 
 #### TextFromTrack endpoints
 
@@ -358,6 +371,17 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - Open-folder no longer goes through a shell (folder names like `$(cmd)` executed `cmd`)
 - Cross-origin writes rejected (CSRF) and public Host names rejected (DNS rebinding; `ALLOWED_HOSTS`)
 - TFT webhook verifies the raw body (it never worked and could crash the backend); async route errors no longer kill the server
+
+#### v0.4.0 — Lyrics without a music folder
+- **Lyrics stage** under the player for every track, with or without a local file: karaoke sync on by default, click a line to seek, per-track timing offset, LRCLIB version picker, copy / download `.lrc`, "Save to file" when a file matched
+- **Full-screen lyrics** (button or `F`) and a **kiosk page** `/#/lyrics?zone=…` for a tablet or TV (wake lock, own zone, linked from the phone QR page)
+- Lyrics prefetched in the backend on every track change and cached; misses and LRCLIB outages remembered, so one LRCLIB round per track
+- Roon title decorations ("(Remastered 2011)", "- Live", " / " artists) retried in simplified form
+- A busy LRCLIB (`503 ServerOverloaded`) is reported as such, not as "no lyrics"
+- Distinct empty states: server unreachable, Core not found, waiting for the extension to be enabled, macOS Local Network blocked, nothing playing
+- Library tools hidden until a music folder is set; Docker music volume optional
+- Fixes: Files Management toggles were never saved (rejected by the server while the UI said "Saved"), a UI-entered API key did not override `TFT_TOKEN`, undefined `INVALID_REQUEST` error code, tray credits line, second app launch now opens the UI, Job History Retry / Embed buttons, French strings in the English UI
+- Removed: `PATH_MAPPINGS` (Roon never exposes file paths, so there was nothing to map)
 
 #### Upcoming
 

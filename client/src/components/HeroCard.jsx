@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import FileTagsCard from './FileTagsCard.jsx';
 import LyricsSection from './LyricsSection.jsx';
+import LyricsStage from './LyricsStage.jsx';
 
 const EMBED_SUPPORTED_EXTS = ['.mp3', '.flac'];
 
@@ -76,6 +77,10 @@ export default function HeroCard({
   onSearch,
   volumeStep = 1,
   onZonePillClick,
+  libraryConfigured = true,
+  roonStatus = null,
+  backendOnline = true,
+  onOpenSettings,
 }) {
   const { t } = useTranslation();
 
@@ -155,13 +160,17 @@ export default function HeroCard({
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
   }
-  // Reset alternative selection when track changes
-  const trackKey = nowPlaying?.now_playing?.one_line?.line1 ?? nowPlaying?.zone_id;
+  // Reset the alternative selection when the track changes — unless Auto Sync is
+  // off: the user is then working on a frozen match and keeps their pick.
+  const trackKey = nowPlaying
+    ? `${nowPlaying.zone_id}|${nowPlaying.title}|${nowPlaying.artist}|${nowPlaying.album}`
+    : '';
   useEffect(() => {
+    setIsMuted(false);
+    if (!autoSync) return;
     setAltOpen(false);
     setConfirmedPath(null);
     setAltFormatCache({});
-    setIsMuted(false);
   }, [trackKey]);
 
   // ── Derived values ───────────────────────────────────────────────────────────
@@ -215,6 +224,13 @@ export default function HeroCard({
     loop: t('now_playing.loop_all'),
     loop_one: t('now_playing.loop_one'),
   }[np?.loop] ?? null;
+
+  // Why nothing is playing: each cause needs a different action from the user.
+  const emptyState = !backendOnline ? 'backend_offline'
+    : roonStatus?.local_network_blocked ? 'lan_blocked'
+    : roonStatus?.awaiting_authorization ? 'waiting_auth'
+    : roonStatus && !roonStatus.connected ? 'roon_not_found'
+    : 'idle';
 
   const scoreFields = [
     { key: 'title',    label: t('match.detail_title',    'Title'),  hint: t('match.hint_title',    'Titre · exact=50, similaire ≥0.85=35, ≥0.70=20 · max 50') },
@@ -279,8 +295,9 @@ export default function HeroCard({
           {/* Track meta */}
           <div className="tft-track-meta">
             <h1 ref={titleRef} className={`tft-np-title${titleOverflows ? ' is-scrolling' : ''}`}>
-              <span className="tft-np-title-text">{np?.title || t('now_playing.no_track')}</span>
+              <span className="tft-np-title-text">{np?.title || t(`now_playing.empty_${emptyState}_title`)}</span>
             </h1>
+            {!np && <p className="tft-np-empty-hint">{t(`now_playing.empty_${emptyState}_hint`)}</p>}
             {np && <>
               {onSearch && np.artist
                 ? <div ref={artistRef} className={`tft-np-artist${artistOverflows ? ' is-scrolling' : ''}`}>
@@ -517,10 +534,24 @@ export default function HeroCard({
 
       </div>
 
+      {/* ═══ LYRICS STAGE (with or without a local file) ══════════════════════ */}
+      <LyricsStage
+        nowPlaying={np}
+        path={autoSync ? confirmedPath : null}
+        refreshKey={tagsRefreshKey}
+        libraryConfigured={libraryConfigured}
+        onSeek={onSeek}
+        onControl={onControl}
+        onSaved={() => { setTagsRefreshKey(k => k + 1); onGenerated?.(); }}
+        onOpenSettings={onOpenSettings}
+      />
+
+      {/* Library tools only make sense once a music folder is configured. */}
+      {libraryConfigured && np && <>
       {/* ═══ LOCAL MATCH STRIP ══════════════════════════════════════════════════ */}
       <div className={`tft-match-strip${!match?.matched ? ' no-match' : ''}`}>
         {!match?.matched ? (
-          <span className="tft-mono">{t('match.no_match')}</span>
+          <span className="tft-mono">{t('match.no_match_hint')}</span>
         ) : (
           <div className="tft-match-meta">
             <div className="tft-np-pills">
@@ -554,7 +585,7 @@ export default function HeroCard({
             <div className="tft-match-path">
               <button
                 className="tft-folder-btn"
-                title="Ouvrir le dossier dans le Finder"
+                title={t('match.open_folder')}
                 onClick={e => { e.stopPropagation(); fetch(`/api/music/open-folder?path=${encodeURIComponent(effectivePath)}`); }}
               >📂</button>
               {effectiveDir}
@@ -633,6 +664,7 @@ export default function HeroCard({
         autoSync={autoSync}
         onAutoSyncChange={setAutoSync}
       />
+      </>}
     </section>
   );
 }

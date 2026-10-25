@@ -11,13 +11,8 @@ const lyricsDetector = require('../music/lyricsDetector');
 const lyricsEmbedder = require('../music/lyricsEmbedder');
 const scanner = require('../music/scanner');
 const lrcCache = require('../utils/lrcCache');
-const userSettings = require('../storage/userSettings');
 
-function getEffectiveToken() {
-  if (config.tftToken) return config.tftToken;
-  const settings = userSettings.get();
-  return settings.tft_token || '';
-}
+const { getEffectiveToken } = tftClient;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -443,7 +438,7 @@ async function retryTranscription(jobId) {
 
   // Update music index: remove HAS_LRC_FILE status
   try {
-    scanner.updateTrackLyricsStatus(job.source_file, lyricsDetector.STATUS.NO_LYRICS);
+    scanner.updateTrackLyricsStatus(job.source_file, lyricsDetector.STATUS.NO_LOCAL_LYRICS);
   } catch (err) {
     logger.warn({ err: err.message }, 'Could not reset music index lyrics status');
   }

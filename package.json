@@ -19,15 +19,13 @@
     "electron:publish": "electron-builder --publish always",
     "scan": "node scripts/scan-library.js",
     "test:tft": "node scripts/test-tft-api.js",
-    "test": "node --test --test-reporter spec tests/utils/normalize.test.js tests/utils/fileUtils.test.js tests/music/matcher.test.js tests/music/lyricsDetector.test.js tests/music/lyricsEmbedder.test.js tests/music/flacTagger.test.js tests/music/pathMapper.test.js tests/textfromtrack/jobStore.test.js tests/roon/roonClient.test.js tests/utils/requestGuards.test.js",
+    "test": "node --test --test-reporter spec tests/utils/normalize.test.js tests/utils/fileUtils.test.js tests/music/matcher.test.js tests/music/lyricsDetector.test.js tests/music/lyricsEmbedder.test.js tests/music/flacTagger.test.js tests/textfromtrack/jobStore.test.js tests/roon/roonClient.test.js tests/lyrics/lyricsResolver.test.js tests/client/i18n.test.js tests/utils/requestGuards.test.js",
     "lint": "eslint src scripts"
   },
   "dependencies": {
     "bonjour-service": "^1.3.0",
-    "chokidar": "^3.6.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "form-data": "^4.0.0",
     "music-metadata": "^12.3.0",
     "node-id3": "^0.2.9",
     "node-roon-api": "github:roonlabs/node-roon-api",

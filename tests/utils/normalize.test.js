@@ -19,6 +19,21 @@ describe('E constants', () => {
       assert.equal(key, val, `E.${key} value should equal the key`);
     }
   });
+
+  test('every E.X used in src/ is defined', () => {
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const srcDir = path.join(__dirname, '..', '..', 'src');
+    const files = fs.readdirSync(srcDir, { recursive: true }).filter(f => f.endsWith('.js'));
+    const missing = new Set();
+    for (const file of files) {
+      const text = fs.readFileSync(path.join(srcDir, file), 'utf8');
+      for (const [, key] of text.matchAll(/\bE\.([A-Z][A-Z_]+)\b/g)) {
+        if (!E[key]) missing.add(`${key} (${file})`);
+      }
+    }
+    assert.deepEqual([...missing], []);
+  });
 });
 
 // ─── buildError ───────────────────────────────────────────────────────────────

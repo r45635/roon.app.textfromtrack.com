@@ -3,7 +3,6 @@
 const path = require('path');
 const fs = require('fs');
 const { Router } = require('express');
-const https = require('https');
 const logger = require('../utils/logger');
 const { buildError } = require('../utils/normalize');
 const lyricsEmbedder = require('../music/lyricsEmbedder');
@@ -13,44 +12,18 @@ const userSettings = require('../storage/userSettings');
 const config = require('../config');
 const lrcCache = require('../utils/lrcCache');
 const jobStore = require('../textfromtrack/jobStore');
+const lrclibClient = require('../lyrics/lrclibClient');
+const { lrclibGet } = lrclibClient;
 
 const router = Router();
 
-const LRCLIB_BASE = 'https://lrclib.net';
-const USER_AGENT = 'TextFromTrackRoonCompanion/1.0 (https://roon.app.textfromtrack.com)';
-
-const LRCLIB_TIMEOUT_MS = 20000; // per-request hard deadline (connect + download)
-
-/**
- * Performs a GET request to LRCLIB and resolves with parsed JSON.
- * Uses a hard AbortController deadline so slow connections don't block forever.
- */
-function lrclibGet(urlPath) {
-  return new Promise((resolve, reject) => {
-    const url = `${LRCLIB_BASE}${urlPath}`;
-
-    // Hard timeout: fires whether the socket is idle or just slow.
-    const timer = setTimeout(() => {
-      req.destroy(new Error(`LRCLIB request timed out after ${LRCLIB_TIMEOUT_MS / 1000}s`));
-    }, LRCLIB_TIMEOUT_MS);
-
-    const req = https.get(url, { headers: { 'User-Agent': USER_AGENT } }, (res) => {
-      const chunks = [];
-      res.on('data', chunk => { chunks.push(chunk); });
-      res.on('end', () => {
-        clearTimeout(timer);
-        if (res.statusCode === 404) return resolve(null);
-        try {
-          const raw = Buffer.concat(chunks).toString('utf8');
-          resolve({ status: res.statusCode, body: JSON.parse(raw) });
-        } catch {
-          resolve({ status: res.statusCode, body: null });
-        }
-      });
-      res.on('error', err => { clearTimeout(timer); reject(err); });
-    });
-    req.on('error', err => { clearTimeout(timer); reject(err); });
-  });
+/** A busy or failing LRCLIB (503 ServerOverloaded, 429, 5xx) is an error, not "no lyrics". */
+function throwIfBusy(result) {
+  if (result && (result.status === 429 || result.status >= 500)) {
+    const detail = result.body && (result.body.message || result.body.name);
+    throw new Error(`LRCLIB HTTP ${result.status}${detail ? `: ${detail}` : ''}`);
+  }
+  return result;
 }
 
 /**
@@ -91,13 +64,13 @@ router.get('/lookup', async (req, res) => {
     if (duration) params.set('duration', String(Math.round(Number(duration))));
 
     logger.info({ title, artist, album, duration }, 'LRCLIB lookup /api/get');
-    const result = await lrclibGet(`/api/get?${params.toString()}`);
+    const result = throwIfBusy(await lrclibGet(`/api/get?${params.toString()}`));
 
     // Not found, error response, or missing body → try search fallback
     if (!result || result.status < 200 || result.status >= 300 || !result.body) {
       logger.info({ title, artist }, 'LRCLIB /api/get not found, trying /api/search');
       const searchParams = new URLSearchParams({ track_name: title, artist_name: artist });
-      const searchResult = await lrclibGet(`/api/search?${searchParams.toString()}`);
+      const searchResult = throwIfBusy(await lrclibGet(`/api/search?${searchParams.toString()}`));
 
       if (!searchResult || !searchResult.body || !Array.isArray(searchResult.body) || searchResult.body.length === 0) {
         return res.json({ found: false });
@@ -171,7 +144,7 @@ router.get('/hit/:id', async (req, res) => {
     return res.status(400).json(buildError('INVALID_ID', 'id must be a numeric LRCLIB track id'));
   }
   try {
-    const result = await lrclibGet(`/api/get/${id}`);
+    const result = throwIfBusy(await lrclibGet(`/api/get/${id}`));
     if (!result || !result.body) {
       return res.json({ found: false });
     }
@@ -207,13 +180,9 @@ router.get('/search', async (req, res) => {
     return res.status(400).json(buildError('MISSING_PARAMS', 'title and artist are required'));
   }
   try {
-    const params = new URLSearchParams({ track_name: title, artist_name: artist });
     logger.info({ title, artist }, 'LRCLIB /search (on-demand versions)');
-    const result = await lrclibGet(`/api/search?${params.toString()}`);
-    if (!result || !Array.isArray(result.body) || result.body.length === 0) {
-      return res.json({ hits: [] });
-    }
-    const hits = result.body.map(h => ({
+    const records = await lrclibClient.search({ title, artist });
+    const hits = records.map(h => ({
       id: h.id,
       instrumental: !!h.instrumental,
       hasSynced: !!h.syncedLyrics,
@@ -265,10 +234,13 @@ router.post('/save', async (req, res) => {
   }
 
   // Resolve flags
-  const bodyHas = (key) => req.body && Object.prototype.hasOwnProperty.call(req.body, key);
-  const doEmbed = bodyHas('embed') ? !!req.body.embed : !!settings.embed_lyrics_default;
-  const doBackup = bodyHas('backup') ? !!req.body.backup : !!settings.backup_before_embed_default;
-  const doSaveBeside = bodyHas('save_beside') ? !!req.body.save_beside : !!settings.save_lrc_beside_source_default;
+  let { embed: doEmbed, backup: doBackup, saveBeside: doSaveBeside } = userSettings.resolveWriteFlags(req.body);
+  // A save must write somewhere: with both defaults off, embed when the format allows it,
+  // else write the .lrc sidecar.
+  if (!doEmbed && !doSaveBeside) {
+    if (lyricsEmbedder.canEmbed(resolved)) doEmbed = true;
+    else doSaveBeside = true;
+  }
 
   const lrcPath = resolved.replace(/\.[^.]+$/, '.lrc');
   const result = { success: true, lrc_file: null, lyrics_embedded: false, backup_path: null };

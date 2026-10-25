@@ -16,7 +16,6 @@ const SETTINGS_PATH = process.env.TFT_USER_DATA_DIR
 
 const DEFAULTS = {
   music_roots: [],
-  path_mappings: [],
   embed_lyrics_default: false,
   backup_before_embed_default: true,
   save_lrc_beside_source_default: false,
@@ -27,7 +26,7 @@ const DEFAULTS = {
 
 /**
  * Read all user settings. Missing keys fall back to defaults.
- * @returns {{ music_roots: string[], path_mappings: {from:string,to:string}[] }}
+ * @returns {typeof DEFAULTS}
  */
 function get() {
   const stored = readJson(SETTINGS_PATH, {});
@@ -43,4 +42,21 @@ function set(updates) {
   writeJson(SETTINGS_PATH, { ...current, ...updates });
 }
 
-module.exports = { get, set };
+/**
+ * Resolve the write flags of a lyrics save: an explicit body value wins, else the user default.
+ * The single place these defaults are read, so every route treats a missing setting the same way
+ * (backup defaults to on, embed and save-beside to off).
+ * @param {object} [body] request body with optional embed / backup / save_beside
+ * @returns {{ embed: boolean, backup: boolean, saveBeside: boolean }}
+ */
+function resolveWriteFlags(body) {
+  const settings = get();
+  const has = (key) => !!body && Object.prototype.hasOwnProperty.call(body, key);
+  return {
+    embed: has('embed') ? !!body.embed : !!settings.embed_lyrics_default,
+    backup: has('backup') ? !!body.backup : settings.backup_before_embed_default !== false,
+    saveBeside: has('save_beside') ? !!body.save_beside : !!settings.save_lrc_beside_source_default,
+  };
+}
+
+module.exports = { get, set, resolveWriteFlags };

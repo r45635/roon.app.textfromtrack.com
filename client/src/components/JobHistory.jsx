@@ -20,16 +20,6 @@ const STATUS_CLASS = {
   superseded: 'badge-neutral',
 };
 
-const STATUS_LABEL = {
-  done:        'Terminé',
-  pending:     'En attente',
-  processing:  'En cours',
-  downloading: 'Téléchargement',
-  embedding:   'Intégration',
-  error:       'Erreur',
-  superseded:  'Annulé',
-};
-
 function SvgCheck()       { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>; }
 function SvgClock()       { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>; }
 function SvgRefresh()     { return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>; }
@@ -251,8 +241,8 @@ export default function JobHistory({ jobs, onJobRetried }) {
                     {/* Main status icon */}
                     <span
                       className={`badge badge-icon ${STATUS_CLASS[job.status] || 'badge-neutral'}`}
-                      title={STATUS_LABEL[job.status] ?? job.status}
-                      aria-label={STATUS_LABEL[job.status] ?? job.status}
+                      title={t(`jobs.status_${job.status}`, job.status)}
+                      aria-label={t(`jobs.status_${job.status}`, job.status)}
                     >
                       {STATUS_SVG[job.status] ?? job.status[0].toUpperCase()}
                     </span>
@@ -274,8 +264,8 @@ export default function JobHistory({ jobs, onJobRetried }) {
                       return (
                         <span
                           className="badge badge-icon badge-warning"
-                          title={`Sans sync${modeSuffix ? ` · ${modeSuffix}` : ''} — ${tip}`}
-                          aria-label="Sans synchronisation"
+                          title={`${t('jobs.no_timestamps')}${modeSuffix ? ` · ${modeSuffix}` : ''} — ${tip}`}
+                          aria-label={t('jobs.no_timestamps')}
                         >
                           <SvgWarning />
                         </span>
@@ -287,7 +277,7 @@ export default function JobHistory({ jobs, onJobRetried }) {
                       <span
                         className="badge badge-icon badge-warning"
                         title={`${t('tft.quality_degraded')}${job.quality.hallucinations_filtered > 0 ? ` · ${job.quality.hallucinations_filtered} ${t('tft.quality_hallucinations_count')}` : ''}`}
-                        aria-label="Quality degraded"
+                        aria-label={t('tft.quality_degraded')}
                       >
                         ⚠
                       </span>
@@ -297,8 +287,8 @@ export default function JobHistory({ jobs, onJobRetried }) {
                     {job.status === 'done' && (job.lyrics_embedded || locallyEmbedded.has(job.job_id)) && (
                       <span
                         className="badge badge-icon badge-success"
-                        title={`Intégré — ${t('jobs.embedded_tip')}`}
-                        aria-label="Paroles intégrées"
+                        title={`${t('jobs.embedded')} — ${t('jobs.embedded_tip')}`}
+                        aria-label={t('jobs.embedded')}
                       >
                         <SvgTag />
                       </span>
@@ -339,9 +329,37 @@ export default function JobHistory({ jobs, onJobRetried }) {
                           >
                             <SvgEye />
                           </button>
+                          {job.has_timestamps === false && job.source !== 'lrclib' && !job.cache_hit && (
+                            <button
+                              className="lrc-folder-btn"
+                              title={t('jobs.retry_tip')}
+                              onClick={() => handleRetry(job.job_id)}
+                              disabled={retrying === job.job_id}
+                              aria-label={t('jobs.retry')}
+                            >
+                              <SvgRefresh />
+                            </button>
+                          )}
+                          {!(job.lyrics_embedded || locallyEmbedded.has(job.job_id))
+                            && EMBED_SUPPORTED_EXTS.includes(getExt(job.source_file)) && (
+                            <button
+                              className="lrc-folder-btn"
+                              title={t('jobs.embed_tip')}
+                              onClick={() => handleEmbed(job.job_id)}
+                              disabled={embedding === job.job_id}
+                              aria-label={t('jobs.embed_tip')}
+                            >
+                              <SvgTag />
+                            </button>
+                          )}
                         </>
                       )}
                       <span className="path small">{job.source_file.split('/').pop()}</span>
+                      {(retryError[job.job_id] || embedError[job.job_id]) && (
+                        <span className="job-action-error small" role="alert">
+                          {retryError[job.job_id] || embedError[job.job_id]}
+                        </span>
+                      )}
                     </span>
                   ) : (
                     t('common.na')
@@ -349,9 +367,9 @@ export default function JobHistory({ jobs, onJobRetried }) {
                 </td>
                 <td className="td-credits">
                   {job.source === 'lrclib' ? (
-                    <span className="badge badge-neutral" title="Paroles obtenues depuis LRCLIB (gratuit)">LRCLIB</span>
+                    <span className="badge badge-neutral" title={t('jobs.source_lrclib_tip')}>LRCLIB</span>
                   ) : job.cache_hit ? (
-                    <span className="badge badge-neutral" title="Servi depuis le cache local (0 crédit)">Cache</span>
+                    <span className="badge badge-neutral" title={t('jobs.source_cache_tip')}>Cache</span>
                   ) : (
                     job.credits_charged ?? job.credits_quoted ?? t('common.na')
                   )}
@@ -371,7 +389,7 @@ export default function JobHistory({ jobs, onJobRetried }) {
             onClick={() => setPage(p => Math.max(0, p - 1))}
             disabled={page === 0}
           >
-            ← Précédent
+            {t('jobs.prev')}
           </button>
           <span className="jobs-page-info">
             {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, jobs.length)} / {jobs.length}
@@ -381,7 +399,7 @@ export default function JobHistory({ jobs, onJobRetried }) {
             onClick={() => setPage(p => p + 1)}
             disabled={(page + 1) * PAGE_SIZE >= jobs.length}
           >
-            Suivant →
+            {t('jobs.next')}
           </button>
         </div>
       )}

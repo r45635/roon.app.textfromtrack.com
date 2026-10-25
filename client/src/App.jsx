@@ -26,7 +26,7 @@ export default function App() {
   const [indexStatus, setIndexStatus] = useState(null);
   const [tftAccount, setTftAccount] = useState(null);
   const [jobs, setJobs] = useState([]);
-  const [confirmedPath, setConfirmedPath] = useState(null);
+  const [libraryConfigured, setLibraryConfigured] = useState(true);
   const prevTrackKeyRef = useRef(null);
   const zoneSelectorRef = useRef(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -104,20 +104,11 @@ export default function App() {
     if (data?.success) setJobs(data.jobs);
   }, []);
 
-  // ── Scan library ──────────────────────────────────────────────────────────────
-
-  async function handleScan() {
-    await fetch('/api/music/index/rescan', { method: 'POST' });
-    setIndexStatus(s => s ? { ...s, scan_in_progress: true } : null);
-    // Poll index status until scan finishes
-    const interval = setInterval(async () => {
-      const data = await apiFetch('/api/music/index/status');
-      if (data) {
-        setIndexStatus(data);
-        if (!data.scan_in_progress) clearInterval(interval);
-      }
-    }, 2000);
-  }
+  // Lyrics-only mode (no music folder) hides the library tools.
+  const fetchLibraryConfig = useCallback(async () => {
+    const data = await apiFetch('/api/music/config');
+    if (data?.success) setLibraryConfigured((data.music_roots || []).length > 0);
+  }, []);
 
   // ── Bootstrap ────────────────────────────────────────────────────────────────
 
@@ -126,6 +117,7 @@ export default function App() {
     fetchNowPlaying();
     fetchZones();
     fetchIndexStatus();
+    fetchLibraryConfig();
     fetchTftAccount();
     fetchJobs();
 
@@ -162,7 +154,7 @@ export default function App() {
       clearInterval(roonInterval);
       clearInterval(jobsInterval);
     };
-  }, [fetchRoonStatus, fetchNowPlaying, fetchZones, fetchJobs]);
+  }, [fetchRoonStatus, fetchNowPlaying, fetchZones, fetchJobs, fetchLibraryConfig]);
 
   // Re-run match only when the track identity changes (not on position/state updates)
   useEffect(() => {
@@ -310,6 +302,24 @@ export default function App() {
     }, 2000);
   }
 
+  // Settings may have added or removed the music folder.
+  function closeSettings() {
+    setSettingsOpen(false);
+    fetchLibraryConfig();
+  }
+
+  // Escape closes the settings drawer and the Roon popup.
+  useEffect(() => {
+    if (!settingsOpen && !roonModalOpen) return undefined;
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      if (settingsOpen) closeSettings();
+      setRoonModalOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  });
+
   // ── Language switcher ────────────────────────────────────────────────────────
 
   const currentLang = i18n.language?.slice(0, 2);
@@ -351,7 +361,7 @@ export default function App() {
               <span className={`roon-dot${roonStatus.connected ? '' : ' offline'}`} />
               <span className="tft-mono" style={{ fontSize: 12, color: 'var(--tft-ink-3)' }}>
                 {roonStatus.core_name || 'Roon'}
-                {zones.length > 0 ? ` · ${zones.length} zone${zones.length !== 1 ? 's' : ''}` : ''}
+                {zones.length > 0 ? ` · ${t('app.zones', { count: zones.length })}` : ''}
               </span>
             </button>
           )}
@@ -360,12 +370,12 @@ export default function App() {
             <button
               className={`tft-credit-pill tft-credit-pill-btn${(tftAccount.credit_available ?? tftAccount.credit_balance) === 0 ? ' tft-credit-pill--zero' : ''}`}
               onClick={refreshTftCredits}
-              title="Click to refresh credit balance"
+              title={t('app.credits_refresh')}
               disabled={refreshingCredits}
             >
               <span className="credit-dot" />
               <span className="tft-mono" style={{ fontSize: 12 }}>
-                {refreshingCredits ? '…' : `${tftAccount.credit_available ?? tftAccount.credit_balance} credits`}
+                {refreshingCredits ? '…' : t('app.credits', { count: tftAccount.credit_available ?? tftAccount.credit_balance })}
               </span>
             </button>
           )}
@@ -375,6 +385,7 @@ export default function App() {
               <button
                 key={lang}
                 className={`lang-btn${currentLang === lang ? ' lang-btn-active' : ''}`}
+                aria-pressed={currentLang === lang}
                 onClick={() => i18n.changeLanguage(lang)}
               >
                 {lang.toUpperCase()}
@@ -406,7 +417,7 @@ export default function App() {
           <div className="tft-roon-modal" onClick={e => e.stopPropagation()}>
             <div className="tft-roon-modal-head">
               <span className="tft-eyebrow">{t('section.roon_connection')}</span>
-              <button className="tft-settings-close" onClick={() => setRoonModalOpen(false)} aria-label="Fermer">✕</button>
+              <button className="tft-settings-close" onClick={() => setRoonModalOpen(false)} aria-label={t('common.close')}>✕</button>
             </div>
             <RoonStatus data={roonStatus} />
           </div>
@@ -415,11 +426,11 @@ export default function App() {
 
       {/* ── Settings drawer ─────────────────────────────────────────────────── */}
       {settingsOpen && (
-        <div className="tft-settings-backdrop" onClick={() => setSettingsOpen(false)}>
+        <div className="tft-settings-backdrop" onClick={closeSettings}>
           <aside className="tft-settings-drawer" onClick={e => e.stopPropagation()}>
             <div className="tft-settings-drawer-head">
               <span className="tft-eyebrow">{t('settings.title', 'Configuration')}</span>
-              <button className="tft-settings-close" onClick={() => setSettingsOpen(false)} aria-label="Fermer">✕</button>
+              <button className="tft-settings-close" onClick={closeSettings} aria-label={t('common.close')}>✕</button>
             </div>
             <div className="tft-settings-drawer-body">
               <TftApiKey onTokenSaved={fetchTftAccount} />
@@ -473,6 +484,10 @@ export default function App() {
             onSearch={(q) => setSearchTrigger({ q, ts: Date.now() })}
             volumeStep={prefs.volumeStep}
             onZonePillClick={() => zoneSelectorRef.current?.open()}
+            libraryConfigured={libraryConfigured}
+            roonStatus={roonStatus}
+            backendOnline={backendOnline}
+            onOpenSettings={() => setSettingsOpen(true)}
           />
           <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} externalQuery={searchTrigger} />
           <JobHistory jobs={jobs} onJobRetried={handleJobRetried} />

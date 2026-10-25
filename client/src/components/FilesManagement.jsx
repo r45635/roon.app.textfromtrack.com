@@ -8,33 +8,37 @@ export default function FilesManagement() {
   const [embedDefault, setEmbedDefault] = useState(false);
   const [backupDefault, setBackupDefault] = useState(true);
   const [saveLrcBesideDefault, setSaveLrcBesideDefault] = useState(false);
-  const [status, setStatus] = useState(null); // 'saving' | 'saved' | null
+  const [status, setStatus] = useState(null); // 'saving' | 'saved' | 'error' | null
+
+  function applyConfig(data) {
+    setEmbedDefault(!!data.embed_lyrics_default);
+    setBackupDefault(data.backup_before_embed_default !== false);
+    setSaveLrcBesideDefault(!!data.save_lrc_beside_source_default);
+  }
 
   useEffect(() => {
     fetch('/api/music/config')
       .then(r => r.json())
-      .then(data => {
-        if (data.success) {
-          setEmbedDefault(!!data.embed_lyrics_default);
-          setBackupDefault(data.backup_before_embed_default !== false);
-          setSaveLrcBesideDefault(!!data.save_lrc_beside_source_default);
-        }
-      })
-      .catch(() => {});
+      .then(data => { if (data.success) applyConfig(data); })
+      .catch(() => setStatus('error'));
   }, []);
 
   async function save(patch) {
     setStatus('saving');
     try {
-      await fetch('/api/music/config', {
+      const res = await fetch('/api/music/config', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(patch),
       });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error?.message || `HTTP ${res.status}`);
+      // Show what the backend actually stored, not what was requested.
+      applyConfig(data);
       setStatus('saved');
       setTimeout(() => setStatus(null), 1800);
     } catch {
-      setStatus(null);
+      setStatus('error');
     }
   }
 
@@ -102,10 +106,13 @@ export default function FilesManagement() {
             <p className="muted small">{t('settings.save_lrc_beside_source_default_hint')}</p>
 
             {status === 'saving' && (
-              <p className="muted small" style={{ color: 'var(--tft-ink-3)' }}>Saving…</p>
+              <p className="muted small">{t('settings.saving')}</p>
             )}
             {status === 'saved' && (
-              <p className="muted small" style={{ color: 'var(--tft-green, #4caf50)' }}>✓ Saved</p>
+              <p className="muted small settings-status-ok">{t('settings.saved')}</p>
+            )}
+            {status === 'error' && (
+              <p className="muted small settings-status-error" role="alert">{t('settings.save_failed')}</p>
             )}
 
           </div>
