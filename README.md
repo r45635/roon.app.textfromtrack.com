@@ -408,6 +408,9 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - Update notice (tray and UI), desktop notifications (TFT job, LRCLIB batch), optional **`ACCESS_TOKEN`**
 - Open folder / reveal on Windows and Linux; "Follow playing track" (was "Auto Match File") with a banner when off; Job History "Show older jobs"
 
+#### v0.5.1 ✓ — LRCLIB busy handling
+- A busy LRCLIB (503/429) is retried once at once; the Retry button really asks again; clearer "LRCLIB is overloaded" message
+
 #### Upcoming
 
 ##### Local tag editor (mp3tag-style, lyrics-aware)
