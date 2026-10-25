@@ -416,6 +416,9 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - The QR code and "Open on Network" no longer pick a self-assigned 169.254.x, VPN or bridge address
 - Zone menu closes on an outside click or Escape; zone rows show the cover, state, grouped speakers and volume; dB and +/- -only volumes handled
 
+#### v0.5.3 ✓ — Screenshot mode
+- App Preferences → Screenshot mode (or `?privacy=1`): neutral Core, zone, speaker, account and folder names on screen, for sharing screenshots and bug reports
+
 #### Upcoming
 
 ##### Local tag editor (mp3tag-style, lyrics-aware)
