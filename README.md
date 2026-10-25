@@ -170,6 +170,7 @@ Copy `.env.example` to `.env` and fill in the values.
 | `WEBHOOK_BASE_URL` | _(empty)_ | Public base URL for TFT webhook delivery. When set, the app auto-registers a webhook with TFT on startup |
 | `TFT_POLL_INTERVAL_MS` | `2000` | How often to poll for job status |
 | `TFT_POLL_TIMEOUT_MS` | `600000` | Maximum polling duration (10 min) |
+| `ACCESS_TOKEN` | _(empty)_ | Optional token required from other machines (UI and API). Give it once with a link `http://<host>:3888/?access_token=…` (sets a cookie; the tray's QR code includes it) or `Authorization: Bearer …`. This machine itself is exempt unless the request comes through a proxy |
 | `UPDATE_CHECK` | `true` | `false` stops the backend from asking GitHub (at most every 6 h) whether a newer release exists |
 | `LOG_LEVEL` | `info` | Pino log level (`fatal`/`error`/`warn`/`info`/`debug`/`trace`) |
 
@@ -330,7 +331,7 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 
 - **`metaflac-js2` is intentionally NOT used.** Calling `save()` after `setTag()` silently drops every other Vorbis comment AND every PICTURE block. The app ships [src/music/flacTagger.js](src/music/flacTagger.js) — a self-contained FLAC editor that preserves all blocks byte-for-byte and verifies tag count post-write.
 
-- **No authentication.** The app should only be exposed on `localhost` or a trusted local network — anyone who can reach port 3888 can use it. Browser-based attacks from other websites are blocked: state-changing requests from another origin are rejected (CSRF), and so are requests whose `Host` is a public domain (DNS rebinding; see `ALLOWED_HOSTS`). Do not publish the port to the Internet.
+- **No authentication by default.** The app should only be exposed on `localhost` or a trusted local network — anyone who can reach port 3888 can use it, unless you set `ACCESS_TOKEN`. Browser-based attacks from other websites are blocked: state-changing requests from another origin are rejected (CSRF), and so are requests whose `Host` is a public domain (DNS rebinding; see `ALLOWED_HOSTS`). Do not publish the port to the Internet.
 
 - **macOS builds are ad-hoc signed, not notarized.** First launch needs *Open Anyway* in *Privacy & Security*, and the app needs *Local Network* access to reach Roon. Builds must stay signed on their own: unsigned Electron apps share Electron's stock cdhash, and Apple revoked Electron 31.7.7's — v0.3.13–0.3.15 were blocked as "Malware" on Apple Silicon.
 

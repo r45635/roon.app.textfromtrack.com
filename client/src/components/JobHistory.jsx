@@ -49,7 +49,7 @@ function getExt(filePath) {
   return idx >= 0 ? filePath.slice(idx).toLowerCase() : '';
 }
 
-export default function JobHistory({ jobs, onJobRetried }) {
+export default function JobHistory({ jobs, total = 0, onLoadMore, onJobRetried }) {
   const { t } = useTranslation();
   const [collapsed, toggleCollapsed] = useCollapsed('job-history');
   const [retrying, setRetrying] = useState(null);
@@ -406,6 +406,14 @@ export default function JobHistory({ jobs, onJobRetried }) {
       )}
 
       </div>
+
+      {onLoadMore && total > (jobs?.length ?? 0) && (
+        <div className="jobs-more">
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onLoadMore}>
+            {t('jobs.load_more', { count: total - jobs.length })}
+          </button>
+        </div>
+      )}
 
       {conflictDialog && (
         <div className="modal-backdrop" onClick={() => resolveConflict('cancel')}>

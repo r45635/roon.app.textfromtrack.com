@@ -20,7 +20,11 @@ function getLocalNetworkIP() {
 // GET /api/qr  — serves a QR code page for the local network URL
 router.get('/', async (req, res) => {
   const ip = getLocalNetworkIP();
-  const networkUrl = ip ? `http://${ip}:${config.port}` : null;
+  const baseUrl = ip ? `http://${ip}:${config.port}` : null;
+  // With ACCESS_TOKEN, the link carries the token so one scan sets the phone up.
+  const tokenQuery = config.accessToken ? `/?access_token=${encodeURIComponent(config.accessToken)}` : '';
+  const networkUrl = baseUrl ? `${baseUrl}${tokenQuery}` : null;
+  const kioskUrl = baseUrl ? `${baseUrl}${tokenQuery || '/'}#/lyrics` : null;
 
   let qrDataUrl = null;
   if (networkUrl) {
@@ -97,7 +101,8 @@ router.get('/', async (req, res) => {
       ? `<div class="qr-wrap"><img src="${qrDataUrl}" width="248" height="248" alt="QR code" /></div>
          <a class="url" href="${networkUrl}" target="_blank">${networkUrl}</a>
          <p class="sub">Lyrics display for a tablet or TV:<br/>
-           <a class="url" href="${networkUrl}/#/lyrics" target="_blank">${networkUrl}/#/lyrics</a></p>`
+           <a class="url" href="${kioskUrl}" target="_blank">${kioskUrl}</a></p>
+         ${config.accessToken ? '<p class="note">These links contain your access token — share them only with your own devices.</p>' : ''}`
       : `<p class="error">No local network interface found.<br/>Make sure Wi-Fi or Ethernet is connected.</p>`
     }
 

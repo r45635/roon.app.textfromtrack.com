@@ -11,7 +11,7 @@
  * No BrowserWindow is created — the UI lives at http://localhost:3888.
  */
 
-const { app, Tray, Menu, shell, nativeImage, dialog, BrowserWindow, ipcMain } = require('electron');
+const { app, Tray, Menu, shell, nativeImage, dialog, BrowserWindow, ipcMain, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -41,6 +41,7 @@ const UI_URL = `http://localhost:${PORT}`;
 const POLL_ROON_MS = 5_000;
 const POLL_CREDITS_MS = 60_000;
 const POLL_UPDATE_MS = 60 * 60_000; // the backend itself asks GitHub at most every 6 h
+const POLL_ACTIVITY_MS = 15_000;     // TFT jobs and LRCLIB batch, for desktop notifications
 
 // ── State ────────────────────────────────────────────────────────────────────
 let tray = null;
@@ -239,6 +240,65 @@ function pollUpdate() {
   }).on('error', () => { /* backend not reachable: the Roon status line already says so */ });
 }
 
+// ── Desktop notifications: TFT job finished, LRCLIB batch finished ──────────
+// Only transitions seen while the app runs are notified (the first poll just
+// records the current state). Off with the tray's "Notifications" checkbox.
+const ACTIVE_JOB_STATES = new Set(['pending', 'processing', 'downloading', 'embedding']);
+const jobStates = new Map(); // job_id -> last seen status
+let activityPrimed = false;
+let batchWasRunning = false;
+
+function notificationsEnabled() {
+  return backendPrefs.read().notifications !== false;
+}
+
+function notify(title, body) {
+  if (!notificationsEnabled() || !Notification.isSupported()) return;
+  const n = new Notification({ title, body, silent: false });
+  n.on('click', () => shell.openExternal(activeBackendURL));
+  n.show();
+}
+
+function getJson(url) {
+  return new Promise((resolve, reject) => {
+    http.get(url, (res) => {
+      let data = '';
+      res.on('data', (c) => (data += c));
+      res.on('end', () => { try { resolve(JSON.parse(data)); } catch (e) { reject(e); } });
+    }).on('error', reject);
+  });
+}
+
+async function pollActivity() {
+  if (!serverReady) return;
+  try {
+    const [jobsRes, batchRes] = await Promise.all([
+      getJson(`${activeBackendURL}/api/tft/jobs?limit=20`),
+      getJson(`${activeBackendURL}/api/library/lrclib-batch`).catch(() => null),
+    ]);
+    for (const job of jobsRes.jobs || []) {
+      const before = jobStates.get(job.job_id);
+      jobStates.set(job.job_id, job.status);
+      if (!activityPrimed || before === undefined || before === job.status) continue;
+      if (!ACTIVE_JOB_STATES.has(before)) continue;
+      const track = [job.artist, job.title].filter(Boolean).join(' — ') || 'Track';
+      if (job.status === 'done') notify('Lyrics ready', track);
+      else if (job.status === 'error') notify('Lyrics generation failed', `${track}: ${job.error?.message || 'error'}`);
+    }
+    const b = batchRes?.batch;
+    if (b) {
+      if (activityPrimed && batchWasRunning && !b.running) {
+        notify(
+          b.cancelled ? 'LRCLIB batch stopped' : 'LRCLIB batch finished',
+          `${b.saved} saved · ${b.not_found} not on LRCLIB · ${b.failed} failed`
+        );
+      }
+      batchWasRunning = !!b.running;
+    }
+    activityPrimed = true;
+  } catch { /* backend busy or restarting: try again on the next tick */ }
+}
+
 // ── Polling: TFT credits ─────────────────────────────────────────────────────
 function pollCredits() {
   if (!serverReady) return;
@@ -270,14 +330,17 @@ function pollCredits() {
 let roonTimer = null;
 let creditsTimer = null;
 let updateTimer = null; // never cleared: it always asks the current activeBackendURL
+let activityTimer = null; // same
 
 function startPolling() {
   pollRoon();
   pollCredits();
   pollUpdate();
+  pollActivity();
   if (!roonTimer) roonTimer = setInterval(pollRoon, POLL_ROON_MS);
   if (!creditsTimer) creditsTimer = setInterval(pollCredits, POLL_CREDITS_MS);
   if (!updateTimer) updateTimer = setInterval(pollUpdate, POLL_UPDATE_MS);
+  if (!activityTimer) activityTimer = setInterval(pollActivity, POLL_ACTIVITY_MS);
 }
 
 // ── Remote backend ping ───────────────────────────────────────────────────────
@@ -644,6 +707,12 @@ function rebuildMenu() {
       checked: loginItem.openAtLogin,
       click: (menuItem) => app.setLoginItemSettings({ openAtLogin: menuItem.checked }),
     });
+    items.push({
+      label: 'Notifications',
+      type: 'checkbox',
+      checked: notificationsEnabled(),
+      click: (menuItem) => backendPrefs.write({ notifications: menuItem.checked }),
+    });
     items.push({ type: 'separator' });
     items.push({ label: 'Quit TextFromTrack', click: () => app.exit(0) });
   } else {
@@ -706,6 +775,12 @@ function rebuildMenu() {
       type: 'checkbox',
       checked: loginItem.openAtLogin,
       click: (menuItem) => app.setLoginItemSettings({ openAtLogin: menuItem.checked }),
+    });
+    items.push({
+      label: 'Notifications',
+      type: 'checkbox',
+      checked: notificationsEnabled(),
+      click: (menuItem) => backendPrefs.write({ notifications: menuItem.checked }),
     });
     items.push({ type: 'separator' });
     items.push({

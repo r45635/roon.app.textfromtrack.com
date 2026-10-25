@@ -63,6 +63,10 @@ services:
       # Roon Core extension port (Roon 2.x: 9330; legacy 1.x cores: 9100).
       # ROON_CORE_PORT: 9330
 
+      # Require a token from other devices (open http://<host>:3888/?access_token=<token> once
+      # on each phone/tablet; it is remembered).
+      # ACCESS_TOKEN: change-me
+
       # Behind a reverse proxy with your own domain, allow that host name
       # (LAN names and IP addresses are always allowed).
       # ALLOWED_HOSTS: lyrics.example.com

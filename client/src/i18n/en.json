@@ -301,7 +301,9 @@
     "source_lrclib_tip": "Lyrics from LRCLIB (free)",
     "source_cache_tip": "Served from the local cache (0 credits)",
     "prev": "← Previous",
-    "next": "Next →"
+    "next": "Next →",
+    "load_more_one": "Show the older job",
+    "load_more_other": "Show older jobs ({{count}} more)"
   },
   "common": {
     "yes": "Yes",

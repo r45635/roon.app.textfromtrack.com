@@ -10,6 +10,8 @@ const config = {
   appBaseUrl: process.env.APP_BASE_URL || 'http://localhost:3888',
   // Extra Host names accepted besides localhost, IPs and LAN names (comma-separated; '*' = any).
   allowedHosts: process.env.ALLOWED_HOSTS || '',
+  // Optional access token for the UI/API from other machines (empty = no token, LAN-open).
+  accessToken: process.env.ACCESS_TOKEN || '',
   nodeEnv: process.env.NODE_ENV || 'development',
 
   // ── Roon ────────────────────────────────────────────────────────────────────

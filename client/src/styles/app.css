@@ -2861,3 +2861,4 @@ button.synced-line:hover { opacity: 0.9; background: var(--tft-hover); }
 }
 
 .search-input { min-width: 0; }
+.jobs-more { display: flex; justify-content: center; padding: 10px 0 4px; }

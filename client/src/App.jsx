@@ -101,10 +101,21 @@ export default function App() {
     try { await fetchTftAccount(); } finally { setRefreshingCredits(false); }
   }, [fetchTftAccount, refreshingCredits]);
 
+  // How many jobs to load; "Show older jobs" raises it.
+  const jobsLimitRef = useRef(20);
+  const [jobsTotal, setJobsTotal] = useState(0);
   const fetchJobs = useCallback(async () => {
-    const data = await apiFetch('/api/tft/jobs?limit=20');
-    if (data?.success) setJobs(data.jobs);
+    const data = await apiFetch(`/api/tft/jobs?limit=${jobsLimitRef.current}`);
+    if (data?.success) {
+      setJobs(data.jobs);
+      setJobsTotal(data.total ?? data.jobs.length);
+    }
   }, []);
+
+  function handleMoreJobs() {
+    jobsLimitRef.current += 50;
+    fetchJobs();
+  }
 
   // Lyrics-only mode (no music folder) hides the library tools.
   const fetchLibraryConfig = useCallback(async () => {
@@ -502,7 +513,7 @@ export default function App() {
           />
           {libraryConfigured && <LibraryCard />}
           <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} externalQuery={searchTrigger} />
-          <JobHistory jobs={jobs} onJobRetried={handleJobRetried} />
+          <JobHistory jobs={jobs} total={jobsTotal} onLoadMore={handleMoreJobs} onJobRetried={handleJobRetried} />
         </div>
       </main>
     </div>

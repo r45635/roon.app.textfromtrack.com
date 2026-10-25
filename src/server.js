@@ -11,12 +11,14 @@ const roonClient = require('./roon/roonClient');
 const { watchRoon } = require('./lyrics/nowPlayingLyrics');
 const { buildError, E } = require('./utils/normalize');
 const { hostGuard, originGuard } = require('./utils/requestGuards');
+const { accessGuard } = require('./utils/accessGuard');
 
 const app = express();
 
 // ─── Request guards (no auth, LAN-exposed API) ────────────────────────────────
 app.use(hostGuard(config.allowedHosts));
 app.use(originGuard);
+app.use(accessGuard(config.accessToken));
 
 // ─── Body parsing ─────────────────────────────────────────────────────────────
 // The TFT webhook needs its raw body for HMAC verification: parse it first so

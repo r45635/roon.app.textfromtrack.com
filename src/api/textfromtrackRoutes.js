@@ -246,9 +246,9 @@ router.post('/generate-current', async (req, res) => {
  * Return local job history.
  */
 router.get('/jobs', (req, res) => {
-  const limit = parseInt(req.query.limit || '50', 10);
-  const jobs = jobStore.list(limit);
-  res.json({ success: true, jobs });
+  const limit = Math.max(1, parseInt(req.query.limit || '50', 10) || 50);
+  const all = jobStore.list();
+  res.json({ success: true, jobs: all.slice(0, limit), total: all.length });
 });
 
 /**
