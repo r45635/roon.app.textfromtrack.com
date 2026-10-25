@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import LyricsFullscreen from './LyricsFullscreen.jsx';
 import { useTrackLyrics } from '../hooks/useTrackLyrics.js';
 import { lrclibProblem } from '../lib/errors.js';
+import { maskNowPlaying, maskZones } from '../lib/privacy.js';
 
 const POLL_MS = 1000;
 
@@ -68,7 +69,7 @@ export default function LyricsKiosk() {
         const data = await res.json().catch(() => null);
         if (stopped) return;
         setOffline(false);
-        setNp(res.ok ? data?.now_playing ?? null : null);
+        setNp(maskNowPlaying(res.ok ? data?.now_playing ?? null : null));
       } catch {
         if (!stopped) setOffline(true);
       }
@@ -80,7 +81,7 @@ export default function LyricsKiosk() {
 
   useEffect(() => {
     if (!pickerOpen) return;
-    fetch('/api/roon/zones').then(r => r.json()).then(d => setZones(d.zones || [])).catch(() => setZones([]));
+    fetch('/api/roon/zones').then(r => r.json()).then(d => setZones(maskZones(d.zones || []))).catch(() => setZones([]));
   }, [pickerOpen]);
 
   const { status, data } = useTrackLyrics(np);

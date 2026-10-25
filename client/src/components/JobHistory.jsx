@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 import { describeError } from '../lib/errors.js';
+import { maskPath } from '../lib/privacy.js';
 
 async function revealInFinder(filePath) {
   await fetch('/api/tft/reveal', {
@@ -299,7 +300,7 @@ export default function JobHistory({ jobs, total = 0, onLoadMore, onJobRetried }
                 <td className="td-path" data-label={t('jobs.track_path')}>
                   {/* Track path column */}
                   {job.source_file ? (
-                    <span className="lrc-reveal-wrap" title={job.source_file}>
+                    <span className="lrc-reveal-wrap" title={maskPath(job.source_file)}>
                       <button
                         className="lrc-folder-btn"
                         title={t('jobs.reveal')}

@@ -9,10 +9,11 @@ const router = Router();
 
 // GET /api/qr  — serves a QR code page for the local network URL
 router.get('/', async (req, res) => {
-  const ip = getLanAddress();
+  // ?privacy=1 (screenshot mode): an example address instead of the real one, in the QR too.
+  const ip = req.query.privacy === '1' ? '192.168.1.20' : getLanAddress();
   const baseUrl = ip ? `http://${ip}:${config.port}` : null;
   // With ACCESS_TOKEN, the link carries the token so one scan sets the phone up.
-  const tokenQuery = config.accessToken ? `/?access_token=${encodeURIComponent(config.accessToken)}` : '';
+  const tokenQuery = config.accessToken && req.query.privacy !== '1' ? `/?access_token=${encodeURIComponent(config.accessToken)}` : '';
   const networkUrl = baseUrl ? `${baseUrl}${tokenQuery}` : null;
   const kioskUrl = baseUrl ? `${baseUrl}${tokenQuery || '/'}#/lyrics` : null;
 

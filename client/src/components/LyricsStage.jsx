@@ -6,6 +6,7 @@ import LrcEditor from './LrcEditor.jsx';
 import { useTrackLyrics } from '../hooks/useTrackLyrics.js';
 import { shiftLrc } from '../lib/lrc.js';
 import { describeError, lrclibProblem } from '../lib/errors.js';
+import { isPrivacyMode } from '../lib/privacy.js';
 
 const OFFSET_STEP_MS = 500;
 const HINT_DISMISSED_KEY = 'tft:libraryHintDismissed';
@@ -215,7 +216,7 @@ export default function LyricsStage({
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setFullscreen(true)} title={`${t('stage.fullscreen')} (F)`}>
             {t('stage.fullscreen')}
           </button>
-          <a className="btn btn-ghost btn-sm" href="/api/qr" target="_blank" rel="noreferrer" title={t('app.phone_qr')}>
+          <a className="btn btn-ghost btn-sm" href={isPrivacyMode() ? '/api/qr?privacy=1' : '/api/qr'} target="_blank" rel="noreferrer" title={t('app.phone_qr')}>
             {t('stage.on_tv')}
           </a>
         </div>

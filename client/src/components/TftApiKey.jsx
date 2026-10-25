@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 import { describeError } from '../lib/errors.js';
+import { maskAccount } from '../lib/privacy.js';
 
 export default function TftApiKey({ onTokenSaved }) {
   const { t } = useTranslation();
@@ -27,7 +28,7 @@ export default function TftApiKey({ onTokenSaved }) {
       if (!data.token_configured) { setCheck(null); return; }
       setCheck({
         valid: data.token_valid !== false,
-        email: data.email,
+        email: maskAccount(data).email,
         credits: data.credit_available ?? data.credit_balance,
         top_up_url: data.top_up_url,
       });

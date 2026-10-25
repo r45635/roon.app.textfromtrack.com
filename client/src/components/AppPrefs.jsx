@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCollapsed } from '../hooks/useCollapsed.js';
+import { isPrivacyMode, setPrivacyMode } from '../lib/privacy.js';
 
 const POLL_PRESETS = [500, 1000, 2000, 3000, 5000];
 const THEME_KEY = 'tft:theme';
@@ -115,6 +116,19 @@ export default function AppPrefs({ prefs, setPref }) {
                 <option value="dark">{t('settings.theme_dark')}</option>
               </select>
             </div>
+
+            {/* Screenshot mode */}
+            <div className="app-pref-row">
+              <label className="embed-toggle settings-embed-toggle">
+                <input
+                  type="checkbox"
+                  defaultChecked={isPrivacyMode()}
+                  onChange={e => { setPrivacyMode(e.target.checked); window.location.reload(); }}
+                />
+                <span>{t('settings.privacy_mode')}</span>
+              </label>
+            </div>
+            <p className="muted small">{t('settings.privacy_mode_hint')}</p>
 
             {/* Volume step */}
             <div className="app-pref-row">

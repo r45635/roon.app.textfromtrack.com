@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 import { useTranslation } from 'react-i18next';
+import { maskPath } from '../lib/privacy.js';
 
 export default function LibrarySettings({ onRescanStarted }) {
   const { t } = useTranslation();
@@ -100,7 +101,7 @@ export default function LibrarySettings({ onRescanStarted }) {
           <ul className="settings-roots-list">
             {roots.map((root, idx) => (
               <li key={idx} className="settings-root-item">
-                <span className="settings-root-path">{root}</span>
+                <span className="settings-root-path">{maskPath(root)}</span>
                 <button
                   className="btn btn-ghost btn-sm settings-remove-btn"
                   onClick={() => handleRemove(idx)}
@@ -164,7 +165,7 @@ function ScanStatus({ status }) {
       )}
       {last.error && <p className="settings-error">{t('settings.scan_failed', { msg: last.error })}</p>}
       {missing.map(r => (
-        <p key={r.path} className="settings-error">{t('settings.root_missing', { path: r.path })}</p>
+        <p key={r.path} className="settings-error">{t('settings.root_missing', { path: maskPath(r.path) })}</p>
       ))}
     </div>
   );

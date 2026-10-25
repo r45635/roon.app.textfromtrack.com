@@ -11,6 +11,7 @@ import TftApiKey from './components/TftApiKey.jsx';
 import FilesManagement from './components/FilesManagement.jsx';
 import LibraryCard from './components/LibraryCard.jsx';
 import { useAppPrefs } from './hooks/useAppPrefs.js';
+import { maskZones, maskNowPlaying, maskRoonStatus, maskAccount, isPrivacyMode } from './lib/privacy.js';
 
 const JOBS_POLL_MS = 5000;
 
@@ -66,17 +67,17 @@ export default function App() {
 
   const fetchRoonStatus = useCallback(async () => {
     const data = await apiFetch('/api/roon/status');
-    if (data) setRoonStatus(data);
+    if (data) setRoonStatus(maskRoonStatus(data));
   }, []);
 
   const fetchNowPlaying = useCallback(async () => {
     const data = await apiFetch('/api/roon/now-playing');
-    setNowPlaying(data?.now_playing ?? null);
+    setNowPlaying(maskNowPlaying(data?.now_playing ?? null));
   }, []);
 
   const fetchZones = useCallback(async () => {
     const data = await apiFetch('/api/roon/zones');
-    if (data?.zones) setZones(data.zones);
+    if (data?.zones) setZones(maskZones(data.zones));
   }, []);
 
   const fetchMatch = useCallback(async () => {
@@ -92,7 +93,7 @@ export default function App() {
 
   const fetchTftAccount = useCallback(async () => {
     const data = await apiFetch('/api/tft/me');
-    if (data) setTftAccount({ token_valid: data.token_valid !== false, ...data });
+    if (data) setTftAccount(maskAccount({ token_valid: data.token_valid !== false, ...data }));
   }, []);
 
   const refreshTftCredits = useCallback(async () => {
@@ -417,7 +418,7 @@ export default function App() {
 
           <a
             className="tft-settings-btn tft-phone-btn"
-            href="/api/qr"
+            href={isPrivacyMode() ? '/api/qr?privacy=1' : '/api/qr'}
             target="_blank"
             rel="noreferrer"
             title={t('app.phone_qr')}

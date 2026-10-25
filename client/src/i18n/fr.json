@@ -448,7 +448,9 @@
     "theme": "Thème",
     "theme_system": "Comme le système",
     "theme_light": "Clair",
-    "theme_dark": "Sombre"
+    "theme_dark": "Sombre",
+    "privacy_mode": "Mode capture d’écran — masquer les noms personnels",
+    "privacy_mode_hint": "Affiche des noms neutres à la place de votre Core Roon, de vos zones, enceintes, compte et dossiers, pour partager des captures. Affichage seulement. Aussi avec ?privacy=1 dans l’adresse."
   },
   "lrclib": {
     "check_button": "Chercher sur LRCLIB",

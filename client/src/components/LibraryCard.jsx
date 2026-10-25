@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCollapsed } from '../hooks/useCollapsed.js';
+import { maskPath } from '../lib/privacy.js';
 
 const PAGE_SIZE = 50;
 
@@ -170,7 +171,7 @@ export default function LibraryCard() {
         {list && list.tracks.length > 0 && (
           <ul className="lib-list">
             {list.tracks.map(tr => (
-              <li key={tr.path} className="lib-row" title={tr.path}>
+              <li key={tr.path} className="lib-row" title={maskPath(tr.path)}>
                 <span className="lib-row-main">
                   <span className="lib-row-title">{tr.title || tr.path.split('/').pop()}</span>
                   <span className="lib-row-sub">{[tr.artist, tr.album].filter(Boolean).join(' · ')}</span>

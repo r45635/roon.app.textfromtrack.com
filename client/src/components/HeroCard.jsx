@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import FileTagsCard from './FileTagsCard.jsx';
 import LyricsSection from './LyricsSection.jsx';
 import LyricsStage from './LyricsStage.jsx';
+import { maskPath } from '../lib/privacy.js';
 import {
   IconPlay, IconPause, IconPrev, IconNext, IconShuffle, IconRepeat, IconRepeatOne, IconVolume, IconVolumeMuted,
 } from './Icons.jsx';
@@ -242,7 +243,9 @@ export default function HeroCard({
   const lyricsStatus = displayTrack?.lyrics_status;
   const lyricsExist = lyricsStatus === 'HAS_LRC_FILE' || lyricsStatus === 'HAS_EMBEDDED_LYRICS' || lyricsStatus === 'HAS_CACHED_LYRICS';
   const effectiveFilename = effectivePath ? effectivePath.split('/').pop() : '';
-  const effectiveDir = effectivePath ? effectivePath.slice(0, effectivePath.lastIndexOf('/') + 1) : '';
+  // Screenshot mode shows a neutral folder instead of the real one.
+  const shownPath = maskPath(effectivePath);
+  const effectiveDir = shownPath ? shownPath.slice(0, shownPath.lastIndexOf('/') + 1) : '';
   const matchedExt = matchedPath ? matchedPath.slice(matchedPath.lastIndexOf('.')).toLowerCase() : '';
   const embedSupported = !matchedPath || EMBED_SUPPORTED_EXTS.includes(matchedExt);
 
