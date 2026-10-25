@@ -209,4 +209,13 @@ function _resetMemo() {
   _inFlight.clear();
 }
 
-module.exports = { resolve, choose, setOffset, isSynced, pickHit, simplify, _resetMemo };
+/**
+ * One LRCLIB lookup with no memo and no cache — for batch jobs that handle retries and
+ * caching themselves. Throws when LRCLIB is unreachable or busy.
+ * @param {{ title, artist, album, duration_seconds }} track
+ */
+function lookupLrclib(track) {
+  return _fetchFromLrclib(track);
+}
+
+module.exports = { resolve, choose, setOffset, lookupLrclib, isSynced, pickHit, simplify, _resetMemo };

@@ -408,7 +408,18 @@
     "title": "Réglages",
     "saving": "Enregistrement…",
     "saved": "✓ Enregistré",
-    "save_failed": "Non enregistré — le serveur a refusé la modification. Rechargez la page et réessayez."
+    "save_failed": "Non enregistré — le serveur a refusé la modification. Rechargez la page et réessayez.",
+    "load_failed": "Impossible de charger les réglages de la bibliothèque.",
+    "save_no_folder": "Enregistrer (sans dossier musical)",
+    "scan_running_one": "Analyse… {{count}} fichier lu",
+    "scan_running_other": "Analyse… {{count}} fichiers lus",
+    "scan_summary_one": "{{count}} piste · dernière analyse {{date}}",
+    "scan_summary_other": "{{count}} pistes · dernière analyse {{date}}",
+    "scan_unreadable_one": "{{count}} fichier illisible",
+    "scan_unreadable_other": "{{count}} fichiers illisibles",
+    "scan_never": "Pas encore analysée.",
+    "scan_failed": "La dernière analyse a échoué : {{msg}}",
+    "root_missing": "Dossier introuvable : {{path}} — le disque ou le NAS est-il monté ?"
   },
   "lrclib": {
     "check_button": "Chercher sur LRCLIB",
@@ -517,5 +528,32 @@
     "pick_zone": "Afficher les paroles de",
     "follow_active": "La zone active",
     "back_to_app": "Retour à l’app"
+  },
+  "library": {
+    "title": "Paroles de la bibliothèque",
+    "empty": "L’index de la bibliothèque est vide — lancez l’analyse de votre dossier musical dans les Réglages.",
+    "coverage": "{{with}} pistes sur {{total}} ont des paroles ({{pct}} %) · {{missing}} sans",
+    "coverage_bar": "{{pct}} % des pistes ont des paroles",
+    "lrc_files_one": "{{count}} fichier .lrc",
+    "lrc_files_other": "{{count}} fichiers .lrc",
+    "embedded_one": "{{count}} dans les tags",
+    "embedded_other": "{{count}} dans les tags",
+    "filter": "Afficher",
+    "filter_missing": "Sans paroles",
+    "filter_with": "Avec paroles",
+    "filter_all": "Toutes",
+    "search_placeholder": "Filtrer par titre, artiste, album…",
+    "no_tracks": "Aucune piste ne correspond.",
+    "batch_start_one": "Chercher les paroles sur LRCLIB pour cette piste",
+    "batch_start_other": "Chercher les paroles sur LRCLIB pour ces {{count}} pistes",
+    "batch_plain_too": "Enregistrer aussi les paroles sans horodatage",
+    "batch_hint": "Gratuit. Une piste par seconde ; les paroles déjà présentes dans ou à côté d’un fichier ne sont jamais remplacées. Écriture selon vos réglages de Gestion des fichiers.",
+    "batch_running": "Recherche des paroles… {{done}} / {{total}}",
+    "batch_done": "Lot terminé — {{total}} pistes",
+    "batch_cancelled": "Lot arrêté à {{done}} / {{total}}",
+    "batch_waiting": "LRCLIB est surchargé ({{msg}}) — nouvel essai dans {{secs}} s.",
+    "batch_counts": "Enregistrées {{saved}} · absentes de LRCLIB {{not_found}} · sans horodatage {{plain}} · déjà présentes {{had}} · échecs {{failed}}",
+    "batch_errors_one": "{{count}} erreur",
+    "batch_errors_other": "{{count}} erreurs"
   }
 }

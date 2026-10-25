@@ -5,12 +5,10 @@ const fs = require('fs');
 const { Router } = require('express');
 const logger = require('../utils/logger');
 const { buildError } = require('../utils/normalize');
-const lyricsEmbedder = require('../music/lyricsEmbedder');
-const lyricsDetector = require('../music/lyricsDetector');
 const scanner = require('../music/scanner');
-const userSettings = require('../storage/userSettings');
-const config = require('../config');
 const lrcCache = require('../utils/lrcCache');
+const lyricsWriter = require('../music/lyricsWriter');
+const musicRoots = require('../music/musicRoots');
 const jobStore = require('../textfromtrack/jobStore');
 const lrclibClient = require('../lyrics/lrclibClient');
 const { lrclibGet } = lrclibClient;
@@ -219,13 +217,8 @@ router.post('/save', async (req, res) => {
   }
 
   // Validate path is within a configured music root (security)
-  const settings = userSettings.get();
-  const roots = settings.music_roots && settings.music_roots.length
-    ? settings.music_roots
-    : config.musicRoots;
   const resolved = path.resolve(audioPath);
-  const inRoot = roots.some(r => resolved.startsWith(path.resolve(r) + path.sep) || resolved === path.resolve(r));
-  if (!inRoot) {
+  if (!musicRoots.isUnderMusicRoot(resolved)) {
     logger.warn({ audioPath: resolved }, 'LRCLIB save: path outside music roots');
     return res.status(403).json(buildError('OUTSIDE_MUSIC_ROOT', 'Path is not within a configured music root'));
   }
@@ -233,45 +226,21 @@ router.post('/save', async (req, res) => {
     return res.status(404).json(buildError('SOURCE_FILE_NOT_FOUND', `File not found: ${resolved}`));
   }
 
-  // Resolve flags
-  let { embed: doEmbed, backup: doBackup, saveBeside: doSaveBeside } = userSettings.resolveWriteFlags(req.body);
-  // A save must write somewhere: with both defaults off, embed when the format allows it,
-  // else write the .lrc sidecar.
-  if (!doEmbed && !doSaveBeside) {
-    if (lyricsEmbedder.canEmbed(resolved)) doEmbed = true;
-    else doSaveBeside = true;
-  }
-
-  const lrcPath = resolved.replace(/\.[^.]+$/, '.lrc');
   const result = { success: true, lrc_file: null, lyrics_embedded: false, backup_path: null };
 
   try {
-    // Write .lrc sidecar
-    if (doSaveBeside) {
-      fs.writeFileSync(lrcPath, lrc_content, 'utf8');
-      result.lrc_file = lrcPath;
-      logger.info({ lrcPath }, 'LRCLIB: LRC sidecar written');
-    }
-
-    // Embed into audio tags
-    if (doEmbed) {
-      const embedResult = lyricsEmbedder.embedLyrics(resolved, lrc_content, {
-        backup: { enabled: doBackup, onConflict: 'overwrite' },
-      });
-      result.lyrics_embedded = true;
-      result.backup_path = embedResult.backup_path;
-      logger.info({ audioPath: resolved }, 'LRCLIB: lyrics embedded');
-    }
+    const written = lyricsWriter.writeLyricsToFile(resolved, lrc_content, req.body);
+    result.lrc_file = written.lrc_file;
+    result.lyrics_embedded = written.lyrics_embedded;
+    result.backup_path = written.backup_path;
+    const doEmbed = written.lyrics_embedded;
 
     // Update scanner index lyrics_status
     try {
-      const newStatus = doEmbed
-        ? lyricsDetector.STATUS.HAS_EMBEDDED_LYRICS
-        : doSaveBeside
-          ? lyricsDetector.STATUS.HAS_LRC_FILE
-          : null;
-      if (newStatus) scanner.updateTrackLyricsStatus(resolved, newStatus);
-    } catch { /* non-fatal */ }
+      scanner.updateTrackLyricsStatus(resolved, written.status);
+    } catch (err) {
+      logger.warn({ err: err.message, audioPath: resolved }, 'LRCLIB save: index status not updated');
+    }
 
     // Write to local LRC cache
     const bodyMeta = req.body || {};

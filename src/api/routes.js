@@ -6,6 +6,7 @@ const musicRoutes = require('./musicRoutes');
 const tftRoutes = require('./textfromtrackRoutes');
 const lrclibRoutes = require('./lrclibRoutes');
 const lyricsRoutes = require('./lyricsRoutes');
+const libraryRoutes = require('./libraryRoutes');
 const debugRoutes = require('./debugRoutes');
 const qrRoutes = require('./qrRoutes');
 
@@ -16,6 +17,7 @@ router.use('/music', musicRoutes);
 router.use('/tft', tftRoutes);
 router.use('/lrclib', lrclibRoutes);
 router.use('/lyrics', lyricsRoutes);
+router.use('/library', libraryRoutes);
 router.use('/debug', debugRoutes);
 router.use('/qr', qrRoutes);
 

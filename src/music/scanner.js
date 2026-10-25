@@ -87,6 +87,9 @@ async function extractTrack(filePath, parseFile) {
 // ─── Main scan entry point ────────────────────────────────────────────────────
 
 let _scanInProgress = false;
+// Live progress of the running scan, and the outcome of the last one (for the settings UI).
+let _progress = { scanned: 0, errors: 0, started_at: null };
+let _lastScan = { error: null, missing_roots: [], error_count: 0 };
 
 /**
  * Scan all configured MUSIC_ROOTS and write the result to music-index.json.
@@ -96,6 +99,20 @@ let _scanInProgress = false;
 async function scan(opts = {}) {
   if (_scanInProgress) throw new Error('A scan is already in progress');
   _scanInProgress = true;
+  _progress = { scanned: 0, errors: 0, started_at: new Date().toISOString() };
+  try {
+    const result = await _scan(opts);
+    _lastScan = { error: null, missing_roots: result.missing_roots, error_count: result.error_count };
+    return result;
+  } catch (err) {
+    _lastScan = { error: err.message, missing_roots: [], error_count: _progress.errors };
+    throw err;
+  } finally {
+    _scanInProgress = false;
+  }
+}
+
+async function _scan(opts) {
   const start = Date.now();
 
   const { onProgress } = opts;
@@ -103,9 +120,8 @@ async function scan(opts = {}) {
   const roots = settings.music_roots.length ? settings.music_roots : config.musicRoots;
 
   if (!roots.length) {
-    _scanInProgress = false;
     logger.warn('MUSIC_ROOTS is not configured — nothing to scan');
-    return { track_count: 0, error_count: 0, elapsed_ms: 0 };
+    return { track_count: 0, error_count: 0, elapsed_ms: 0, missing_roots: [] };
   }
 
   logger.info({ roots }, 'Starting music library scan');
@@ -117,9 +133,11 @@ async function scan(opts = {}) {
   let errorCount = 0;
   let scannedCount = 0;
 
+  const missingRoots = [];
   for (const root of roots) {
     if (!fs.existsSync(root)) {
       logger.warn({ root }, 'Music root does not exist — skipping');
+      missingRoots.push(root);
       continue;
     }
     for (const filePath of walkDir(root)) {
@@ -130,10 +148,18 @@ async function scan(opts = {}) {
         errorCount++;
       }
       scannedCount++;
+      _progress.scanned = scannedCount;
+      _progress.errors = errorCount;
       if (onProgress && scannedCount % 100 === 0) {
         onProgress(scannedCount, errorCount);
       }
     }
+  }
+
+  // Every root missing (NAS unmounted, drive asleep): keep the previous index rather
+  // than replacing it with an empty one.
+  if (missingRoots.length === roots.length) {
+    throw new Error(`No music folder is reachable: ${missingRoots.join(', ')}`);
   }
 
   const index = {
@@ -152,21 +178,53 @@ async function scan(opts = {}) {
     'Music library scan complete'
   );
 
-  _scanInProgress = false;
-  return { track_count: tracks.length, error_count: errorCount, elapsed_ms: elapsed };
+  return { track_count: tracks.length, error_count: errorCount, elapsed_ms: elapsed, missing_roots: missingRoots };
+}
+
+const EMPTY_INDEX = { version: 1, last_scan_at: null, track_count: 0, music_roots: [], tracks: [] };
+
+// Parsed index kept in memory, reloaded only when the file changes on disk — a large
+// library's JSON is tens of MB and is read on every track change.
+let _cache = { mtimeMs: -1, path: null, index: null };
+
+/**
+ * Read the current music index (from memory when the file is unchanged).
+ * Callers must not mutate the returned object; use updateTracksLyricsStatus to change it.
+ */
+function loadIndex() {
+  let mtimeMs;
+  try {
+    mtimeMs = fs.statSync(config.musicIndexPath).mtimeMs;
+  } catch {
+    return { ...EMPTY_INDEX, tracks: [] };
+  }
+  if (_cache.index && _cache.mtimeMs === mtimeMs && _cache.path === config.musicIndexPath) return _cache.index;
+  const index = readJson(config.musicIndexPath, null) || { ...EMPTY_INDEX, tracks: [] };
+  _cache = { mtimeMs, path: config.musicIndexPath, index };
+  return index;
 }
 
 /**
- * Read the current music index from disk.
+ * Update the lyrics_status of several tracks with a single index write.
+ * @param {Array<{ path: string, status: string }>} updates
+ * @returns {number} how many tracks were found and updated
  */
-function loadIndex() {
-  return readJson(config.musicIndexPath, {
-    version: 1,
-    last_scan_at: null,
-    track_count: 0,
-    music_roots: [],
-    tracks: [],
-  });
+function updateTracksLyricsStatus(updates) {
+  if (!updates.length) return 0;
+  const index = readJson(config.musicIndexPath, null);
+  if (!index) return 0;
+  const byPath = new Map(updates.map(u => [u.path, u.status]));
+  let changed = 0;
+  for (const track of index.tracks) {
+    if (!byPath.has(track.path)) continue;
+    const status = byPath.get(track.path);
+    track.lyrics_status = status;
+    track.has_lrc_file = status === lyricsDetector.STATUS.HAS_LRC_FILE;
+    track.has_embedded_lyrics = status === lyricsDetector.STATUS.HAS_EMBEDDED_LYRICS;
+    changed++;
+  }
+  if (changed) writeJson(config.musicIndexPath, index);
+  return changed;
 }
 
 /**
@@ -175,17 +233,18 @@ function loadIndex() {
  * @param {string} lyricsStatus
  */
 function updateTrackLyricsStatus(filePath, lyricsStatus) {
-  const index = loadIndex();
-  const track = index.tracks.find(t => t.path === filePath);
-  if (track) {
-    track.lyrics_status = lyricsStatus;
-    track.has_lrc_file = lyricsStatus === lyricsDetector.STATUS.HAS_LRC_FILE;
-    writeJson(config.musicIndexPath, index);
-  }
+  updateTracksLyricsStatus([{ path: filePath, status: lyricsStatus }]);
 }
 
 function isScanInProgress() {
   return _scanInProgress;
 }
 
-module.exports = { scan, loadIndex, updateTrackLyricsStatus, isScanInProgress };
+/** Progress of the running scan and outcome of the last one. */
+function getScanState() {
+  return { in_progress: _scanInProgress, progress: { ..._progress }, last: { ..._lastScan } };
+}
+
+module.exports = {
+  scan, loadIndex, updateTrackLyricsStatus, updateTracksLyricsStatus, isScanInProgress, getScanState,
+};

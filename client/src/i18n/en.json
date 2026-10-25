@@ -408,7 +408,18 @@
     "title": "Settings",
     "saving": "Saving…",
     "saved": "✓ Saved",
-    "save_failed": "Not saved — the server rejected the change. Reload the page and try again."
+    "save_failed": "Not saved — the server rejected the change. Reload the page and try again.",
+    "load_failed": "Could not load the library settings.",
+    "save_no_folder": "Save (no music folder)",
+    "scan_running_one": "Scanning… {{count}} file read",
+    "scan_running_other": "Scanning… {{count}} files read",
+    "scan_summary_one": "{{count}} track · last scan {{date}}",
+    "scan_summary_other": "{{count}} tracks · last scan {{date}}",
+    "scan_unreadable_one": "{{count}} unreadable file",
+    "scan_unreadable_other": "{{count}} unreadable files",
+    "scan_never": "Not scanned yet.",
+    "scan_failed": "Last scan failed: {{msg}}",
+    "root_missing": "Folder not found: {{path}} — is the drive or NAS mounted?"
   },
   "lrclib": {
     "check_button": "Check LRCLIB Lyrics",
@@ -517,5 +528,32 @@
     "pick_zone": "Show lyrics for",
     "follow_active": "The active zone",
     "back_to_app": "Back to the app"
+  },
+  "library": {
+    "title": "Library lyrics",
+    "empty": "The library index is empty — scan your music folder in Settings.",
+    "coverage": "{{with}} of {{total}} tracks have lyrics ({{pct}} %) · {{missing}} without",
+    "coverage_bar": "{{pct}} % of tracks have lyrics",
+    "lrc_files_one": "{{count}} .lrc file",
+    "lrc_files_other": "{{count}} .lrc files",
+    "embedded_one": "{{count}} in file tags",
+    "embedded_other": "{{count}} in file tags",
+    "filter": "Show",
+    "filter_missing": "Without lyrics",
+    "filter_with": "With lyrics",
+    "filter_all": "All",
+    "search_placeholder": "Filter by title, artist, album…",
+    "no_tracks": "No track matches.",
+    "batch_start_one": "Fetch lyrics from LRCLIB for this track",
+    "batch_start_other": "Fetch lyrics from LRCLIB for these {{count}} tracks",
+    "batch_plain_too": "Also save lyrics without timestamps",
+    "batch_hint": "Free. One track per second; lyrics already in or next to a file are never replaced. Written using your Files Management defaults.",
+    "batch_running": "Fetching lyrics… {{done}} / {{total}}",
+    "batch_done": "Batch finished — {{total}} tracks",
+    "batch_cancelled": "Batch stopped at {{done}} / {{total}}",
+    "batch_waiting": "LRCLIB is busy ({{msg}}) — retrying in {{secs}} s.",
+    "batch_counts": "Saved {{saved}} · not on LRCLIB {{not_found}} · without timestamps {{plain}} · already had lyrics {{had}} · failed {{failed}}",
+    "batch_errors_one": "{{count}} error",
+    "batch_errors_other": "{{count}} errors"
   }
 }

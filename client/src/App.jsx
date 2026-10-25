@@ -9,6 +9,7 @@ import LibrarySettings from './components/LibrarySettings.jsx';
 import AppPrefs from './components/AppPrefs.jsx';
 import TftApiKey from './components/TftApiKey.jsx';
 import FilesManagement from './components/FilesManagement.jsx';
+import LibraryCard from './components/LibraryCard.jsx';
 import { useAppPrefs } from './hooks/useAppPrefs.js';
 
 const JOBS_POLL_MS = 5000;
@@ -489,6 +490,7 @@ export default function App() {
             backendOnline={backendOnline}
             onOpenSettings={() => setSettingsOpen(true)}
           />
+          {libraryConfigured && <LibraryCard />}
           <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} externalQuery={searchTrigger} />
           <JobHistory jobs={jobs} onJobRetried={handleJobRetried} />
         </div>

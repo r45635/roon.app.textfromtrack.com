@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 import { useTranslation } from 'react-i18next';
 
@@ -9,6 +9,14 @@ export default function LibrarySettings({ onRescanStarted }) {
   const [newPath, setNewPath] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [status, setStatus] = useState(null); // GET /api/music/index/status
+
+  const loadStatus = useCallback(async () => {
+    try {
+      const data = await (await fetch('/api/music/index/status')).json();
+      if (data.success) setStatus(data);
+    } catch { /* shown as unknown */ }
+  }, []);
 
   useEffect(() => {
     fetch('/api/music/config')
@@ -18,8 +26,17 @@ export default function LibrarySettings({ onRescanStarted }) {
           setRoots(data.music_roots || []);
         }
       })
-      .catch(() => setError('Failed to load library config'));
-  }, []);
+      .catch(() => setError(t('settings.load_failed')));
+    loadStatus();
+  }, [loadStatus]);
+
+  // Follow a running scan.
+  const scanning = !!status?.scan_in_progress;
+  useEffect(() => {
+    if (!scanning) return undefined;
+    const id = setInterval(loadStatus, 1500);
+    return () => clearInterval(id);
+  }, [scanning, loadStatus]);
 
   function handleAdd() {
     const trimmed = newPath.trim();
@@ -45,12 +62,18 @@ export default function LibrarySettings({ onRescanStarted }) {
       });
       const saveData = await saveRes.json();
       if (!saveData.success) throw new Error(saveData.error?.message || 'Save failed');
+      // No folder left: lyrics-only mode, nothing to scan.
+      if (roots.length === 0) {
+        await loadStatus();
+        return;
+      }
 
       const scanRes = await fetch('/api/music/index/rescan', { method: 'POST' });
       const scanData = await scanRes.json();
       if (!scanData.success) throw new Error(scanData.error?.message || 'Rescan failed');
 
       if (onRescanStarted) onRescanStarted();
+      await loadStatus();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -105,15 +128,44 @@ export default function LibrarySettings({ onRescanStarted }) {
           >{t('settings.add_path')}</button>
         </div>
 
+        {status && roots.length > 0 && <ScanStatus status={status} />}
+
         {error && <p className="settings-error">{error}</p>}
 
         <button
           className="btn btn-primary settings-save-btn"
           onClick={handleSaveRescan}
           disabled={saving}
-        >{saving ? '…' : t('settings.save_rescan')}</button>
+        >{saving ? '…' : roots.length ? t('settings.save_rescan') : t('settings.save_no_folder')}</button>
       </div>
       </div>
     </section>
+  );
+}
+
+function ScanStatus({ status }) {
+  const { t, i18n } = useTranslation();
+  const missing = (status.roots || []).filter(r => !r.exists);
+  const last = status.scan?.last || {};
+  return (
+    <div className="settings-scan-status" role="status">
+      {status.scan_in_progress ? (
+        <p>{t('settings.scan_running', { count: status.scan?.progress?.scanned ?? 0 })}</p>
+      ) : status.last_scan_at ? (
+        <p>
+          {t('settings.scan_summary', {
+            count: status.track_count ?? 0,
+            date: new Date(status.last_scan_at).toLocaleString(i18n.language),
+          })}
+          {last.error_count > 0 && ` · ${t('settings.scan_unreadable', { count: last.error_count })}`}
+        </p>
+      ) : (
+        <p>{t('settings.scan_never')}</p>
+      )}
+      {last.error && <p className="settings-error">{t('settings.scan_failed', { msg: last.error })}</p>}
+      {missing.map(r => (
+        <p key={r.path} className="settings-error">{t('settings.root_missing', { path: r.path })}</p>
+      ))}
+    </div>
   );
 }

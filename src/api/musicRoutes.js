@@ -33,6 +33,8 @@ router.get('/index/status', (req, res) => {
     last_scan_at: index.last_scan_at,
     music_roots: index.music_roots,
     scan_in_progress: scanner.isScanInProgress(),
+    scan: scanner.getScanState(),
+    roots: musicRoots.getMusicRoots().map(p => ({ path: p, exists: fs.existsSync(p) })),
   });
 });
 
@@ -126,6 +128,8 @@ router.get('/match-current', async (req, res) => {
 
   if (result) {
     if (result.matched && result.track) {
+      // The index is shared in memory: work on a copy of the matched track.
+      result.track = { ...result.track };
       // Single parseFile call: covers both lyrics detection AND audio format fields.
       // This avoids the duplicate parse that previously happened (detect → parseFile,
       // then a second parseFile for sample_rate/bits_per_sample).

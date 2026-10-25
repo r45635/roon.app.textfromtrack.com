@@ -210,7 +210,7 @@ Copy `.env.example` to `.env` and fill in the values.
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/music/index/status` | Track count, last scan time, configured roots |
+| `GET` | `/api/music/index/status` | Track count, last scan time, configured roots, live scan progress, last scan error, missing roots |
 | `POST` | `/api/music/index/rescan` | Trigger a background library rescan |
 | `GET` | `/api/music/config` | User-settings (music roots, embed/backup defaults) |
 | `POST` | `/api/music/config` | Partial update: send only the keys to change |
@@ -236,6 +236,16 @@ Copy `.env.example` to `.env` and fill in the values.
 | `GET` | `/api/lyrics/current` | Lyrics of the track playing in a zone: matched file (sidecar, embedded), cache, then LRCLIB. Query: `?zone_id=...&path=...` (both optional; `path` must be under a music root). Returns `{ track, library_configured, audio_path, lyrics: { found, source, text, synced, instrumental, lrclib_id, offset_ms, error? } }` |
 | `POST` | `/api/lyrics/choose` | Use a specific LRCLIB record for a track. Body: `{ title, artist, album?, lrclib_id }` |
 | `POST` | `/api/lyrics/offset` | Save a track's timing offset (positive = later). Body: `{ title, artist, album?, offset_ms }` |
+
+#### Library endpoints (music folder required)
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/library/summary` | Lyrics coverage (`.lrc` files, embedded, missing), scan state, reachability of each music root, current batch |
+| `GET` | `/api/library/tracks` | Scanned tracks. Query: `?status=missing\|with\|all&q=...&offset=...&limit=...` (max 200) |
+| `POST` | `/api/library/lrclib-batch` | Fetch lyrics from LRCLIB and write them into the files, in the background. Body: `{ paths }` or a filter `{ status, q }`, plus `synced_only` (default `true`). Never replaces lyrics already in or next to a file; waits and retries when LRCLIB is busy |
+| `GET` | `/api/library/lrclib-batch` | State of the current or last batch (counts, current track, wait, last errors) |
+| `POST` | `/api/library/lrclib-batch/cancel` | Stop after the current track |
 
 #### TextFromTrack endpoints
 

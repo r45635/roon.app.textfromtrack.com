@@ -2691,3 +2691,46 @@ button.synced-line:hover { opacity: 0.9; background: var(--tft-hover); }
   .synced-stream { scroll-behavior: auto; }
   .synced-line, .lyrics-fs-progress-fill { transition: none; }
 }
+
+/* ── Library lyrics card ────────────────────────────────────────────────────── */
+.lib-coverage { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.lib-coverage-bar {
+  display: flex; height: 8px; border-radius: 999px; overflow: hidden; background: var(--tft-amber-soft);
+}
+.lib-seg { height: 100%; }
+.lib-seg--lrc { background: var(--tft-signal); }
+.lib-seg--emb { background: oklch(80% 0.12 145); }
+.lib-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.lib-filters { display: inline-flex; border: 1px solid var(--tft-line); border-radius: 8px; overflow: hidden; }
+.lib-filter {
+  background: transparent; border: 0; padding: 6px 12px; font-size: 12px; color: var(--tft-ink-3); cursor: pointer;
+}
+.lib-filter + .lib-filter { border-left: 1px solid var(--tft-line); }
+.lib-filter.active { background: var(--tft-ink); color: var(--tft-paper); }
+.lib-search {
+  flex: 1; min-width: 180px; padding: 6px 10px; font-size: 13px; color: var(--tft-ink);
+  border: 1px solid var(--tft-line); border-radius: 8px; background: var(--tft-paper-2);
+}
+.lib-batch-start { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 10px; }
+.lib-batch-start p { flex-basis: 100%; margin: 0; }
+.lib-plain-toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--tft-ink-3); }
+.lib-list { list-style: none; display: flex; flex-direction: column; border-top: 1px solid var(--tft-line-2); }
+.lib-row {
+  display: flex; align-items: center; gap: 10px; padding: 7px 4px; border-bottom: 1px solid var(--tft-line-2);
+}
+.lib-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.lib-row-title, .lib-row-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-row-title { font-size: 13px; color: var(--tft-ink); }
+.lib-row-sub { font-size: 11px; color: var(--tft-mute); }
+.lib-batch {
+  display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; margin-bottom: 12px;
+  border: 1px solid var(--tft-line); border-radius: var(--tft-r-md); background: var(--tft-paper-2);
+}
+.lib-batch.running { border-color: var(--tft-info); }
+.lib-batch-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 13px; }
+.lib-batch-bar { height: 6px; border-radius: 999px; background: var(--tft-line); overflow: hidden; }
+.lib-batch-bar span { display: block; height: 100%; background: var(--tft-info); transition: width 0.4s ease; }
+.lib-batch-wait { color: var(--tft-amber-ink); margin: 0; }
+.lib-batch p { margin: 0; }
+.lib-batch-errors { margin: 6px 0 0 16px; color: var(--tft-error-ink); }
+.settings-scan-status { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--tft-ink-3); }
