@@ -423,6 +423,9 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - Screenshot mode: neutral names stay the same on every page; paused zones don't show what they last played
 - Instrumental breaks shown as ♪ in synced lyrics
 
+#### v0.5.5 ✓ — Polish
+- Screenshot mode names in the UI language; shorter French labels; SVG controls in full screen
+
 #### Upcoming
 
 ##### Local tag editor (mp3tag-style, lyrics-aware)
