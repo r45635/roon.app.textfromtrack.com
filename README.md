@@ -372,7 +372,7 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - Cross-origin writes rejected (CSRF) and public Host names rejected (DNS rebinding; `ALLOWED_HOSTS`)
 - TFT webhook verifies the raw body (it never worked and could crash the backend); async route errors no longer kill the server
 
-#### v0.4.0 — Lyrics without a music folder
+#### v0.4.0 ✓ — Lyrics without a music folder
 - **Lyrics stage** under the player for every track, with or without a local file: karaoke sync on by default, click a line to seek, per-track timing offset, LRCLIB version picker, copy / download `.lrc`, "Save to file" when a file matched
 - **Full-screen lyrics** (button or `F`) and a **kiosk page** `/#/lyrics?zone=…` for a tablet or TV (wake lock, own zone, linked from the phone QR page)
 - Lyrics prefetched in the backend on every track change and cached; misses and LRCLIB outages remembered, so one LRCLIB round per track
