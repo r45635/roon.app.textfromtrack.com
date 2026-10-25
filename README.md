@@ -22,6 +22,8 @@ This is **not** an official Roon plugin. It is a standalone Node.js service that
 
 | | |
 |---|---|
+| 🚀 **Quick start** | [Five minutes to synced lyrics](docs/quickstart.md) · [en français](docs/quickstart.fr.md) |
+| 🎤 **Player** | [Player guide](docs/guide/player.md) · [en français](docs/guide/player.fr.md) — lyrics, full screen, phone / tablet / TV, zones |
 | 📦 **Install** | [Installation guide](docs/install.md) — Docker (recommended) or Node.js |
 | 📖 **Use** | [User guide](docs/user-guide.md) — authorize Roon, scan your library, generate lyrics, embed tags |
 

@@ -1,0 +1,92 @@
+<!doctype html>
+<!--
+  Ad visual template. Open with a query string, render the #canvas element at its exact size:
+    template.html?f=ad1&lang=en     1280×640  GitHub social preview / Docker Hub
+    template.html?f=ad2&lang=fr     1200×675  X, Mastodon, Reddit, forum
+    template.html?f=ad3             1080×1080 square
+    template.html?f=ad4             1080×1350 portrait
+  Images come from ../../media/<lang>/ (captured in Screenshot mode).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ad visual</title>
+<style>
+  :root { --ink: #ECEAE4; --mute: #A9A69F; --signal: oklch(80% 0.14 145); --bg1: #141412; --bg2: #26251f; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #555; font-family: "Geist", "Inter", system-ui, -apple-system, sans-serif; }
+  #canvas {
+    position: relative; overflow: hidden; color: var(--ink);
+    background: radial-gradient(120% 120% at 0% 0%, #2f3a2c 0%, var(--bg2) 40%, var(--bg1) 100%);
+    display: grid; gap: 28px; padding: 56px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: 22px; letter-spacing: -0.01em; }
+  .brand small { display: block; font-family: ui-monospace, Menlo, monospace; font-weight: 400; font-size: 12px; color: var(--mute); letter-spacing: 0.12em; text-transform: uppercase; }
+  .mark { width: 44px; height: 44px; }
+  h1 { font-size: 54px; line-height: 1.05; letter-spacing: -0.03em; font-weight: 750; }
+  h1 em { font-style: normal; color: var(--signal); }
+  .sub { font-size: 22px; color: var(--mute); line-height: 1.4; }
+  .pill { display: inline-block; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); font-size: 16px; margin-right: 8px; }
+  .shot { border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.08); display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  /* The captures already include the device bezel: no second frame here. */
+  .phone { filter: drop-shadow(0 30px 50px rgba(0,0,0,0.55)); }
+  /* Clip the capture to the bezel's rounded outline so the page background around it never shows. */
+  .phone img { display: block; width: 100%; clip-path: inset(0.5% 0 0 0 round 10.6% / 5.2%); }
+  .credit { position: absolute; left: 56px; right: 56px; bottom: 18px; font-size: 12px; color: rgba(236,234,228,0.55); display: flex; justify-content: space-between; gap: 16px; }
+
+  /* Formats */
+  .ad1 { width: 1280px; height: 640px; grid-template-columns: 1fr 1.25fr; align-items: center; }
+  .ad2 { width: 1200px; height: 675px; grid-template-columns: 1fr 1.35fr; align-items: center; }
+  .ad3 { width: 1080px; height: 1080px; grid-template-rows: auto auto 1fr; justify-items: center; text-align: center; }
+  .ad4 { width: 1080px; height: 1350px; grid-template-rows: auto auto 1fr; justify-items: center; text-align: center; }
+  .ad3 h1, .ad4 h1 { font-size: 66px; }
+  .ad3 .phone { width: 380px; }
+  .ad4 .devices { display: grid; grid-template-columns: 1.7fr 1fr; gap: 24px; align-items: center; align-self: center; width: 100%; margin-bottom: 40px; }
+  .ad4 .tablet { filter: drop-shadow(0 30px 50px rgba(0,0,0,0.55)); }
+  .ad4 .tablet img { display: block; width: 100%; clip-path: inset(1.2% 0 0 0 round 2.9% / 3.8%); }
+  .shot-wrap { height: 100%; max-height: 528px; display: flex; justify-content: center; }
+  .ad1 .shot { width: auto; max-width: 100%; object-fit: contain; }
+</style>
+</head>
+<body>
+<div id="canvas"></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const f = q.get('f') || 'ad1';
+  const lang = q.get('lang') || 'en';
+  const T = {
+    en: {
+      ad1: ['Synced lyrics for <em>everything Roon plays</em>', 'Free &amp; open source', ['Mac', 'Windows', 'Linux', 'Docker']],
+      ad2: ['Roon plays it.<br><em>You sing along.</em>', 'Line by line · Click to jump · Full screen', []],
+      ad3: ['Lyrics in <em>your pocket</em>', 'Your phone follows the zone you choose', []],
+      ad4: ['Turn a tablet into a <em>lyrics display</em>', 'One QR code, any zone', []],
+      credit: 'Music: “The Nest”, “My Favorite Regret”, “Wake Up” by Josh Woodward (CC BY 4.0) — joshwoodward.com',
+      roon: 'Not affiliated with Roon Labs',
+    },
+    fr: {
+      ad1: ['Les paroles synchronisées de <em>tout ce que joue Roon</em>', 'Gratuit et open source', ['Mac', 'Windows', 'Linux', 'Docker']],
+      ad2: ['Roon joue.<br><em>Vous chantez.</em>', 'Ligne par ligne · Cliquez pour y aller · Plein écran', []],
+      ad3: ['Les paroles <em>dans votre poche</em>', 'Votre téléphone suit la zone de votre choix', []],
+      ad4: ['Une tablette en <em>afficheur de paroles</em>', 'Un QR code, n’importe quelle zone', []],
+      credit: 'Musique : « The Nest », « My Favorite Regret », « Wake Up » de Josh Woodward (CC BY 4.0) — joshwoodward.com',
+      roon: 'Sans lien avec Roon Labs',
+    },
+  }[lang];
+  const media = `../../media/${lang}/`;
+  const brand = `<div class="brand"><svg class="mark" viewBox="0 0 96 96"><rect width="96" height="96" rx="22" fill="#ECEAE4"/><path d="M22 26 L22 70 L30 70" stroke="#141412" stroke-width="6" fill="none"/><path d="M74 26 L74 70 L66 70 M74 26 L66 26" stroke="#141412" stroke-width="6" fill="none"/><rect x="36" y="34" width="24" height="6" fill="#141412"/><rect x="45" y="34" width="6" height="20" fill="#141412"/><g fill="#3fae5a"><rect x="36" y="58" width="3" height="6"/><rect x="42" y="54" width="3" height="14"/><rect x="48" y="50" width="3" height="22"/><rect x="54" y="56" width="3" height="10"/><rect x="60" y="60" width="3" height="3"/></g></svg><div>TextFromTrack<small>Roon companion</small></div></div>`;
+  const [title, sub, pills] = T[f];
+  const text = `<div>${brand}<h1 style="margin-top:28px">${title}</h1><p class="sub" style="margin-top:16px">${sub}</p>${pills.length ? `<p style="margin-top:22px">${pills.map(p => `<span class="pill">${p}</span>`).join('')}</p>` : ''}</div>`;
+  const canvas = document.getElementById('canvas');
+  canvas.className = f;
+  let visual = '';
+  if (f === 'ad1') visual = `<div class="shot-wrap"><img class="shot" src="${media}player-card-dark.png" alt=""></div>`;
+  if (f === 'ad2') visual = `<div class="shot-wrap"><img class="shot" src="${media}player-fullscreen.png" alt=""></div>`;
+  if (f === 'ad3') visual = `<div class="phone"><img src="${media}player-phone-dark.png" alt=""></div>`;
+  if (f === 'ad4') visual = `<div class="devices"><div class="tablet"><img src="${media}player-tablet.png" alt=""></div><div class="phone"><img src="${media}player-phone-dark.png" alt=""></div></div>`;
+  canvas.innerHTML = (f === 'ad3' || f === 'ad4')
+    ? `${brand}<div><h1>${title}</h1><p class="sub" style="margin-top:14px">${sub}</p></div>${visual}`
+    : `${text}${visual}`;
+  canvas.insertAdjacentHTML('beforeend', `<div class="credit"><span>${T.credit}</span><span>${T.roon}</span></div>`);
+</script>
+</body>
+</html>
