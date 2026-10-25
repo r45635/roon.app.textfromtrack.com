@@ -13,6 +13,9 @@
   - [Zone Selector](#zone-selector)
   - [Now Playing](#now-playing)
   - [Lyrics Stage](#lyrics-stage)
+  - [Library Lyrics](#library-lyrics)
+  - [Syncing lyrics yourself](#syncing-lyrics-yourself-lrc-editor)
+  - [Listen to the file](#listen-to-the-file)
   - [Local File Match](#local-file-match)
   - [File Tags](#file-tags)
 - [Lyrics](#lyrics)
@@ -23,6 +26,7 @@
   - [TextFromTrack API Key](#textfromtrack-api-key)
   - [App Preferences](#app-preferences)
   - [Library Settings](#library-settings)
+- [Appearance, notifications and access](#appearance-notifications-and-access)
 - [Mobile](#mobile)
 
 ---
@@ -116,6 +120,24 @@ Right under the player, the lyrics of the playing track, **with or without a mus
 The source badge says where the lyrics come from: *LRCLIB*, *Saved copy* (local cache), *.lrc file* or *In file tags*.
 
 **Lyrics on a tablet or TV:** open `http://<companion-ip>:3888/#/lyrics` (also linked from *Show QR Code for Phone* in the tray). Pick a zone with the *Zone* button; each display follows its own zone and keeps the screen awake.
+
+---
+
+### Library Lyrics
+
+Shown once a music folder is set (**Settings → Library**). The bar shows how many tracks have lyrics (in a `.lrc` file or in the file tags) and how many don't.
+
+- **Filters** *Without lyrics / With lyrics / All* and a search box (title, artist, album).
+- **Fetch lyrics from LRCLIB for these N tracks** runs over the filtered list, in the background: one track per second, lyrics written with your Files Management options. Lyrics already in or next to a file are never replaced; lyrics without timestamps are skipped unless you tick *Also save lyrics without timestamps*. When LRCLIB is busy the batch waits (30 s, 1 min, 2 min) and says so. You can cancel it; the summary lists what was saved, not found, skipped or failed.
+- **Save LRCLIB lyrics automatically** (Settings → Files Management, off by default): when the playing track matches a file without lyrics and LRCLIB has synced lyrics, they are written into the file and appear in Job History.
+
+### Syncing lyrics yourself (LRC editor)
+
+In the lyrics stage, **Sync these lyrics** (plain lyrics) or **Edit timing** (synced lyrics) opens the editor. Play the track in Roon and press **Space** at the start of each line. **Backspace** undoes, **[** and **]** shift the current line by 0.1 s, and a double-click plays from a line. **Save timing** keeps the result as the track's lyrics; with a matched file, **Save to file** then writes it into the track.
+
+### Listen to the file
+
+Under the matched file name, a small player plays the **local file** in your browser, to check the match before spending credits.
 
 ---
 
@@ -259,6 +281,13 @@ The TFT transcription feature requires a Personal Access Token (PAT).
 > 💡 **Roon and LRC sidecars:** Roon does not read `.lrc` sidecar files. To use synced lyrics within Roon, enable **"Embed [LYRICS] tag"** — this writes the LRC into the audio file's tag, which Roon can display in compatible views.
 
 ---
+
+## Appearance, notifications and access
+
+- **Theme**: App Preferences → Theme (*Same as the system*, *Light*, *Dark*).
+- **New version**: a "vX available" link in the top bar (and in the tray menu) opens the release notes.
+- **Desktop notifications** (desktop app): lyrics ready or failed, LRCLIB batch finished. Turn them off with *Notifications* in the tray menu.
+- **Access token**: start the companion with `ACCESS_TOKEN=…` to require it from other devices. Open `http://<companion-ip>:3888/?access_token=…` once on each phone or tablet (the tray's QR code contains it); the device remembers it. The computer running the companion is not asked.
 
 ## Mobile
 

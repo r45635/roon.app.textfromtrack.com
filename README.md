@@ -212,6 +212,7 @@ Copy `.env.example` to `.env` and fill in the values.
 
 | Method | Path | Description |
 |---|---|---|
+| `GET` | `/api/music/stream` | Stream a local file for preview (`?path=`, HTTP Range, music roots only) |
 | `GET` | `/api/music/index/status` | Track count, last scan time, configured roots, live scan progress, last scan error, missing roots |
 | `POST` | `/api/music/index/rescan` | Trigger a background library rescan |
 | `GET` | `/api/music/config` | User-settings (music roots, embed/backup defaults) |
@@ -237,6 +238,7 @@ Copy `.env.example` to `.env` and fill in the values.
 |---|---|---|
 | `GET` | `/api/lyrics/current` | Lyrics of the track playing in a zone: matched file (sidecar, embedded), cache, then LRCLIB. Query: `?zone_id=...&path=...` (both optional; `path` must be under a music root). Returns `{ track, library_configured, audio_path, lyrics: { found, source, text, synced, instrumental, lrclib_id, offset_ms, error? } }` |
 | `POST` | `/api/lyrics/choose` | Use a specific LRCLIB record for a track. Body: `{ title, artist, album?, lrclib_id }` |
+| `POST` | `/api/lyrics/custom` | Save edited lyrics (LRC editor) as the track's lyrics in the local cache. Body: `{ title, artist, album?, lrc }` |
 | `POST` | `/api/lyrics/offset` | Save a track's timing offset (positive = later). Body: `{ title, artist, album?, offset_ms }` |
 
 #### Library endpoints (music folder required)
@@ -395,14 +397,24 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 - Fixes: Files Management toggles were never saved (rejected by the server while the UI said "Saved"), a UI-entered API key did not override `TFT_TOKEN`, undefined `INVALID_REQUEST` error code, tray credits line, second app launch now opens the UI, Job History Retry / Embed buttons, French strings in the English UI
 - Removed: `PATH_MAPPINGS` (Roon never exposes file paths, so there was nothing to map)
 
+#### v0.5.0 ✓ — Library lyrics, editor, dark theme
+- **Library lyrics** card: coverage (`.lrc` / embedded / missing), filters, search, and an **LRCLIB batch** that writes the missing lyrics into your files (1 track/s, waits 30/60/120 s when LRCLIB is busy, never replaces existing lyrics, cancellable)
+- Optional **automatic save** of synced LRCLIB lyrics for the playing track when its file has none
+- **LRC editor**: sync plain lyrics or fix timing by pressing Space on each line while Roon plays
+- **Listen to the file**: preview the matched local file in the browser before spending credits
+- Scan status in Settings (count, last scan, live progress, unreachable folders); a scan with every folder unreachable no longer empties the index
+- **Dark theme** (system, or forced in App Preferences); SVG player icons, repeat mode shown, Roon's own mute, keyboard and touch sliders; phone layout (Job History as cards, 44 px targets)
+- Readable error messages (e.g. read-only Docker music mount), TFT key checked with the service, "Top up credits" link
+- Update notice (tray and UI), desktop notifications (TFT job, LRCLIB batch), optional **`ACCESS_TOKEN`**
+- Open folder / reveal on Windows and Linux; "Follow playing track" (was "Auto Match File") with a banner when off; Job History "Show older jobs"
+
 #### Upcoming
 
 ##### Local tag editor (mp3tag-style, lyrics-aware)
-Tag inspection (all fields) and LYRICS write/delete are already done. Still pending: read/write every metadata field, bulk operations, inline LRC editor with timestamp-aware shortcuts.
+Tag inspection (all fields), LYRICS write/delete and the LRC timing editor are done. Still pending: read/write every metadata field, bulk tag operations.
 
-##### Local player with synced lyrics verification
-HTML5 `<audio>` playback streamed from the backend so users can audibly confirm the local match and visually verify lyrics sync before spending TFT credits.
+##### TextFromTrack batch
+Generate AI lyrics for many library tracks at once, with the credit estimate shown before confirming.
 
-##### Security & remote access
-- HTTP Basic Auth / token auth when exposed outside localhost
-- Background job queue with priority and retry logic
+##### Remote access
+- Remote-backend mode of the desktop app with an `ACCESS_TOKEN`-protected backend

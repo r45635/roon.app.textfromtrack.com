@@ -615,6 +615,7 @@
     <li><a href="#zone-selector"><span class="nav-icon">🔊</span> Zone Selector</a></li>
     <li><a href="#now-playing"><span class="nav-icon">🎵</span> Now Playing</a></li>
     <li><a href="#lyrics-stage"><span class="nav-icon">🎤</span> Lyrics Stage</a></li>
+    <li><a href="#library-lyrics"><span class="nav-icon">📚</span> Library Lyrics</a></li>
     <li><a href="#local-match"><span class="nav-icon">📂</span> Local File Match</a></li>
     <li><a href="#file-tags"><span class="nav-icon">🏷️</span> File Tags</a></li>
     <div class="nav-section-label">Lyrics</div>
@@ -849,6 +850,48 @@
           <div class="icon">🖥️</div>
           <h3>Full screen &amp; TV display</h3>
           <p>Press <code>F</code> for big lyrics over the blurred cover (<code>Esc</code> closes). For a tablet or TV, open <code>http://&lt;companion-ip&gt;:3888/#/lyrics</code> (also linked from the tray's QR code page): each display follows its own zone and keeps the screen awake.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- LIBRARY LYRICS -->
+    <section class="section" id="library-lyrics">
+      <div class="divider"></div>
+      <div class="section-header" style="margin-top:60px;">
+        <div class="section-icon yellow">📚</div>
+        <h2 class="section-title">Library Lyrics, editor and preview</h2>
+      </div>
+      <p class="section-subtitle">Shown once a music folder is set. The bar shows how many tracks have lyrics (in a <code>.lrc</code> file or in the file tags).</p>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="icon">⬇️</div>
+          <h3>LRCLIB batch</h3>
+          <p>Filter the tracks (without lyrics, with, all; search), then fetch their lyrics from LRCLIB in the background — one track per second, written with your Files Management options. Existing lyrics are never replaced; when LRCLIB is busy the batch waits and says so. Cancellable.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">⚡</div>
+          <h3>Automatic save</h3>
+          <p>Settings → Files Management → <em>Save LRCLIB lyrics automatically</em> (off by default): the playing track's file gets synced LRCLIB lyrics when it has none. Each save shows in Job History.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">⌨️</div>
+          <h3>LRC editor</h3>
+          <p><em>Sync these lyrics</em> or <em>Edit timing</em> in the lyrics stage: play the track and press Space at the start of each line. Backspace undoes, [ and ] shift by 0.1 s, a double-click plays from a line.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🎧</div>
+          <h3>Listen to the file</h3>
+          <p>A small player under the matched file name plays the local file in your browser, to check the match before spending credits.</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🌙</div>
+          <h3>Theme, updates, notifications</h3>
+          <p>Dark or light theme in App Preferences. A "vX available" link appears when a new version is out. The desktop app notifies when lyrics are ready or a batch ends (tray → Notifications).</p>
+        </div>
+        <div class="feature-card">
+          <div class="icon">🔒</div>
+          <h3>Access token</h3>
+          <p>Start the companion with <code>ACCESS_TOKEN</code> to require it from other devices; open <code>http://&lt;ip&gt;:3888/?access_token=…</code> once on each phone or tablet (the tray's QR code contains it).</p>
         </div>
       </div>
     </section>
