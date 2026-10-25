@@ -581,14 +581,9 @@ async function initBackend() {
 }
 
 // ── Local network IP ─────────────────────────────────────────────────────────
+// Shared with the backend's QR page: skips 169.254.x, VPN and bridge addresses.
 function getLocalNetworkIP() {
-  const ifaces = os.networkInterfaces();
-  for (const name of Object.keys(ifaces)) {
-    for (const iface of ifaces[name]) {
-      if (iface.family === 'IPv4' && !iface.internal) return iface.address;
-    }
-  }
-  return null;
+  return require('../src/utils/lanAddress').getLanAddress();
 }
 
 // ── About dialog ─────────────────────────────────────────────────────────────

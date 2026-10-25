@@ -2,24 +2,14 @@
 
 const { Router } = require('express');
 const QRCode = require('qrcode');
-const os = require('os');
 const config = require('../config');
+const { getLanAddress } = require('../utils/lanAddress');
 
 const router = Router();
 
-function getLocalNetworkIP() {
-  const ifaces = os.networkInterfaces();
-  for (const name of Object.keys(ifaces)) {
-    for (const iface of ifaces[name]) {
-      if (iface.family === 'IPv4' && !iface.internal) return iface.address;
-    }
-  }
-  return null;
-}
-
 // GET /api/qr  — serves a QR code page for the local network URL
 router.get('/', async (req, res) => {
-  const ip = getLocalNetworkIP();
+  const ip = getLanAddress();
   const baseUrl = ip ? `http://${ip}:${config.port}` : null;
   // With ACCESS_TOKEN, the link carries the token so one scan sets the phone up.
   const tokenQuery = config.accessToken ? `/?access_token=${encodeURIComponent(config.accessToken)}` : '';
