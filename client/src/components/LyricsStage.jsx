@@ -215,6 +215,9 @@ export default function LyricsStage({
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setFullscreen(true)} title={`${t('stage.fullscreen')} (F)`}>
             {t('stage.fullscreen')}
           </button>
+          <a className="btn btn-ghost btn-sm" href="/api/qr" target="_blank" rel="noreferrer" title={t('app.phone_qr')}>
+            {t('stage.on_tv')}
+          </a>
         </div>
       </div>
 

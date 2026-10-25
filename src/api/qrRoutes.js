@@ -26,14 +26,13 @@ router.get('/', async (req, res) => {
   const networkUrl = baseUrl ? `${baseUrl}${tokenQuery}` : null;
   const kioskUrl = baseUrl ? `${baseUrl}${tokenQuery || '/'}#/lyrics` : null;
 
+  const qrOptions = { width: 280, margin: 2, color: { dark: '#1a1a1a', light: '#ffffff' } };
   let qrDataUrl = null;
+  let kioskQrDataUrl = null;
   if (networkUrl) {
     try {
-      qrDataUrl = await QRCode.toDataURL(networkUrl, {
-        width: 280,
-        margin: 2,
-        color: { dark: '#1a1a1a', light: '#ffffff' },
-      });
+      qrDataUrl = await QRCode.toDataURL(networkUrl, qrOptions);
+      kioskQrDataUrl = await QRCode.toDataURL(kioskUrl, qrOptions);
     } catch { /* ignore */ }
   }
 
@@ -100,8 +99,10 @@ router.get('/', async (req, res) => {
     ${qrDataUrl
       ? `<div class="qr-wrap"><img src="${qrDataUrl}" width="248" height="248" alt="QR code" /></div>
          <a class="url" href="${networkUrl}" target="_blank">${networkUrl}</a>
-         <p class="sub">Lyrics display for a tablet or TV:<br/>
-           <a class="url" href="${kioskUrl}" target="_blank">${kioskUrl}</a></p>
+         <h1 style="margin-top:28px">Lyrics display for a tablet or TV</h1>
+         <p class="sub">Full-screen synced lyrics; pick the zone on the device.</p>
+         ${kioskQrDataUrl ? `<div class="qr-wrap"><img src="${kioskQrDataUrl}" width="248" height="248" alt="QR code for the lyrics display" /></div>` : ''}
+         <a class="url" href="${kioskUrl}" target="_blank">${kioskUrl}</a>
          ${config.accessToken ? '<p class="note">These links contain your access token — share them only with your own devices.</p>' : ''}`
       : `<p class="error">No local network interface found.<br/>Make sure Wi-Fi or Ethernet is connected.</p>`
     }

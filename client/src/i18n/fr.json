@@ -9,7 +9,8 @@
     "zones_other": "{{count}} zones",
     "top_up": "Recharger des crédits",
     "update_available": "v{{version}} disponible",
-    "update_title": "Vous utilisez la v{{current}}. Ouvrir les notes de version et téléchargements (Docker : récupérez la nouvelle image)."
+    "update_title": "Vous utilisez la v{{current}}. Ouvrir les notes de version et téléchargements (Docker : récupérez la nouvelle image).",
+    "phone_qr": "Ouvrir sur votre téléphone, tablette ou TV (QR code)"
   },
   "nav": {
     "lang_en": "EN",
@@ -544,7 +545,8 @@
     "search": "Rechercher",
     "no_versions": "LRCLIB n’a aucune version de ce titre.",
     "not_found_short": "Aucune parole trouvée pour ce titre.",
-    "lrclib_busy": "LRCLIB, la base de paroles gratuite, est surchargée en ce moment. Nouvel essai dans une minute — ou cliquez sur Réessayer."
+    "lrclib_busy": "LRCLIB, la base de paroles gratuite, est surchargée en ce moment. Nouvel essai dans une minute — ou cliquez sur Réessayer.",
+    "on_tv": "Sur téléphone / TV"
   },
   "kiosk": {
     "idle": "Rien en lecture dans cette zone.",

@@ -9,7 +9,8 @@
     "zones_other": "{{count}} zones",
     "top_up": "Top up credits",
     "update_available": "v{{version}} available",
-    "update_title": "You run v{{current}}. Open the release notes and downloads (Docker: pull the new image)."
+    "update_title": "You run v{{current}}. Open the release notes and downloads (Docker: pull the new image).",
+    "phone_qr": "Open on your phone, tablet or TV (QR code)"
   },
   "nav": {
     "lang_en": "EN",
@@ -544,7 +545,8 @@
     "search": "Search",
     "no_versions": "LRCLIB has no version of this title.",
     "not_found_short": "No lyrics found for this track.",
-    "lrclib_busy": "LRCLIB, the free lyrics database, is overloaded right now. Trying again in a minute — or press Retry."
+    "lrclib_busy": "LRCLIB, the free lyrics database, is overloaded right now. Trying again in a minute — or press Retry.",
+    "on_tv": "On a phone / TV"
   },
   "kiosk": {
     "idle": "Nothing playing in this zone.",
