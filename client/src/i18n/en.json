@@ -543,7 +543,8 @@
     "search_artist": "Artist",
     "search": "Search",
     "no_versions": "LRCLIB has no version of this title.",
-    "not_found_short": "No lyrics found for this track."
+    "not_found_short": "No lyrics found for this track.",
+    "lrclib_busy": "LRCLIB, the free lyrics database, is overloaded right now. Trying again in a minute — or press Retry."
   },
   "kiosk": {
     "idle": "Nothing playing in this zone.",

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import LyricsFullscreen from './LyricsFullscreen.jsx';
 import { useTrackLyrics } from '../hooks/useTrackLyrics.js';
+import { lrclibProblem } from '../lib/errors.js';
 
 const POLL_MS = 1000;
 
@@ -95,7 +96,7 @@ export default function LyricsKiosk() {
     : !np ? t('kiosk.idle')
     : status === 'loading' ? t('stage.loading')
     : lyrics?.instrumental ? t('stage.instrumental')
-    : lyrics?.error ? t('stage.lrclib_unreachable', { msg: lyrics.error })
+    : lyrics?.error ? lrclibProblem(lyrics.error)
     : t('stage.not_found_short');
 
   const zoneSwitch = (

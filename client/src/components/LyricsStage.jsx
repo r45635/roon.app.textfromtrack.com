@@ -5,7 +5,7 @@ import LyricsFullscreen from './LyricsFullscreen.jsx';
 import LrcEditor from './LrcEditor.jsx';
 import { useTrackLyrics } from '../hooks/useTrackLyrics.js';
 import { shiftLrc } from '../lib/lrc.js';
-import { describeError } from '../lib/errors.js';
+import { describeError, lrclibProblem } from '../lib/errors.js';
 
 const OFFSET_STEP_MS = 500;
 const HINT_DISMISSED_KEY = 'tft:libraryHintDismissed';
@@ -146,7 +146,7 @@ export default function LyricsStage({
     body = (
       <div className="tft-lyrics-stage-msg">
         <p>{t('stage.load_failed', { msg: error })}</p>
-        <button type="button" className="btn btn-ghost" onClick={reload}>{t('common.retry')}</button>
+        <button type="button" className="btn btn-ghost" onClick={() => reload(true)}>{t('common.retry')}</button>
       </div>
     );
   } else if (lyrics?.instrumental) {
@@ -167,8 +167,8 @@ export default function LyricsStage({
   } else if (lyrics?.error) {
     body = (
       <div className="tft-lyrics-stage-msg">
-        <p>{t('stage.lrclib_unreachable', { msg: lyrics.error })}</p>
-        <button type="button" className="btn btn-ghost" onClick={reload}>{t('common.retry')}</button>
+        <p title={lyrics.error}>{lrclibProblem(lyrics.error)}</p>
+        <button type="button" className="btn btn-ghost" onClick={() => reload(true)}>{t('common.retry')}</button>
       </div>
     );
   } else if (lyrics) {
@@ -177,7 +177,7 @@ export default function LyricsStage({
 
   const fsMessage = status === 'loading' ? t('stage.loading')
     : lyrics?.instrumental ? t('stage.instrumental')
-    : lyrics?.error ? t('stage.lrclib_unreachable', { msg: lyrics.error })
+    : lyrics?.error ? lrclibProblem(lyrics.error)
     : t('stage.not_found_short');
 
   return (
@@ -329,7 +329,7 @@ function VersionPicker({ np, currentId, onChoose }) {
         <input value={artist} onChange={e => setArtist(e.target.value)} placeholder={t('stage.search_artist')} aria-label={t('stage.search_artist')} />
         <button type="submit" className="btn btn-primary btn-sm" disabled={loading}>{loading ? t('common.loading') : t('stage.search')}</button>
       </form>
-      {err && <p className="tft-lyrics-stage-notice error" role="alert">{t('stage.lrclib_unreachable', { msg: err })}</p>}
+      {err && <p className="tft-lyrics-stage-notice error" role="alert">{lrclibProblem(err)}</p>}
       {hits && hits.length === 0 && <p className="muted small">{t('stage.no_versions')}</p>}
       {hits && hits.length > 0 && (
         <ul className="tft-versions-list">

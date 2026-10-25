@@ -50,12 +50,13 @@ function findLocalFile(np) {
 
 /**
  * @param {object} np now-playing state
- * @param {{ audioPath?: string|null }} [opts] a file the viewer picked; omitted = auto-match
+ * @param {{ audioPath?: string|null, refresh?: boolean }} [opts] a file the viewer picked
+ *   (omitted = auto-match); refresh = ask LRCLIB again even after a recent miss or error
  * @returns {Promise<{ lyrics: object, audioPath: string|null }>}
  */
 async function lyricsForNowPlaying(np, opts = {}) {
   const audioPath = opts.audioPath !== undefined ? opts.audioPath : findLocalFile(np);
-  const lyrics = await lyricsResolver.resolve(np, { audioPath });
+  const lyrics = await lyricsResolver.resolve(np, { audioPath, refresh: !!opts.refresh });
   return { lyrics, audioPath };
 }
 

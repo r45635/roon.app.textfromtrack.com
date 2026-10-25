@@ -24,7 +24,8 @@ function trackFromBody(body) {
  * GET /api/lyrics/current
  * Lyrics of the track playing in a zone — works with or without a music folder.
  * Query: zone_id (optional, defaults to the active zone), path (optional, a local file the
- * viewer picked instead of the automatic match; must be under a music root).
+ * viewer picked instead of the automatic match; must be under a music root), refresh=1
+ * (ask LRCLIB again — the Retry button).
  */
 router.get('/current', async (req, res) => {
   const { zone_id: zoneId, path: rawPath } = req.query;
@@ -50,7 +51,9 @@ router.get('/current', async (req, res) => {
   }
 
   try {
-    const result = await lyricsForNowPlaying(np, { audioPath });
+    const opts = { refresh: req.query.refresh === '1' };
+    if (audioPath !== undefined) opts.audioPath = audioPath;
+    const result = await lyricsForNowPlaying(np, opts);
     res.json({
       success: true,
       track: {

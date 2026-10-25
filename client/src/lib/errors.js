@@ -8,6 +8,13 @@ const MESSAGE_PATTERNS = [
   [/Failed to fetch|NetworkError|Load failed/i, 'BACKEND_UNREACHABLE'],
 ];
 
+/** Message for an LRCLIB lookup that failed: busy (503/429) reads differently from down. */
+export function lrclibProblem(message) {
+  return /HTTP (503|429)/.test(message || '')
+    ? i18n.t('stage.lrclib_busy')
+    : i18n.t('stage.lrclib_unreachable', { msg: message });
+}
+
 /**
  * A sentence the user can act on, from an API error envelope ({ code, message }) or an Error.
  * Falls back to the raw message when the code is unknown.

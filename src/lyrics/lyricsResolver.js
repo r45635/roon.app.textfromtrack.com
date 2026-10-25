@@ -126,17 +126,20 @@ function _trackId(track) {
 /**
  * Resolve the lyrics of a track.
  * @param {{ title, artist, album, duration_seconds }} track
- * @param {{ audioPath?: string|null }} [opts] matched local file, if any (already validated)
+ * @param {{ audioPath?: string|null, refresh?: boolean }} [opts] matched local file, if any
+ *   (already validated); refresh = ignore a remembered LRCLIB miss or error
  * @returns {Promise<{ found: boolean, source: string|null, text: string|null, synced: boolean,
  *   instrumental: boolean, track_id: string|null, lrclib_id: number|null, offset_ms: number,
  *   error?: string }>}
  */
-async function resolve(track, { audioPath = null } = {}) {
+async function resolve(track, { audioPath = null, refresh = false } = {}) {
   if (!track || !track.title || !track.artist) {
     return { found: false, source: null, text: null, synced: false, instrumental: false,
       track_id: null, lrclib_id: null, offset_ms: 0 };
   }
   const trackId = _trackId(track);
+  // "Retry": forget a remembered miss or error and ask LRCLIB again.
+  if (refresh) _memo.delete(trackId);
   const prefs = lyricsPrefs.get(trackId);
   const base = { track_id: trackId, lrclib_id: prefs.lrclib_id ?? null, offset_ms: prefs.offset_ms || 0 };
 

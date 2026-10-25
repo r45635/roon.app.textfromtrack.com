@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 async function postJson(url, body) {
   const res = await fetch(url, {
@@ -23,6 +23,7 @@ async function postJson(url, body) {
 export function useTrackLyrics(np, { path = null, refreshKey = 0 } = {}) {
   const [state, setState] = useState({ status: 'idle', key: null, data: null, error: null });
   const [reloadTick, setReloadTick] = useState(0);
+  const refreshNextRef = useRef(false); // next fetch asks LRCLIB again (Retry button)
 
   const hasTrack = !!(np && np.title && np.artist);
   const key = hasTrack
@@ -40,6 +41,7 @@ export function useTrackLyrics(np, { path = null, refreshKey = 0 } = {}) {
     const qs = new URLSearchParams();
     if (np.zone_id) qs.set('zone_id', np.zone_id);
     if (path) qs.set('path', path);
+    if (refreshNextRef.current) { qs.set('refresh', '1'); refreshNextRef.current = false; }
     fetch(`/api/lyrics/current?${qs.toString()}`, { signal: ctrl.signal })
       .then(r => r.json().then(d => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {
@@ -54,7 +56,11 @@ export function useTrackLyrics(np, { path = null, refreshKey = 0 } = {}) {
     // np fields are part of `key`, so `key` is the only dependency needed.
   }, [key, reloadTick]);
 
-  const reload = useCallback(() => setReloadTick(n => n + 1), []);
+  /** Fetch again; force = ask LRCLIB even after a recent miss or error (Retry button). */
+  const reload = useCallback((force = false) => {
+    if (force === true) refreshNextRef.current = true;
+    setReloadTick(n => n + 1);
+  }, []);
 
   // LRCLIB was down or busy: the backend retries after its 60 s error memo, so ask again then.
   const lyricsError = state.status === 'ready' && state.data?.lyrics?.error;

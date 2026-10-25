@@ -152,6 +152,15 @@ describe('resolve', () => {
     assert.equal(calls.length, n);
   });
 
+  test('refresh (Retry) asks LRCLIB again despite a remembered miss', async () => {
+    await resolver.resolve(TRACK);
+    const n = calls.length;
+    lrclib.get = { id: 42, syncedLyrics: SYNCED };
+    const r = await resolver.resolve(TRACK, { refresh: true });
+    assert.ok(calls.length > n);
+    assert.equal(r.found, true);
+  });
+
   test('concurrent resolves share one LRCLIB round', async () => {
     lrclib.get = { id: 42, syncedLyrics: SYNCED };
     await Promise.all([resolver.resolve(TRACK), resolver.resolve(TRACK), resolver.resolve(TRACK)]);
