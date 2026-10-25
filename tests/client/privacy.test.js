@@ -42,4 +42,18 @@ describe('screenshot mode (client/src/lib/privacy.js)', () => {
     assert.equal(p.maskPath('/Volumes/My Passport/HiRes Music/The Doors/Alive/07 Moonlight.flac'), '/Music/The Doors/Alive/07 Moonlight.flac');
     p.setPrivacyMode(false);
   });
+
+  test('on: paused zones hide what they last played; names survive a reload', () => {
+    p.setPrivacyMode(true);
+    const [paused, playing] = p.maskZones([
+      { zone_id: 'z1', state: 'paused', now_playing_title: 'A Song', now_playing_artist: 'Someone', image_key: 'abc', outputs: [] },
+      { zone_id: 'z2', state: 'playing', now_playing_title: 'The Nest', now_playing_artist: 'Josh Woodward', image_key: 'def', outputs: [] },
+    ]);
+    assert.equal(paused.now_playing_title, null);
+    assert.equal(paused.image_key, null);
+    assert.equal(playing.now_playing_title, 'The Nest');
+    // Names are stored, not kept in module memory: a fresh page reads the same table.
+    assert.match(localStorage.getItem('tft:privacyNames'), /"z1":"Living Room"/);
+    p.setPrivacyMode(false);
+  });
 });
