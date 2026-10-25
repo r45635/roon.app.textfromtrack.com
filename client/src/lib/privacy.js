@@ -27,24 +27,45 @@ export function setPrivacyMode(on) {
   } catch { /* storage blocked */ }
 }
 
-// Stable neutral names, in order of first appearance.
-const zoneNames = new Map();
-const outputNames = new Map();
-function neutral(map, id, list, prefix) {
-  if (!id) return list[0];
-  if (!map.has(id)) map.set(id, list[map.size] || `${prefix} ${map.size + 1}`);
-  return map.get(id);
+// Neutral names are given once per zone / speaker and remembered in localStorage, so a
+// zone keeps the same name on every page (main UI, phone, kiosk) and after a reload.
+const NAMES_KEY = 'tft:privacyNames';
+function loadNames() {
+  try { return JSON.parse(localStorage.getItem(NAMES_KEY)) || { zones: {}, outputs: {} }; } catch { return { zones: {}, outputs: {} }; }
 }
-const zoneName = (id) => neutral(zoneNames, id, ZONE_NAMES, 'Zone');
-const outputName = (id) => neutral(outputNames, id, OUTPUT_NAMES, 'Speaker');
+function neutral(kind, id, list, prefix) {
+  if (!id) return list[0];
+  const names = loadNames();
+  const table = names[kind] || (names[kind] = {});
+  if (!table[id]) {
+    const n = Object.keys(table).length;
+    table[id] = list[n] || `${prefix} ${n + 1}`;
+    try { localStorage.setItem(NAMES_KEY, JSON.stringify(names)); } catch { /* storage blocked */ }
+  }
+  return table[id];
+}
+const zoneName = (id) => neutral('zones', id, ZONE_NAMES, 'Zone');
+const outputName = (id) => neutral('outputs', id, OUTPUT_NAMES, 'Speaker');
 
 function maskOutputs(outputs) {
   return (outputs || []).map(o => ({ ...o, display_name: outputName(o.output_id) }));
 }
 
+/**
+ * What paused or stopped zones last played is personal too (and often a commercial cover):
+ * only zones that are playing right now keep their track and cover.
+ */
 export function maskZones(zones) {
   if (!isPrivacyMode() || !Array.isArray(zones)) return zones;
-  return zones.map(z => ({ ...z, display_name: zoneName(z.zone_id), outputs: maskOutputs(z.outputs) }));
+  return zones.map(z => {
+    const masked = { ...z, display_name: zoneName(z.zone_id), outputs: maskOutputs(z.outputs) };
+    if (z.state !== 'playing') {
+      masked.now_playing_title = null;
+      masked.now_playing_artist = null;
+      masked.image_key = null;
+    }
+    return masked;
+  });
 }
 
 export function maskNowPlaying(np) {

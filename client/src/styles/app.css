@@ -2891,3 +2891,4 @@ button.synced-line:hover { opacity: 0.9; background: var(--tft-hover); }
 .zone-item { display: flex; align-items: center; gap: 12px; }
 .zone-item-meta { font-size: 11px; color: var(--tft-mute); margin-top: 2px; }
 .zone-selector-trigger .zone-art { width: 22px; height: 22px; border-radius: 4px; }
+a.btn { text-decoration: none; }

@@ -142,7 +142,8 @@ export default function SyncedLyrics({
                 title: t('lyrics.seek_to_line'),
               } : {})}
             >
-              {line.text || '\u200b'}
+              {/* An empty timed line is an instrumental break: show a note so the active line stays visible. */}
+              {line.text || '♪'}
             </LineTag>
           );
         })}
