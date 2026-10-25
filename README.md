@@ -411,6 +411,11 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 #### v0.5.1 ✓ — LRCLIB busy handling
 - A busy LRCLIB (503/429) is retried once at once; the Retry button really asks again; clearer "LRCLIB is overloaded" message
 
+#### v0.5.2 ✓ — Phone / TV access
+- QR code reachable from the web UI (phone icon in the top bar, "On a phone / TV" in the lyrics stage), with a second QR code for the full-screen lyrics display
+- The QR code and "Open on Network" no longer pick a self-assigned 169.254.x, VPN or bridge address
+- Zone menu closes on an outside click or Escape; zone rows show the cover, state, grouped speakers and volume; dB and +/- -only volumes handled
+
 #### Upcoming
 
 ##### Local tag editor (mp3tag-style, lyrics-aware)

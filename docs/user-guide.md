@@ -119,7 +119,7 @@ Right under the player, the lyrics of the playing track, **with or without a mus
 
 The source badge says where the lyrics come from: *LRCLIB*, *Saved copy* (local cache), *.lrc file* or *In file tags*.
 
-**Lyrics on a tablet or TV:** open `http://<companion-ip>:3888/#/lyrics` (also linked from *Show QR Code for Phone* in the tray). Pick a zone with the *Zone* button; each display follows its own zone and keeps the screen awake.
+**Lyrics on a tablet or TV:** click the phone icon in the top bar (or *On a phone / TV* in the lyrics stage, or *Show QR Code for Phone* in the tray menu) and scan the second QR code, or open `http://<companion-ip>:3888/#/lyrics`. Pick a zone with the *Zone* button; each display follows its own zone and keeps the screen awake.
 
 ---
 
