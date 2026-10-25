@@ -525,7 +525,7 @@
     "offset_later": "Afficher plus tard (+0,5 s)",
     "offset_reset": "Réinitialiser le décalage",
     "offset_failed": "Décalage non enregistré : {{msg}}",
-    "versions": "Autres versions",
+    "versions": "Versions",
     "copy": "Copier",
     "download": "Télécharger",
     "save_to_file": "Enregistrer dans le fichier",
@@ -542,7 +542,7 @@
     "instrumental": "Instrumental — pas de paroles.",
     "instrumental_short": "Instrumental",
     "lrclib_unreachable": "LRCLIB est injoignable ({{msg}}). Nouvel essai dans une minute.",
-    "not_found": "Aucune parole trouvée pour ce titre. Essayez « Autres versions » avec un titre simplifié.",
+    "not_found": "Aucune parole trouvée pour ce titre. Essayez « Versions » avec un titre simplifié.",
     "tip_click_line": "Cliquez sur une ligne pour y aller.",
     "library_hint": "Ajoutez votre dossier musical pour enregistrer les paroles dans vos fichiers et générer des paroles par IA avec TextFromTrack.",
     "library_hint_open": "Ouvrir les réglages",
@@ -553,7 +553,7 @@
     "no_versions": "LRCLIB n’a aucune version de ce titre.",
     "not_found_short": "Aucune parole trouvée pour ce titre.",
     "lrclib_busy": "LRCLIB, la base de paroles gratuite, est surchargée en ce moment. Nouvel essai dans une minute — ou cliquez sur Réessayer.",
-    "on_tv": "Sur téléphone / TV"
+    "on_tv": "Téléphone / TV"
   },
   "kiosk": {
     "idle": "Rien en lecture dans cette zone.",
@@ -618,8 +618,8 @@
     "UNKNOWN_ERROR": "Une erreur est survenue."
   },
   "editor": {
-    "sync_lyrics": "Synchroniser ces paroles",
-    "edit_timing": "Modifier le timing",
+    "sync_lyrics": "Synchroniser",
+    "edit_timing": "Recaler",
     "stamp": "Horodater la ligne (Espace)",
     "undo": "Annuler (⌫)",
     "save": "Enregistrer le timing",

@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import SyncedLyrics from './SyncedLyrics.jsx';
+import { IconPlay, IconPause, IconPrev, IconNext } from './Icons.jsx';
 
 /**
  * Full-screen lyrics view: big type over a blurred cover, transport at the bottom.
@@ -24,7 +25,8 @@ export default function LyricsFullscreen({
 
   useEffect(() => {
     if (!onClose) return undefined;
-    closeRef.current?.focus();
+    // Focus for keyboard users, without the focus ring a mouse or the F key would not expect.
+    closeRef.current?.focus({ focusVisible: false });
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
@@ -83,11 +85,11 @@ export default function LyricsFullscreen({
         </div>
         {np && onControl && (
           <div className="lyrics-fs-transport">
-            <button type="button" className="lyrics-fs-btn" onClick={() => onControl('previous')} disabled={!np.is_previous_allowed} aria-label={t('now_playing.control_prev')}>⏮</button>
+            <button type="button" className="lyrics-fs-btn" onClick={() => onControl('previous')} disabled={!np.is_previous_allowed} aria-label={t('now_playing.control_prev')}><IconPrev /></button>
             <button type="button" className="lyrics-fs-btn lyrics-fs-btn--main" onClick={() => onControl('playpause')} disabled={!np.is_play_allowed && !np.is_pause_allowed} aria-label={isPlaying ? t('now_playing.control_pause') : t('now_playing.control_play')}>
-              {isPlaying ? '⏸' : '▶'}
+              {isPlaying ? <IconPause size={26} /> : <IconPlay size={26} />}
             </button>
-            <button type="button" className="lyrics-fs-btn" onClick={() => onControl('next')} disabled={!np.is_next_allowed} aria-label={t('now_playing.control_next')}>⏭</button>
+            <button type="button" className="lyrics-fs-btn" onClick={() => onControl('next')} disabled={!np.is_next_allowed} aria-label={t('now_playing.control_next')}><IconNext /></button>
           </div>
         )}
       </footer>

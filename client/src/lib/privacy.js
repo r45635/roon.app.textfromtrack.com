@@ -5,8 +5,21 @@
 // On with App Preferences → "Screenshot mode", or a URL with ?privacy=1 (?privacy=0 off).
 
 const KEY = 'tft:privacy';
-const ZONE_NAMES = ['Living Room', 'Kitchen', 'Office', 'Bedroom', 'Studio', 'Terrace', 'Library', 'Garage'];
-const OUTPUT_NAMES = ['Speaker A', 'Speaker B', 'Speaker C', 'Speaker D', 'Speaker E', 'Speaker F', 'Speaker G', 'Speaker H'];
+const NAMES = {
+  en: {
+    zones: ['Living Room', 'Kitchen', 'Office', 'Bedroom', 'Studio', 'Terrace', 'Library', 'Garage'],
+    speaker: 'Speaker', zone: 'Zone', core: 'Roon Core', email: 'listener@example.com',
+  },
+  fr: {
+    zones: ['Salon', 'Cuisine', 'Bureau', 'Chambre', 'Studio', 'Terrasse', 'Bibliothèque', 'Garage'],
+    speaker: 'Enceinte', zone: 'Zone', core: 'Roon Core', email: 'auditeur@example.com',
+  },
+};
+// The UI language as i18next stores it (updated by the EN / FR buttons).
+function language() {
+  try { return (localStorage.getItem('i18nextLng') || navigator.language || 'en').slice(0, 2); } catch { return 'en'; }
+}
+const names = () => NAMES[language()] || NAMES.en;
 
 (function readUrlSwitch() {
   try {
@@ -27,25 +40,27 @@ export function setPrivacyMode(on) {
   } catch { /* storage blocked */ }
 }
 
-// Neutral names are given once per zone / speaker and remembered in localStorage, so a
-// zone keeps the same name on every page (main UI, phone, kiosk) and after a reload.
-const NAMES_KEY = 'tft:privacyNames';
-function loadNames() {
-  try { return JSON.parse(localStorage.getItem(NAMES_KEY)) || { zones: {}, outputs: {} }; } catch { return { zones: {}, outputs: {} }; }
-}
-function neutral(kind, id, list, prefix) {
-  if (!id) return list[0];
-  const names = loadNames();
-  const table = names[kind] || (names[kind] = {});
-  if (!table[id]) {
-    const n = Object.keys(table).length;
-    table[id] = list[n] || `${prefix} ${n + 1}`;
-    try { localStorage.setItem(NAMES_KEY, JSON.stringify(names)); } catch { /* storage blocked */ }
+// Each zone / speaker gets a slot number once, remembered in localStorage, so it keeps the
+// same neutral name on every page (main UI, phone, kiosk), after a reload, in every language.
+const SLOTS_KEY = 'tft:privacySlots';
+function slot(kind, id) {
+  let slots;
+  try { slots = JSON.parse(localStorage.getItem(SLOTS_KEY)) || {}; } catch { slots = {}; }
+  const table = slots[kind] || (slots[kind] = {});
+  if (table[id] == null) {
+    table[id] = Object.keys(table).length;
+    try { localStorage.setItem(SLOTS_KEY, JSON.stringify(slots)); } catch { /* storage blocked */ }
   }
   return table[id];
 }
-const zoneName = (id) => neutral('zones', id, ZONE_NAMES, 'Zone');
-const outputName = (id) => neutral('outputs', id, OUTPUT_NAMES, 'Speaker');
+function zoneName(id) {
+  const n = names(); const i = id ? slot('zones', id) : 0;
+  return n.zones[i] || `${n.zone} ${i + 1}`;
+}
+function outputName(id) {
+  const n = names(); const i = id ? slot('outputs', id) : 0;
+  return `${n.speaker} ${String.fromCharCode(65 + (i % 26))}`;
+}
 
 function maskOutputs(outputs) {
   return (outputs || []).map(o => ({ ...o, display_name: outputName(o.output_id) }));
@@ -75,12 +90,12 @@ export function maskNowPlaying(np) {
 
 export function maskRoonStatus(status) {
   if (!isPrivacyMode() || !status) return status;
-  return { ...status, core_name: status.core_name ? 'Roon Core' : status.core_name, last_connect_error: null };
+  return { ...status, core_name: status.core_name ? names().core : status.core_name, last_connect_error: null };
 }
 
 export function maskAccount(account) {
   if (!isPrivacyMode() || !account) return account;
-  return { ...account, email: account.email ? 'listener@example.com' : account.email };
+  return { ...account, email: account.email ? names().email : account.email };
 }
 
 /** "/Volumes/My Passport/HiRes Music/Artist/Album/01 Song.flac" → "/Music/Artist/Album/01 Song.flac" */

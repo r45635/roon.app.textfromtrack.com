@@ -553,7 +553,7 @@
     "no_versions": "LRCLIB has no version of this title.",
     "not_found_short": "No lyrics found for this track.",
     "lrclib_busy": "LRCLIB, the free lyrics database, is overloaded right now. Trying again in a minute — or press Retry.",
-    "on_tv": "On a phone / TV"
+    "on_tv": "Phone / TV"
   },
   "kiosk": {
     "idle": "Nothing playing in this zone.",
@@ -618,7 +618,7 @@
     "UNKNOWN_ERROR": "Something went wrong."
   },
   "editor": {
-    "sync_lyrics": "Sync these lyrics",
+    "sync_lyrics": "Sync lyrics",
     "edit_timing": "Edit timing",
     "stamp": "Stamp line (Space)",
     "undo": "Undo (⌫)",

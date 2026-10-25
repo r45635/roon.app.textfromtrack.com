@@ -13,6 +13,7 @@ global.localStorage = {
   removeItem: k => store.delete(k),
 };
 global.window = { location: { search: '' } };
+// Node 21+ has a read-only global navigator; its language is fine as the English fallback.
 
 let p;
 before(async () => {
@@ -53,7 +54,18 @@ describe('screenshot mode (client/src/lib/privacy.js)', () => {
     assert.equal(paused.image_key, null);
     assert.equal(playing.now_playing_title, 'The Nest');
     // Names are stored, not kept in module memory: a fresh page reads the same table.
-    assert.match(localStorage.getItem('tft:privacyNames'), /"z1":"Living Room"/);
+    assert.match(localStorage.getItem('tft:privacySlots'), /"z1":0/);
+    p.setPrivacyMode(false);
+  });
+
+  test('on: neutral names follow the UI language', () => {
+    p.setPrivacyMode(true);
+    localStorage.setItem('i18nextLng', 'fr');
+    const [z] = p.maskZones([{ zone_id: 'z1', state: 'playing', outputs: [{ output_id: 'o1' }] }]);
+    assert.equal(z.display_name, 'Salon');
+    assert.equal(z.outputs[0].display_name, 'Enceinte A');
+    assert.equal(p.maskAccount({ email: 'x@y.z' }).email, 'auditeur@example.com');
+    localStorage.removeItem('i18nextLng');
     p.setPrivacyMode(false);
   });
 });
