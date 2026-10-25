@@ -419,6 +419,10 @@ Defined in [src/utils/normalize.js](src/utils/normalize.js).
 #### v0.5.3 ✓ — Screenshot mode
 - App Preferences → Screenshot mode (or `?privacy=1`): neutral Core, zone, speaker, account and folder names on screen, for sharing screenshots and bug reports
 
+#### v0.5.4 ✓ — Polish
+- Screenshot mode: neutral names stay the same on every page; paused zones don't show what they last played
+- Instrumental breaks shown as ♪ in synced lyrics
+
 #### Upcoming
 
 ##### Local tag editor (mp3tag-style, lyrics-aware)
