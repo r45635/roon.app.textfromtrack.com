@@ -8,12 +8,14 @@ export default function FilesManagement() {
   const [embedDefault, setEmbedDefault] = useState(false);
   const [backupDefault, setBackupDefault] = useState(true);
   const [saveLrcBesideDefault, setSaveLrcBesideDefault] = useState(false);
+  const [autoSaveLrclib, setAutoSaveLrclib] = useState(false);
   const [status, setStatus] = useState(null); // 'saving' | 'saved' | 'error' | null
 
   function applyConfig(data) {
     setEmbedDefault(!!data.embed_lyrics_default);
     setBackupDefault(data.backup_before_embed_default !== false);
     setSaveLrcBesideDefault(!!data.save_lrc_beside_source_default);
+    setAutoSaveLrclib(!!data.auto_save_lrclib);
   }
 
   useEffect(() => {
@@ -104,6 +106,16 @@ export default function FilesManagement() {
               <span>{t('settings.save_lrc_beside_source_default')}</span>
             </label>
             <p className="muted small">{t('settings.save_lrc_beside_source_default_hint')}</p>
+
+            <label className="embed-toggle settings-embed-toggle">
+              <input
+                type="checkbox"
+                checked={autoSaveLrclib}
+                onChange={e => { setAutoSaveLrclib(e.target.checked); save({ auto_save_lrclib: e.target.checked }); }}
+              />
+              <span>{t('settings.auto_save_lrclib')}</span>
+            </label>
+            <p className="muted small">{t('settings.auto_save_lrclib_hint')}</p>
 
             {status === 'saving' && (
               <p className="muted small">{t('settings.saving')}</p>

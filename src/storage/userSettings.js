@@ -19,6 +19,8 @@ const DEFAULTS = {
   embed_lyrics_default: false,
   backup_before_embed_default: true,
   save_lrc_beside_source_default: false,
+  // Write synced LRCLIB lyrics into the playing track's file when it has none.
+  auto_save_lrclib: false,
   tft_token: '',
   webhook_id: '',
   webhook_secret: '',

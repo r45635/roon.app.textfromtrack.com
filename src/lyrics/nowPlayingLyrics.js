@@ -12,6 +12,9 @@ const logger = require('../utils/logger');
 const scanner = require('../music/scanner');
 const matcher = require('../music/matcher');
 const musicRoots = require('../music/musicRoots');
+const lyricsWriter = require('../music/lyricsWriter');
+const userSettings = require('../storage/userSettings');
+const jobStore = require('../textfromtrack/jobStore');
 const lyricsResolver = require('./lyricsResolver');
 
 const MATCH_MEMO_TTL_MS = 30 * 1000;
@@ -57,7 +60,26 @@ async function lyricsForNowPlaying(np, opts = {}) {
 }
 
 /**
- * Prefetch lyrics whenever a zone starts playing a new track.
+ * "Save LRCLIB lyrics automatically": the playing track matched a local file that has no
+ * lyrics (resolve fell through to the cache or LRCLIB) and the lyrics are synced → write them.
+ * @returns {boolean} whether lyrics were written
+ */
+function autoSave(np, lyrics, audioPath) {
+  if (!userSettings.get().auto_save_lrclib) return false;
+  if (!audioPath || !lyrics.found || !lyrics.synced || !lyrics.text) return false;
+  if (lyrics.source !== 'lrclib' && lyrics.source !== 'cache') return false;
+  const written = lyricsWriter.writeLyricsToFile(audioPath, lyrics.text);
+  scanner.updateTrackLyricsStatus(audioPath, written.status);
+  jobStore.recordLyricsSave({
+    sourceFile: audioPath, lrc: lyrics.text, title: np.title, artist: np.artist, album: np.album,
+    written, auto: true,
+  });
+  logger.info({ audioPath, embedded: written.lyrics_embedded }, 'LRCLIB lyrics saved automatically');
+  return true;
+}
+
+/**
+ * Prefetch lyrics whenever a zone starts playing a new track (and auto-save them if enabled).
  * @param {{ events: import('events').EventEmitter, getNowPlaying: Function }} roon
  */
 function watchRoon(roon) {
@@ -70,13 +92,32 @@ function watchRoon(roon) {
       if (lastKeyByZone.get(zoneId) === key) continue;
       lastKeyByZone.set(zoneId, key);
       lyricsForNowPlaying(np)
-        .then(({ lyrics }) => logger.debug(
-          { zone: np.zone_name, title: np.title, source: lyrics.source, found: lyrics.found },
-          'Lyrics prefetched'
-        ))
+        .then(({ lyrics, audioPath }) => {
+          logger.debug(
+            { zone: np.zone_name, title: np.title, source: lyrics.source, found: lyrics.found },
+            'Lyrics prefetched'
+          );
+          try {
+            autoSave(np, lyrics, audioPath);
+          } catch (err) {
+            logger.warn({ err: err.message, audioPath }, 'Automatic lyrics save failed');
+            // Visible in Job History, not only in the log.
+            jobStore.create({
+              job_id: require('crypto').randomUUID(),
+              source_file: audioPath,
+              lrc_file: null,
+              title: np.title, artist: np.artist, album: np.album,
+              status: 'error',
+              source: 'lrclib',
+              auto_saved: true,
+              created_at: new Date().toISOString(),
+              error: { code: err.code || 'LYRICS_EMBED_FAILED', message: err.message },
+            });
+          }
+        })
         .catch(err => logger.warn({ err: err.message, title: np.title }, 'Lyrics prefetch failed'));
     }
   });
 }
 
-module.exports = { findLocalFile, lyricsForNowPlaying, watchRoon };
+module.exports = { findLocalFile, lyricsForNowPlaying, watchRoon, autoSave };

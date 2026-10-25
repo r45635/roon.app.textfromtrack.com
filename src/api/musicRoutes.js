@@ -65,6 +65,7 @@ function musicConfigResponse() {
     embed_lyrics_default: !!settings.embed_lyrics_default,
     backup_before_embed_default: settings.backup_before_embed_default !== false,
     save_lrc_beside_source_default: !!settings.save_lrc_beside_source_default,
+    auto_save_lrclib: !!settings.auto_save_lrclib,
   };
 }
 
@@ -80,6 +81,7 @@ const BOOLEAN_CONFIG_KEYS = [
   'embed_lyrics_default',
   'backup_before_embed_default',
   'save_lrc_beside_source_default',
+  'auto_save_lrclib',
 ];
 
 /**

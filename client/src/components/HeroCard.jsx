@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import FileTagsCard from './FileTagsCard.jsx';
 import LyricsSection from './LyricsSection.jsx';
 import LyricsStage from './LyricsStage.jsx';
+import {
+  IconPlay, IconPause, IconPrev, IconNext, IconShuffle, IconRepeat, IconRepeatOne, IconVolume, IconVolumeMuted,
+} from './Icons.jsx';
 
 const EMBED_SUPPORTED_EXTS = ['.mp3', '.flac'];
 
@@ -64,6 +67,58 @@ function ScoreChip({ label, points, max, hint }) {
   );
 }
 
+/**
+ * Volume bar: drag with mouse, finger or pen (pointer events), or use the keyboard
+ * (arrows = one step, Home/End = min/max).
+ */
+function VolumeBar({ value, max, label, onSet, onStep }) {
+  const pct = max ? Math.round((value / max) * 100) : 0;
+  function startDrag(e) {
+    e.preventDefault();
+    const bar = e.currentTarget;
+    bar.setPointerCapture?.(e.pointerId);
+    let last = -1;
+    const apply = (clientX) => {
+      const rect = bar.getBoundingClientRect();
+      const v = Math.round(Math.max(0, Math.min(1, (clientX - rect.left) / rect.width)) * max);
+      if (v === last) return;
+      last = v;
+      onSet(v);
+    };
+    apply(e.clientX);
+    const move = (me) => apply(me.clientX);
+    const up = () => {
+      bar.removeEventListener('pointermove', move);
+      bar.removeEventListener('pointerup', up);
+      bar.removeEventListener('pointercancel', up);
+    };
+    bar.addEventListener('pointermove', move);
+    bar.addEventListener('pointerup', up);
+    bar.addEventListener('pointercancel', up);
+  }
+  function onKeyDown(e) {
+    const keys = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 };
+    if (keys[e.key]) { e.preventDefault(); onStep(keys[e.key]); }
+    else if (e.key === 'Home') { e.preventDefault(); onSet(0); }
+    else if (e.key === 'End') { e.preventDefault(); onSet(max); }
+  }
+  return (
+    <div
+      className="tft-volume-bar tft-volume-bar--interactive"
+      role="slider"
+      tabIndex={0}
+      aria-label={label}
+      aria-valuemin={0}
+      aria-valuemax={max}
+      aria-valuenow={value}
+      onPointerDown={startDrag}
+      onKeyDown={onKeyDown}
+    >
+      <div className="tft-volume-fill" style={{ width: `${pct}%` }} />
+    </div>
+  );
+}
+
 export default function HeroCard({
   nowPlaying,
   matchData,
@@ -90,8 +145,6 @@ export default function HeroCard({
   const [altFormatCache, setAltFormatCache] = useState({});
   const [tagsRefreshKey, setTagsRefreshKey] = useState(0);
   const [volDetailOpen, setVolDetailOpen] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
-  const prevVolumeRef = useRef(null);
   const [autoSync, setAutoSync] = useState(true);
 
   // ── Title / Artist / Album marquee ──────────────────────────────────────────
@@ -138,35 +191,12 @@ export default function HeroCard({
     if (autoSync) setFrozenMatchData(matchData);
   }, [matchData, autoSync]);
 
-  // ── Volume drag helper ───────────────────────────────────────────────────────
-  function startVolumeDrag(e, outputIds, vMax) {
-    e.preventDefault();
-    const bar = e.currentTarget;
-    let lastVal = -1;
-    const apply = (clientX) => {
-      const rect = bar.getBoundingClientRect();
-      const pct = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      const val = Math.round(pct * vMax);
-      if (val === lastVal) return;
-      lastVal = val;
-      outputIds.forEach(id => onVolume?.(id, 'absolute', val));
-    };
-    apply(e.clientX);
-    const onMove = (me) => apply(me.clientX);
-    const onUp = () => {
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-    };
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('mouseup', onUp);
-  }
   // Reset the alternative selection when the track changes — unless Auto Sync is
   // off: the user is then working on a frozen match and keeps their pick.
   const trackKey = nowPlaying
     ? `${nowPlaying.zone_id}|${nowPlaying.title}|${nowPlaying.artist}|${nowPlaying.album}`
     : '';
   useEffect(() => {
-    setIsMuted(false);
     if (!autoSync) return;
     setAltOpen(false);
     setConfirmedPath(null);
@@ -330,11 +360,26 @@ export default function HeroCard({
             <div className="tft-progress-wrap">
               <div
                 className={`tft-progress-bar${onSeek && np.is_seek_allowed ? ' np-progress-seekable' : ''}`}
-                onClick={onSeek && np.is_seek_allowed ? (e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-                  onSeek('absolute', Math.round(ratio * np.duration_seconds));
-                } : undefined}
+                {...(onSeek && np.is_seek_allowed ? {
+                  role: 'slider',
+                  tabIndex: 0,
+                  'aria-label': t('now_playing.seek_hint'),
+                  'aria-valuemin': 0,
+                  'aria-valuemax': Math.round(np.duration_seconds),
+                  'aria-valuenow': Math.round(np.seek_position_seconds ?? 0),
+                  'aria-valuetext': `${fmt(np.seek_position_seconds)} / ${fmt(np.duration_seconds)}`,
+                  onClick: (e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+                    onSeek('absolute', Math.round(ratio * np.duration_seconds));
+                  },
+                  onKeyDown: (e) => {
+                    // Arrows = 5 s, Home = start.
+                    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); onSeek('relative', 5); }
+                    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); onSeek('relative', -5); }
+                    else if (e.key === 'Home') { e.preventDefault(); onSeek('absolute', 0); }
+                  },
+                } : {})}
               >
                 <div className="tft-progress-fill" style={{ width: `${progress}%` }} />
               </div>
@@ -349,41 +394,34 @@ export default function HeroCard({
           <div className="tft-volume-card">
             {!multiVolume && volumeVal != null && firstOutput && (() => {
               const vMax = firstOutput.volume?.soft_limit ?? firstOutput.volume?.max ?? 100;
-              const vPct = Math.round((volumeVal / vMax) * 100);
+              const muted = !!firstOutput.volume?.is_muted;
               return (
                 <div className="tft-volume">
                   <button
                     type="button"
-                    className="tft-volume-mute-btn"
+                    className={`tft-volume-mute-btn${muted ? ' active' : ''}`}
                     aria-label={t('now_playing.volume_mute')}
-                    onClick={() => {
-                      if (!isMuted) {
-                        prevVolumeRef.current = volumeVal;
-                        setIsMuted(true);
-                        onVolume?.(firstOutput.output_id, 'absolute', 0);
-                      } else {
-                        setIsMuted(false);
-                        onVolume?.(firstOutput.output_id, 'absolute', prevVolumeRef.current ?? 50);
-                      }
-                    }}
-                  >{isMuted ? '🔇' : '🔊'}</button>
-                  <div
-                    className="tft-volume-bar tft-volume-bar--interactive"
-                    onMouseDown={(e) => startVolumeDrag(e, [firstOutput.output_id], vMax)}
-                  >
-                    <div className="tft-volume-fill" style={{ width: `${vPct}%` }} />
-                  </div>
+                    aria-pressed={muted}
+                    onClick={() => onMute?.(firstOutput.output_id, muted ? 'unmute' : 'mute')}
+                  >{muted ? <IconVolumeMuted /> : <IconVolume />}</button>
+                  <VolumeBar
+                    value={volumeVal}
+                    max={vMax}
+                    label={firstOutput.display_name}
+                    onSet={(v) => onVolume?.(firstOutput.output_id, 'absolute', v)}
+                    onStep={(dir) => onVolume?.(firstOutput.output_id, 'relative', dir * volumeStep)}
+                  />
                   <div className="tft-volume-val tft-mono">{volumeVal}</div>
                   <button
                     type="button"
                     className="tft-round-btn tft-round-btn--small"
-                    aria-label={t('now_playing.vol_down', 'Decrease volume')}
+                    aria-label={t('now_playing.vol_down')}
                     onClick={() => onVolume?.(firstOutput.output_id, 'relative', -volumeStep)}
                   >−</button>
                   <button
                     type="button"
                     className="tft-round-btn tft-round-btn--small"
-                    aria-label={t('now_playing.vol_up', 'Increase volume')}
+                    aria-label={t('now_playing.vol_up')}
                     onClick={() => onVolume?.(firstOutput.output_id, 'relative', volumeStep)}
                   >+</button>
                 </div>
@@ -392,7 +430,7 @@ export default function HeroCard({
             {multiVolume && (() => {
               const avgVal = Math.round(volumeOutputs.reduce((s, o) => s + o.volume.value, 0) / volumeOutputs.length);
               const globalMax = Math.max(...volumeOutputs.map(o => o.volume.soft_limit ?? o.volume.max ?? 100));
-              const avgPct = Math.round((avgVal / globalMax) * 100);
+              const allMuted = volumeOutputs.every(o => o.volume.is_muted);
               return (
                 <div className="tft-volume-group">
                   <div className="tft-volume">
@@ -400,40 +438,34 @@ export default function HeroCard({
                       type="button"
                       className="tft-volume-detail-toggle"
                       onClick={() => setVolDetailOpen(v => !v)}
-                      title={volDetailOpen ? 'Masquer le détail' : 'Voir le détail par enceinte'}
+                      aria-expanded={volDetailOpen}
+                      title={volDetailOpen ? t('now_playing.speakers_hide') : t('now_playing.speakers_show')}
                     >{volDetailOpen ? '▾' : '▸'}</button>
                     <button
                       type="button"
-                      className="tft-volume-mute-btn"
+                      className={`tft-volume-mute-btn${allMuted ? ' active' : ''}`}
                       aria-label={t('now_playing.volume_mute')}
-                      onClick={() => {
-                        if (!isMuted) {
-                          prevVolumeRef.current = avgVal;
-                          setIsMuted(true);
-                          volumeOutputs.forEach(o => onVolume?.(o.output_id, 'absolute', 0));
-                        } else {
-                          setIsMuted(false);
-                          volumeOutputs.forEach(o => onVolume?.(o.output_id, 'absolute', prevVolumeRef.current ?? 50));
-                        }
-                      }}
-                    >{isMuted ? '🔇' : '🔊'}</button>
-                    <div
-                      className="tft-volume-bar tft-volume-bar--interactive"
-                      onMouseDown={(e) => startVolumeDrag(e, volumeOutputs.map(o => o.output_id), globalMax)}
-                    >
-                      <div className="tft-volume-fill" style={{ width: `${avgPct}%` }} />
-                    </div>
+                      aria-pressed={allMuted}
+                      onClick={() => volumeOutputs.forEach(o => onMute?.(o.output_id, allMuted ? 'unmute' : 'mute'))}
+                    >{allMuted ? <IconVolumeMuted /> : <IconVolume />}</button>
+                    <VolumeBar
+                      value={avgVal}
+                      max={globalMax}
+                      label={t('now_playing.master')}
+                      onSet={(v) => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'absolute', v))}
+                      onStep={(dir) => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'relative', dir * volumeStep))}
+                    />
                     <div className="tft-volume-val tft-mono">{avgVal}</div>
                     <button
                       type="button"
                       className="tft-round-btn tft-round-btn--small"
-                      aria-label={t('now_playing.vol_down', 'Decrease volume')}
+                      aria-label={t('now_playing.vol_down')}
                       onClick={() => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'relative', -volumeStep))}
                     >−</button>
                     <button
                       type="button"
                       className="tft-round-btn tft-round-btn--small"
-                      aria-label={t('now_playing.vol_up', 'Increase volume')}
+                      aria-label={t('now_playing.vol_up')}
                       onClick={() => volumeOutputs.forEach(o => onVolume?.(o.output_id, 'relative', volumeStep))}
                     >+</button>
                   </div>
@@ -441,29 +473,29 @@ export default function HeroCard({
                     <div className="tft-volume-rows">
                       {volumeOutputs.map(o => {
                         const vMax = o.volume.soft_limit ?? o.volume.max ?? 100;
-                        const vPct = Math.round((o.volume.value / vMax) * 100);
                         return (
                           <div className="tft-volume-row" key={o.output_id}>
                             <span className="tft-volume-name tft-mono" title={o.display_name}>
-                              {o.display_name.split(' ').pop()}
+                              {o.display_name}
                             </span>
-                            <div
-                              className="tft-volume-bar tft-volume-bar--interactive"
-                              onMouseDown={(e) => startVolumeDrag(e, [o.output_id], vMax)}
-                            >
-                              <div className="tft-volume-fill" style={{ width: `${vPct}%` }} />
-                            </div>
+                            <VolumeBar
+                              value={o.volume.value}
+                              max={vMax}
+                              label={o.display_name}
+                              onSet={(v) => onVolume?.(o.output_id, 'absolute', v)}
+                              onStep={(dir) => onVolume?.(o.output_id, 'relative', dir * volumeStep)}
+                            />
                             <div className="tft-volume-val tft-mono">{o.volume.value}</div>
                             <button
                               type="button"
                               className="tft-round-btn tft-round-btn--small"
-                              aria-label={t('now_playing.vol_down', 'Decrease volume')}
+                              aria-label={t('now_playing.vol_down')}
                               onClick={() => onVolume?.(o.output_id, 'relative', -volumeStep)}
                             >−</button>
                             <button
                               type="button"
                               className="tft-round-btn tft-round-btn--small"
-                              aria-label={t('now_playing.vol_up', 'Increase volume')}
+                              aria-label={t('now_playing.vol_up')}
                               onClick={() => onVolume?.(o.output_id, 'relative', volumeStep)}
                             >+</button>
                           </div>
@@ -487,45 +519,49 @@ export default function HeroCard({
                   <button
                     type="button"
                     className={`tft-round-btn tft-round-btn--small${np.shuffle ? ' active' : ''}`}
-                    aria-label={t('now_playing.shuffle', 'Toggle shuffle')}
+                    aria-label={t('now_playing.shuffle')}
+                    aria-pressed={!!np.shuffle}
+                    title={t('now_playing.shuffle')}
                     onClick={() => onSettings({ shuffle: !np.shuffle })}
-                  >🔀</button>
+                  ><IconShuffle /></button>
                 )}
                 {onControl && (
                   <>
                     <button
                       type="button"
                       className="tft-round-btn tft-round-btn--small"
-                      aria-label={t('now_playing.previous', 'Previous track')}
+                      aria-label={t('now_playing.previous')}
                       onClick={() => onControl('previous')}
                       disabled={!np.is_previous_allowed}
-                    >⏮</button>
+                    ><IconPrev /></button>
                     <button
                       type="button"
                       className="tft-round-btn tft-round-btn--primary"
-                      aria-label={isPlaying ? t('now_playing.pause', 'Pause') : t('now_playing.play', 'Play')}
+                      aria-label={isPlaying ? t('now_playing.pause') : t('now_playing.play')}
                       onClick={() => onControl('playpause')}
                       disabled={!np.is_play_allowed && !np.is_pause_allowed}
-                    >{isPlaying ? '⏸' : '▶'}</button>
+                    >{isPlaying ? <IconPause size={22} /> : <IconPlay size={22} />}</button>
                     <button
                       type="button"
                       className="tft-round-btn tft-round-btn--small"
-                      aria-label={t('now_playing.next', 'Next track')}
+                      aria-label={t('now_playing.next')}
                       onClick={() => onControl('next')}
                       disabled={!np.is_next_allowed}
-                    >⏭</button>
+                    ><IconNext /></button>
                   </>
                 )}
                 {onSettings && (
                   <button
                     type="button"
                     className={`tft-round-btn tft-round-btn--small${np.loop !== 'disabled' ? ' active' : ''}`}
-                    aria-label={t('now_playing.loop', 'Toggle repeat')}
+                    aria-label={`${t('now_playing.loop')} — ${loopLabel || t('now_playing.loop_off')}`}
+                    title={loopLabel || t('now_playing.loop_off')}
+                    aria-pressed={np.loop !== 'disabled'}
                     onClick={() => {
                       const next = np.loop === 'disabled' ? 'loop' : np.loop === 'loop' ? 'loop_one' : 'disabled';
                       onSettings({ loop: next });
                     }}
-                  >🔁</button>
+                  >{np.loop === 'loop_one' ? <IconRepeatOne /> : <IconRepeat />}</button>
                 )}
               </div>
             )}
@@ -604,7 +640,8 @@ export default function HeroCard({
               <div className="tft-match-chips">
                 {scoreFields.map(({ key, label, hint }) => {
                   const d = match.score_detail[key];
-                  if (!d) return null;
+                  // Roon never sends an ISRC, so a 0/60 chip would only add noise.
+                  if (!d || (key === 'isrc' && !d.points)) return null;
                   return <ScoreChip key={key} label={label} points={d.points} max={d.max} hint={hint} />;
                 })}
               </div>

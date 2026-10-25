@@ -3,10 +3,26 @@ import { useTranslation } from 'react-i18next';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 
 const POLL_PRESETS = [500, 1000, 2000, 3000, 5000];
+const THEME_KEY = 'tft:theme';
+
+function readTheme() {
+  try { return localStorage.getItem(THEME_KEY) || 'system'; } catch { return 'system'; }
+}
+
+/** 'system' follows the OS; 'light' / 'dark' force it (also applied before first paint in index.html). */
+function applyTheme(theme) {
+  if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+  else delete document.documentElement.dataset.theme;
+  try {
+    if (theme === 'system') localStorage.removeItem(THEME_KEY);
+    else localStorage.setItem(THEME_KEY, theme);
+  } catch { /* blocked: the choice lasts for this page only */ }
+}
 
 export default function AppPrefs({ prefs, setPref }) {
   const { t } = useTranslation();
   const [collapsed, toggleCollapsed] = useCollapsed('app-prefs', false);
+  const [theme, setTheme] = useState(readTheme);
 
   // ── Diagnostics state ────────────────────────────────────────────────────────
   const [logState, setLogState] = useState(null); // null | { available, content, logPath, truncated, totalLines, message }
@@ -84,6 +100,21 @@ export default function AppPrefs({ prefs, setPref }) {
       {!collapsed && (
         <div className="card-body">
           <div className="settings-body">
+
+            {/* Theme */}
+            <div className="app-pref-row">
+              <label className="settings-label" htmlFor="tft-theme">{t('settings.theme')}</label>
+              <select
+                id="tft-theme"
+                className="app-pref-select"
+                value={theme}
+                onChange={e => { setTheme(e.target.value); applyTheme(e.target.value); }}
+              >
+                <option value="system">{t('settings.theme_system')}</option>
+                <option value="light">{t('settings.theme_light')}</option>
+                <option value="dark">{t('settings.theme_dark')}</option>
+              </select>
+            </div>
 
             {/* Volume step */}
             <div className="app-pref-row">

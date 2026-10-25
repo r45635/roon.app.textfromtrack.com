@@ -92,7 +92,10 @@
     "empty_waiting_auth_hint": "Open Roon → Settings → Extensions and enable “TextFromTrack Roon Companion”.",
     "frozen_banner": "Working on {{file}} — the panels below no longer follow the track playing now.",
     "frozen_banner_nofile": "The panels below no longer follow the track playing now.",
-    "follow_again": "Follow playing track"
+    "follow_again": "Follow playing track",
+    "loop": "Repeat",
+    "speakers_show": "Show each speaker",
+    "speakers_hide": "Hide speakers"
   },
   "match": {
     "no_index": "Library not scanned yet",
@@ -430,7 +433,13 @@
     "scan_unreadable_other": "{{count}} unreadable files",
     "scan_never": "Not scanned yet.",
     "scan_failed": "Last scan failed: {{msg}}",
-    "root_missing": "Folder not found: {{path}} — is the drive or NAS mounted?"
+    "root_missing": "Folder not found: {{path}} — is the drive or NAS mounted?",
+    "auto_save_lrclib": "Save LRCLIB lyrics automatically",
+    "auto_save_lrclib_hint": "When the playing track matches a file that has no lyrics and LRCLIB has synced lyrics, write them into the file (with the options above). Each save appears in Job History.",
+    "theme": "Theme",
+    "theme_system": "Same as the system",
+    "theme_light": "Light",
+    "theme_dark": "Dark"
   },
   "lrclib": {
     "check_button": "Check LRCLIB Lyrics",

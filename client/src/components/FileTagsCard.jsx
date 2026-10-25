@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { describeError } from '../lib/errors.js';
+import { useMediaQuery } from '../hooks/useMediaQuery.js';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 import SyncedLyrics from './SyncedLyrics.jsx';
 
@@ -257,6 +258,7 @@ export default function FileTagsCard({ filePath, refreshKey = 0, nowPlaying = nu
   const { t } = useTranslation();
   const [collapsed, toggleCollapsed] = useCollapsed('file-tags', true);
   const [activeTab, setActiveTab] = useState('art');
+  const isMobile = useMediaQuery('(max-width: 620px)'); // same breakpoint as the carousel CSS
   const carouselRef = useRef(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const [state, setState] = useState({ tags: null, format: null, loading: false, error: null });
@@ -520,23 +522,28 @@ export default function FileTagsCard({ filePath, refreshKey = 0, nowPlaying = nu
                   </button>
                 </div>
                 <div className="file-tabs-content">
-                  {activeTab === 'art'    && <ArtworkPanel key={`art-${panelKey}`}    filePath={filePath} active />}
-                  {activeTab === 'lyrics' && <LyricsPanel  key={`lyrics-${panelKey}`} filePath={filePath} active
+                  {!isMobile && activeTab === 'art'    && <ArtworkPanel key={`art-${panelKey}`}    filePath={filePath} active />}
+                  {!isMobile && activeTab === 'lyrics' && <LyricsPanel  key={`lyrics-${panelKey}`} filePath={filePath} active
                     onDelete={() => { setPanelKey(k => k + 1); }}
                     seekSeconds={nowPlaying?.seek_position_seconds ?? 0}
                     isPlaying={nowPlaying?.state === 'playing'} />}
                 </div>
               </div>
-              {/* ── Mobile slides (art + lyrics) ─────────────────────── */}
-              <div className="file-tags-mobile-art">
-                <ArtworkPanel key={`art-m-${panelKey}`} filePath={filePath} active />
-              </div>
-              <div className="file-tags-mobile-lyrics">
-                <LyricsPanel key={`lyrics-m-${panelKey}`} filePath={filePath} active
-                  onDelete={() => { setPanelKey(k => k + 1); }}
-                  seekSeconds={nowPlaying?.seek_position_seconds ?? 0}
-                  isPlaying={nowPlaying?.state === 'playing'} />
-              </div>
+              {/* ── Mobile slides (art + lyrics) — mounted only on mobile so the
+                   panels (and their requests) never exist twice ───────────── */}
+              {isMobile && (
+                <>
+                  <div className="file-tags-mobile-art">
+                    <ArtworkPanel key={`art-m-${panelKey}`} filePath={filePath} active />
+                  </div>
+                  <div className="file-tags-mobile-lyrics">
+                    <LyricsPanel key={`lyrics-m-${panelKey}`} filePath={filePath} active
+                      onDelete={() => { setPanelKey(k => k + 1); }}
+                      seekSeconds={nowPlaying?.seek_position_seconds ?? 0}
+                      isPlaying={nowPlaying?.state === 'playing'} />
+                  </div>
+                </>
+              )}
             </div>
             {/* Dots indicator — shown on mobile only via CSS */}
             <div className="file-tags-dots">

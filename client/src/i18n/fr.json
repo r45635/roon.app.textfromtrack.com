@@ -92,7 +92,10 @@
     "empty_waiting_auth_hint": "Ouvrez Roon → Paramètres → Extensions et activez « TextFromTrack Roon Companion ».",
     "frozen_banner": "Travail sur {{file}} — les panneaux ci-dessous ne suivent plus le titre en cours.",
     "frozen_banner_nofile": "Les panneaux ci-dessous ne suivent plus le titre en cours.",
-    "follow_again": "Suivre le titre en cours"
+    "follow_again": "Suivre le titre en cours",
+    "loop": "Répétition",
+    "speakers_show": "Voir le détail par enceinte",
+    "speakers_hide": "Masquer le détail"
   },
   "match": {
     "no_index": "Bibliothèque non encore indexée",
@@ -430,7 +433,13 @@
     "scan_unreadable_other": "{{count}} fichiers illisibles",
     "scan_never": "Pas encore analysée.",
     "scan_failed": "La dernière analyse a échoué : {{msg}}",
-    "root_missing": "Dossier introuvable : {{path}} — le disque ou le NAS est-il monté ?"
+    "root_missing": "Dossier introuvable : {{path}} — le disque ou le NAS est-il monté ?",
+    "auto_save_lrclib": "Enregistrer automatiquement les paroles LRCLIB",
+    "auto_save_lrclib_hint": "Quand le titre en cours correspond à un fichier sans paroles et que LRCLIB a des paroles synchronisées, les écrire dans le fichier (avec les options ci-dessus). Chaque enregistrement apparaît dans l’historique.",
+    "theme": "Thème",
+    "theme_system": "Comme le système",
+    "theme_light": "Clair",
+    "theme_dark": "Sombre"
   },
   "lrclib": {
     "check_button": "Chercher sur LRCLIB",

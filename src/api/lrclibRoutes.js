@@ -233,7 +233,6 @@ router.post('/save', async (req, res) => {
     result.lrc_file = written.lrc_file;
     result.lyrics_embedded = written.lyrics_embedded;
     result.backup_path = written.backup_path;
-    const doEmbed = written.lyrics_embedded;
 
     // Update scanner index lyrics_status
     try {
@@ -252,38 +251,15 @@ router.post('/save', async (req, res) => {
       lrc_content
     );
 
-    // Create a job record so this appears in Job History
-    const { randomUUID } = require('crypto');
-    const segmentCount = (lrc_content.match(/^\[[\d:.]+\]/gm) || []).length;
-    const hasTimestamps = segmentCount > 0;
-    const lrclibJob = {
-      job_id: randomUUID(),
-      source_file: resolved,
-      lrc_file: result.lrc_file,
-      title: (typeof bodyMeta.title === 'string' ? bodyMeta.title : null),
-      artist: (typeof bodyMeta.artist === 'string' ? bodyMeta.artist : null),
-      album: (typeof bodyMeta.album === 'string' ? bodyMeta.album : null),
-      status: 'done',
-      source: 'lrclib',
-      cache_hit: false,
-      embed_requested: doEmbed,
-      force_requested: false,
-      lyrics_embedded: result.lyrics_embedded,
-      timestamps_requested: 'auto',
-      timestamps_mode: null,
-      credits_quoted: 0,
-      credits_charged: 0,
-      segment_count: segmentCount,
-      created_at: new Date().toISOString(),
-      completed_at: new Date().toISOString(),
-      has_timestamps: hasTimestamps,
-      has_timestamps_source: 'lrc_content',
-      embed_error: null,
-      backup_path: result.backup_path || null,
-      backup_created: !!result.backup_path,
-      error: null,
-    };
-    jobStore.create(lrclibJob);
+    // Job record so this appears in Job History
+    jobStore.recordLyricsSave({
+      sourceFile: resolved,
+      lrc: lrc_content,
+      title: typeof bodyMeta.title === 'string' ? bodyMeta.title : null,
+      artist: typeof bodyMeta.artist === 'string' ? bodyMeta.artist : null,
+      album: typeof bodyMeta.album === 'string' ? bodyMeta.album : null,
+      written: result,
+    });
 
     return res.json(result);
   } catch (err) {

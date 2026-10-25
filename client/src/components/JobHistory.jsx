@@ -227,7 +227,7 @@ export default function JobHistory({ jobs, onJobRetried }) {
           <tbody>
             {jobs.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map(job => (
               <tr key={job.job_id} className={job.status === 'error' ? 'row-error' : ''}>
-                <td className="td-date">
+                <td className="td-date" data-label={t('jobs.date')}>
                   {job.created_at ? (
                     <>
                       <span className="td-date-day">{new Date(job.created_at).toLocaleDateString()}</span>
@@ -235,9 +235,9 @@ export default function JobHistory({ jobs, onJobRetried }) {
                     </>
                   ) : t('common.na')}
                 </td>
-                <td className="td-truncate" title={job.title || ''}>{job.title || t('common.na')}</td>
-                <td className="td-truncate" title={job.artist || ''}>{job.artist || t('common.na')}</td>
-                <td className="td-status">
+                <td className="td-truncate td-title" data-label={t('jobs.track')} title={job.title || ''}>{job.title || t('common.na')}</td>
+                <td className="td-truncate" data-label={t('jobs.artist')} title={job.artist || ''}>{job.artist || t('common.na')}</td>
+                <td className="td-status" data-label={t('jobs.status')}>
                   <div className="status-badges">
                     {/* Main status icon */}
                     <span
@@ -296,7 +296,7 @@ export default function JobHistory({ jobs, onJobRetried }) {
                     )}
                   </div>
                 </td>
-                <td className="td-path">
+                <td className="td-path" data-label={t('jobs.track_path')}>
                   {/* Track path column */}
                   {job.source_file ? (
                     <span className="lrc-reveal-wrap" title={job.source_file}>
@@ -366,7 +366,7 @@ export default function JobHistory({ jobs, onJobRetried }) {
                     t('common.na')
                   )}
                 </td>
-                <td className="td-credits">
+                <td className="td-credits" data-label={t('jobs.credits')}>
                   {job.source === 'lrclib' ? (
                     <span className="badge badge-neutral" title={t('jobs.source_lrclib_tip')}>LRCLIB</span>
                   ) : job.cache_hit ? (
