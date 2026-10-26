@@ -17,4 +17,13 @@ module.exports = [
       'no-empty': ['error', { allowEmptyCatch: true }],
     },
   },
+  {
+    // ES modules run by Node (scripts/media/shoot.mjs)
+    files: ['**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2024,
+      sourceType: 'module',
+      globals: { ...globals.node, WebSocket: 'readonly' }, // built into Node 22+
+    },
+  },
 ];
