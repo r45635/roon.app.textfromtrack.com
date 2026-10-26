@@ -11,7 +11,8 @@ import TftApiKey from './components/TftApiKey.jsx';
 import FilesManagement from './components/FilesManagement.jsx';
 import LibraryCard from './components/LibraryCard.jsx';
 import { useAppPrefs } from './hooks/useAppPrefs.js';
-import { maskZones, maskNowPlaying, maskRoonStatus, maskAccount, isPrivacyMode } from './lib/privacy.js';
+import { maskZones, maskNowPlaying, maskRoonStatus, maskAccount } from './lib/privacy.js';
+import { qrPageUrl } from './lib/qrPage.js';
 
 const JOBS_POLL_MS = 5000;
 
@@ -419,7 +420,7 @@ export default function App() {
 
           <a
             className="tft-settings-btn tft-phone-btn"
-            href={isPrivacyMode() ? '/api/qr?privacy=1' : '/api/qr'}
+            href={qrPageUrl()}
             target="_blank"
             rel="noreferrer"
             title={t('app.phone_qr')}

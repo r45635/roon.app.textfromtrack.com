@@ -406,6 +406,9 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 ### v0.5.6 ✓ — Zone selection fix
 - A zone with nothing loaded (stopped, empty queue) can be chosen again: the selection used to fall back silently to another zone
 
+### v0.5.7 ✓ — Phone / TV page in French
+- The QR page follows the UI language (`/api/qr?lang=fr`), or the browser's when opened from the tray
+
 ### Upcoming
 
 #### Local tag editor (mp3tag-style, lyrics-aware)
