@@ -56,16 +56,17 @@ Not affiliated with Roon Labs. Roon is a trademark of Roon Labs.
 | Square, 1080×1080 | [ad3.en.png](marketing/visuals/ad3.en.png) · [ad3.fr.png](marketing/visuals/ad3.fr.png) |
 | Portrait, 1080×1350 | [ad4.en.png](marketing/visuals/ad4.en.png) · [ad4.fr.png](marketing/visuals/ad4.fr.png) |
 
-**Clips** (MP4 and GIF)
+**Clips** (MP4 and GIF — English UI · French UI)
 
 | | |
 |---|---|
-| Lyrics line by line | [karaoke.mp4](media/clips/karaoke.mp4) · [.gif](media/clips/karaoke.gif) |
-| Click a line, Roon jumps there | [seek.mp4](media/clips/seek.mp4) · [.gif](media/clips/seek.gif) |
-| Timing nudge | [timing.mp4](media/clips/timing.mp4) · [.gif](media/clips/timing.gif) |
-| Full screen | [fullscreen.mp4](media/clips/fullscreen.mp4) · [.gif](media/clips/fullscreen.gif) |
-| Phone and tablet | [phone-tv.mp4](media/clips/phone-tv.mp4) · [.gif](media/clips/phone-tv.gif) |
-| Zone menu | [zones.mp4](media/clips/zones.mp4) · [.gif](media/clips/zones.gif) |
+| Promo cut, 15 s, 1280×720, with end card | [ad5.en.mp4](marketing/visuals/ad5.en.mp4) · [.gif](marketing/visuals/ad5.en.gif) — [ad5.fr.mp4](marketing/visuals/ad5.fr.mp4) · [.gif](marketing/visuals/ad5.fr.gif) |
+| Lyrics line by line | [karaoke.mp4](media/clips/karaoke.mp4) · [.gif](media/clips/karaoke.gif) — [FR](media/clips/fr/karaoke.mp4) · [.gif](media/clips/fr/karaoke.gif) |
+| Click a line, Roon jumps there | [seek.mp4](media/clips/seek.mp4) · [.gif](media/clips/seek.gif) — [FR](media/clips/fr/seek.mp4) · [.gif](media/clips/fr/seek.gif) |
+| Timing nudge | [timing.mp4](media/clips/timing.mp4) · [.gif](media/clips/timing.gif) — [FR](media/clips/fr/timing.mp4) · [.gif](media/clips/fr/timing.gif) |
+| Full screen | [fullscreen.mp4](media/clips/fullscreen.mp4) · [.gif](media/clips/fullscreen.gif) — [FR](media/clips/fr/fullscreen.mp4) · [.gif](media/clips/fr/fullscreen.gif) |
+| Phone and tablet | [phone-tv.mp4](media/clips/phone-tv.mp4) · [.gif](media/clips/phone-tv.gif) — [FR](media/clips/fr/phone-tv.mp4) · [.gif](media/clips/fr/phone-tv.gif) |
+| Zone menu | [zones.mp4](media/clips/zones.mp4) · [.gif](media/clips/zones.gif) — [FR](media/clips/fr/zones.mp4) · [.gif](media/clips/fr/zones.gif) |
 
 **Screenshots:** [English](media/en/) · [French](media/fr/) — player (light and dark), full
 screen, zones, versions, settings, phone, tablet, QR page.

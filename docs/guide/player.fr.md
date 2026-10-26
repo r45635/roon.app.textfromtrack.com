@@ -30,7 +30,7 @@ et le volume — et pour changer de zone, transférer la file ou grouper des sor
 
 ## Les paroles
 
-![Les paroles, ligne par ligne](../media/clips/karaoke.gif)
+![Les paroles, ligne par ligne](../media/clips/fr/karaoke.gif)
 
 Sous le lecteur, les paroles du titre en cours. La ligne en surbrillance suit la musique.
 
