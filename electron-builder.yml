@@ -25,7 +25,9 @@ files:
   - "!tests/**"
   - "!scripts/**"
   - "!dev-tools/**"
-  - "!screenshoots/**"
+  # The app opens docs/user-guide.html only: leave the doc media and launch kit out
+  - "!docs/media/**"
+  - "!docs/marketing/**"
   - "!**/*.test.js"
   - "!**/.env*"
 
