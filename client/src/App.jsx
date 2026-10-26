@@ -260,6 +260,7 @@ export default function App() {
 
   async function handleSelectZone(zoneId) {
     setNowPlaying(prev => prev ? { ...prev, zone_id: zoneId } : prev);
+    setZones(prev => prev.map(z => ({ ...z, is_active: z.zone_id === zoneId })));
     try {
       await fetch('/api/roon/active-zone', {
         method: 'POST',
@@ -499,7 +500,7 @@ export default function App() {
             <ZoneSelector
               ref={zoneSelectorRef}
               zones={zones}
-              activeZoneId={nowPlaying?.zone_id}
+              activeZoneId={nowPlaying?.zone_id ?? zones.find(z => z.is_active)?.zone_id}
               onSelect={handleSelectZone}
               onTransfer={handleTransfer}
               onGroup={handleGroup}

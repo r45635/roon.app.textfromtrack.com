@@ -403,6 +403,9 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 ### v0.5.5 ✓ — Polish
 - Screenshot mode names in the UI language; shorter French labels; SVG controls in full screen
 
+### v0.5.6 ✓ — Zone selection fix
+- A zone with nothing loaded (stopped, empty queue) can be chosen again: the selection used to fall back silently to another zone
+
 ### Upcoming
 
 #### Local tag editor (mp3tag-style, lyrics-aware)

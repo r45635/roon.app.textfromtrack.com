@@ -115,8 +115,12 @@ function _refreshActiveZone() {
   if (_activeZoneId) {
     const active = _zones.get(_activeZoneId);
     if (active) {
+      // A chosen zone with nothing loaded stays chosen: falling back to another
+      // zone here made idle zones impossible to select.
       const state = _extractNowPlaying(active);
-      if (state) { nowPlayingStore.set(state); return; }
+      if (state) nowPlayingStore.set(state);
+      else nowPlayingStore.clear();
+      return;
     }
     // Explicitly selected zone is gone — fall through to auto but don't cling
     // to a stale _activeZoneId (let the UI re-select).

@@ -116,3 +116,54 @@ describe('startRoon — discovery', () => {
     assert.deepEqual(Object.keys(roon._sood_conns), ['core-b']);
   });
 });
+
+describe('setActiveZone', () => {
+  const nowPlayingStore = require('../../src/roon/nowPlayingStore');
+
+  function pairWith(client, zones) {
+    config.roonCoreHost = null;
+    client.startRoon();
+    let onZones;
+    lastRoonApi.opts.core_paired({
+      display_name: 'Core', display_version: '2.0', services: {
+        RoonApiTransport: { subscribe_zones: (cb) => { onZones = cb; } },
+        RoonApiBrowse: {},
+      },
+    });
+    onZones('Subscribed', { zones });
+    return (data) => onZones('Changed', data);
+  }
+
+  const playing = {
+    zone_id: 'z-play', display_name: 'Kitchen', state: 'playing', outputs: [],
+    now_playing: { three_line: { line1: 'Song', line2: 'Artist' }, length: 200 },
+  };
+  const idle = { zone_id: 'z-idle', display_name: 'Living Room', state: 'stopped', outputs: [] };
+
+  test('keeps a chosen zone that has nothing loaded, instead of falling back to a playing one', () => {
+    const client = loadClient();
+    const changed = pairWith(client, [playing, idle]);
+    assert.equal(nowPlayingStore.get()?.zone_id, 'z-play');
+
+    client.setActiveZone('z-idle');
+    assert.equal(nowPlayingStore.get(), null);
+    assert.deepEqual(client.getAllZones().filter(z => z.is_active).map(z => z.zone_id), ['z-idle']);
+
+    // Another zone's update must not pull the selection away
+    changed({ zones_changed: [{ ...playing, now_playing: { ...playing.now_playing, seek_position: 10 } }] });
+    assert.deepEqual(client.getAllZones().filter(z => z.is_active).map(z => z.zone_id), ['z-idle']);
+
+    // Something starts in the chosen zone: it shows up
+    changed({ zones_changed: [{ ...idle, state: 'playing', now_playing: { three_line: { line1: 'Other', line2: 'Band' } } }] });
+    assert.equal(nowPlayingStore.get()?.zone_id, 'z-idle');
+    assert.equal(nowPlayingStore.get()?.title, 'Other');
+  });
+
+  test('falls back to the automatic zone when the chosen one disappears', () => {
+    const client = loadClient();
+    const changed = pairWith(client, [playing, idle]);
+    client.setActiveZone('z-idle');
+    changed({ zones_removed: ['z-idle'] });
+    assert.equal(nowPlayingStore.get()?.zone_id, 'z-play');
+  });
+});
