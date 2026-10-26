@@ -1,0 +1,28 @@
+name: Docker Hub description
+
+# Keeps the Docker Hub page in step with docs/DOCKERHUB.md, using the same credentials as the
+# release. The token needs the "Read, Write, Delete" scope: Docker Hub refuses description
+# updates from narrower tokens.
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/DOCKERHUB.md
+      - .github/workflows/dockerhub-description.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  description:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: peter-evans/dockerhub-description@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: r45635/roon-companion
+          short-description: "Synced lyrics for everything Roon plays — web UI, phone & TV display. amd64/arm64."
+          readme-filepath: docs/DOCKERHUB.md
