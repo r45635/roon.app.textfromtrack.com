@@ -98,9 +98,22 @@ export function maskAccount(account) {
   return { ...account, email: account.email ? names().email : account.email };
 }
 
-/** "/Volumes/My Passport/HiRes Music/Artist/Album/01 Song.flac" → "/Music/Artist/Album/01 Song.flac" */
+let knownRoots = [];
+
+/** The configured music folders: maskPath then replaces exactly that prefix, however deep the files sit. */
+export function setKnownRoots(roots) {
+  knownRoots = (roots || []).map(r => String(r).replace(/\/+$/, '')).filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+}
+
+/**
+ * "/Volumes/My Passport/HiRes Music/Artist/Album/01 Song.flac" → "/Music/Artist/Album/01 Song.flac".
+ * A music folder itself becomes "/Music". Without known folders, the last three parts are kept.
+ */
 export function maskPath(p) {
   if (!isPrivacyMode() || !p) return p;
+  const root = knownRoots.find(r => p === r || p.startsWith(r + '/'));
+  if (root) return '/Music' + p.slice(root.length);
   const parts = p.split('/').filter(Boolean);
   return '/Music/' + parts.slice(-3).join('/');
 }

@@ -409,6 +409,10 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 ### v0.5.7 ✓ — Phone / TV page in French
 - The QR page follows the UI language (`/api/qr?lang=fr`), or the browser's when opened from the tray
 
+### v0.5.8 ✓ — Library on a sleeping drive
+- The library scan uses async file access: a NAS or USB drive waking up no longer freezes the UI, the API and the Roon connection
+- Screenshot mode hides the whole music-folder prefix (`/Music/…`), however shallow the library is
+
 ### Upcoming
 
 #### Local tag editor (mp3tag-style, lyrics-aware)

@@ -41,6 +41,12 @@ describe('screenshot mode (client/src/lib/privacy.js)', () => {
     assert.equal(p.maskRoonStatus({ core_name: 'vincents-Mac-Studio' }).core_name, 'Roon Core');
     assert.equal(p.maskAccount({ email: 'someone@gmail.com' }).email, 'listener@example.com');
     assert.equal(p.maskPath('/Volumes/My Passport/HiRes Music/The Doors/Alive/07 Moonlight.flac'), '/Music/The Doors/Alive/07 Moonlight.flac');
+    // With the music folders known, their whole prefix goes, however shallow the files are
+    p.setKnownRoots(['/Volumes/My Passport/HiRes Music/']);
+    assert.equal(p.maskPath('/Volumes/My Passport/HiRes Music/Josh Woodward/TheNest.mp3'), '/Music/Josh Woodward/TheNest.mp3');
+    assert.equal(p.maskPath('/Volumes/My Passport/HiRes Music'), '/Music');
+    assert.equal(p.maskPath('/Volumes/Other/Disk/A/B/c.flac'), '/Music/A/B/c.flac');
+    p.setKnownRoots([]);
     p.setPrivacyMode(false);
   });
 

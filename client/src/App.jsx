@@ -11,7 +11,7 @@ import TftApiKey from './components/TftApiKey.jsx';
 import FilesManagement from './components/FilesManagement.jsx';
 import LibraryCard from './components/LibraryCard.jsx';
 import { useAppPrefs } from './hooks/useAppPrefs.js';
-import { maskZones, maskNowPlaying, maskRoonStatus, maskAccount } from './lib/privacy.js';
+import { maskZones, maskNowPlaying, maskRoonStatus, maskAccount, setKnownRoots } from './lib/privacy.js';
 import { qrPageUrl } from './lib/qrPage.js';
 
 const JOBS_POLL_MS = 5000;
@@ -122,7 +122,10 @@ export default function App() {
   // Lyrics-only mode (no music folder) hides the library tools.
   const fetchLibraryConfig = useCallback(async () => {
     const data = await apiFetch('/api/music/config');
-    if (data?.success) setLibraryConfigured((data.music_roots || []).length > 0);
+    if (data?.success) {
+      setKnownRoots(data.music_roots);
+      setLibraryConfigured((data.music_roots || []).length > 0);
+    }
   }, []);
 
   // ── Bootstrap ────────────────────────────────────────────────────────────────

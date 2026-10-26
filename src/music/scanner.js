@@ -10,12 +10,20 @@ const userSettings = require('../storage/userSettings');
 
 const SUPPORTED_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.aiff', '.aif', '.m4a']);
 
+// The library often sits on a NAS or a USB drive that can stall for a minute while it
+// wakes up: every file access here is async, so a stalled drive never freezes the server
+// (UI, API and the Roon connection keep running while the scan waits).
+
+async function exists(p) {
+  try { await fs.promises.access(p); return true; } catch { return false; }
+}
+
 // ─── Recursive directory walker ───────────────────────────────────────────────
 
-function* walkDir(dir) {
+async function* walkDir(dir) {
   let entries;
   try {
-    entries = fs.readdirSync(dir, { withFileTypes: true });
+    entries = await fs.promises.readdir(dir, { withFileTypes: true });
   } catch (err) {
     logger.warn({ dir, err: err.message }, 'Cannot read directory — skipping');
     return;
@@ -40,7 +48,7 @@ async function extractTrack(filePath, parseFile) {
 
   let stat;
   try {
-    stat = fs.statSync(filePath);
+    stat = await fs.promises.stat(filePath);
   } catch (err) {
     logger.warn({ filePath, err: err.message }, 'Cannot stat file — skipping');
     return null;
@@ -55,8 +63,8 @@ async function extractTrack(filePath, parseFile) {
   }
 
   const { common, format } = metadata;
-  const lyricsStatus = lyricsDetector.detectFromMetadata(filePath, common);
   const lrcPath = lyricsDetector.getLrcPath(filePath);
+  const lyricsStatus = lyricsDetector.detectFromMetadata(filePath, common, await exists(lrcPath));
 
   return {
     path: filePath,
@@ -135,12 +143,12 @@ async function _scan(opts) {
 
   const missingRoots = [];
   for (const root of roots) {
-    if (!fs.existsSync(root)) {
+    if (!(await exists(root))) {
       logger.warn({ root }, 'Music root does not exist — skipping');
       missingRoots.push(root);
       continue;
     }
-    for (const filePath of walkDir(root)) {
+    for await (const filePath of walkDir(root)) {
       const track = await extractTrack(filePath, parseFile);
       if (track) {
         tracks.push(track);

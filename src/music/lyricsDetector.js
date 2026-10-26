@@ -92,11 +92,12 @@ function extractEmbeddedLyrics(metadata) {
  *
  * @param {string} audioPath
  * @param {object} common - metadata.common from music-metadata
+ * @param {boolean} [lrcExists] - whether the .lrc sidecar exists, when the caller already checked (async)
  * @returns {string} One of the STATUS constants
  */
-function detectFromMetadata(audioPath, common) {
+function detectFromMetadata(audioPath, common, lrcExists) {
   try {
-    if (hasLrcFile(audioPath)) return STATUS.HAS_LRC_FILE;
+    if (lrcExists ?? hasLrcFile(audioPath)) return STATUS.HAS_LRC_FILE;
     if (hasEmbeddedLyrics(common)) return STATUS.HAS_EMBEDDED_LYRICS;
     return STATUS.NO_LOCAL_LYRICS;
   } catch {
