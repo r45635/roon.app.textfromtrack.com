@@ -19,7 +19,7 @@
     "electron:publish": "electron-builder --publish always",
     "scan": "node scripts/scan-library.js",
     "test:tft": "node scripts/test-tft-api.js",
-    "test": "node --test --test-reporter spec tests/utils/normalize.test.js tests/utils/fileUtils.test.js tests/music/matcher.test.js tests/music/lyricsDetector.test.js tests/music/lyricsEmbedder.test.js tests/music/flacTagger.test.js tests/textfromtrack/jobStore.test.js tests/roon/roonClient.test.js tests/lyrics/lyricsResolver.test.js tests/lyrics/autoSave.test.js tests/lyrics/lrclibClient.test.js tests/client/i18n.test.js tests/client/privacy.test.js tests/library/lrclibBatch.test.js tests/utils/desktop.test.js tests/utils/updateCheck.test.js tests/utils/accessGuard.test.js tests/utils/lanAddress.test.js tests/utils/requestGuards.test.js tests/api/qrRoutes.test.js tests/music/scanner.test.js",
+    "test": "node --test --test-reporter spec tests/utils/normalize.test.js tests/utils/fileUtils.test.js tests/music/matcher.test.js tests/music/lyricsDetector.test.js tests/music/lyricsEmbedder.test.js tests/music/flacTagger.test.js tests/textfromtrack/jobStore.test.js tests/roon/roonClient.test.js tests/lyrics/lyricsResolver.test.js tests/lyrics/autoSave.test.js tests/lyrics/lrclibClient.test.js tests/client/i18n.test.js tests/client/privacy.test.js tests/library/lrclibBatch.test.js tests/utils/desktop.test.js tests/utils/updateCheck.test.js tests/utils/accessGuard.test.js tests/utils/lanAddress.test.js tests/utils/requestGuards.test.js tests/api/qrRoutes.test.js tests/music/scanner.test.js tests/music/id3Tagger.test.js",
     "lint": "eslint src scripts"
   },
   "dependencies": {
@@ -27,7 +27,6 @@
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "music-metadata": "^12.3.0",
-    "node-id3": "^0.2.9",
     "node-roon-api": "github:roonlabs/node-roon-api",
     "node-roon-api-browse": "github:roonlabs/node-roon-api-browse",
     "node-roon-api-status": "github:roonlabs/node-roon-api-status",

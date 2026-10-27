@@ -413,6 +413,11 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 - The library scan uses async file access: a NAS or USB drive waking up no longer freezes the UI, the API and the Roon connection
 - Screenshot mode hides the whole music-folder prefix (`/Music/…`), however shallow the library is
 
+### v0.5.9 ✓ — MP3 tags kept intact
+- Lyrics and tag edits on MP3 files now change only the frames concerned (`src/music/id3Tagger.js`); node-id3, which re-encoded every frame and garbled some (a comment came back as mojibake, a second one was dropped), is gone. ID3v2.3 and v2.4 unsynchronisation handled
+- The library card recounts after lyrics are saved into a file
+- A scan that reads nothing for 15 s explains why (drive waking up, or macOS waiting for network-volume access)
+
 ### Upcoming
 
 #### Local tag editor (mp3tag-style, lyrics-aware)

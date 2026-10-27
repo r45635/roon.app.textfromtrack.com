@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const NodeID3 = require('node-id3');
+const id3Tagger = require('./id3Tagger');
 const flacTagger = require('./flacTagger');
 const logger = require('../utils/logger');
 const { AppError, E } = require('../utils/normalize');
@@ -130,22 +130,14 @@ function embedLyrics(audioPath, lrcContent, options = {}) {
 }
 
 function embedMp3(audioPath, lrcContent) {
-  // node-id3.update() is a partial update — it merges the supplied frames
-  // with whatever already exists in the file, so other tags (artist, album,
-  // pictures, …) are preserved.
-  const tags = {
-    unsynchronisedLyrics: {
-      language: 'eng',
-      shortText: 'LYRICS',
-      text: lrcContent,
-    },
-  };
-  const ok = NodeID3.update(tags, audioPath);
-  if (ok !== true) {
-    const message = ok && ok.message ? ok.message : 'node-id3 update failed';
-    throw new AppError(E.LYRICS_EMBED_FAILED, `MP3 embed failed: ${message}`);
+  // Only the USLT frame changes; every other ID3 frame is copied byte-for-byte (see id3Tagger).
+  let summary;
+  try {
+    summary = id3Tagger.setLyrics(audioPath, lrcContent);
+  } catch (err) {
+    throw new AppError(E.LYRICS_EMBED_FAILED, `MP3 embed failed: ${err.message}`);
   }
-  logger.info({ audioPath, length: lrcContent.length }, 'Embedded LYRICS into MP3 (USLT)');
+  logger.info({ audioPath, length: lrcContent.length, frames_kept: summary.kept }, 'Embedded LYRICS into MP3 (USLT)');
   return { format: 'mp3', bytes: lrcContent.length };
 }
 
@@ -210,17 +202,14 @@ function removeLyrics(audioPath) {
     return { format: 'flac', ...result };
   }
 
-  // MP3: read all tags, delete the USLT frame, re-write everything else.
-  const currentTags = NodeID3.read(audioPath);
-  if (!currentTags.unsynchronisedLyrics) {
-    return { format: 'mp3', removed: false };
+  // MP3: drop the USLT frames only; every other frame is copied byte-for-byte.
+  let result;
+  try {
+    result = id3Tagger.removeLyrics(audioPath);
+  } catch (err) {
+    throw new AppError(E.LYRICS_EMBED_FAILED, `MP3 lyrics removal failed: ${err.message}`);
   }
-  delete currentTags.unsynchronisedLyrics;
-  const ok = NodeID3.write(currentTags, audioPath);
-  if (ok !== true) {
-    throw new AppError(E.LYRICS_EMBED_FAILED, `MP3 lyrics removal failed: ${ok?.message || 'unknown'}`);
-  }
-  logger.info({ audioPath }, 'removeLyrics: MP3 USLT removed');
-  return { format: 'mp3', removed: true };
+  logger.info({ audioPath, removed: result.removed }, 'removeLyrics: MP3');
+  return { format: 'mp3', removed: result.removed };
 }
 

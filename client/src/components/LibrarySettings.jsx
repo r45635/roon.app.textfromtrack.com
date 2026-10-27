@@ -3,6 +3,13 @@ import { useCollapsed } from '../hooks/useCollapsed.js';
 import { useTranslation } from 'react-i18next';
 import { maskPath } from '../lib/privacy.js';
 
+// Nothing read 15 s into a scan: the drive is asleep, or macOS waits for the user to allow
+// access to a network volume (the scan then hangs until they answer).
+function scanStalled(status) {
+  const p = status?.scan?.progress;
+  return !!p?.started_at && (p.scanned ?? 0) === 0 && Date.now() - Date.parse(p.started_at) > 15000;
+}
+
 export default function LibrarySettings({ onRescanStarted }) {
   const { t } = useTranslation();
   const [collapsed, toggleCollapsed] = useCollapsed('library-settings');
@@ -151,7 +158,10 @@ function ScanStatus({ status }) {
   return (
     <div className="settings-scan-status" role="status">
       {status.scan_in_progress ? (
-        <p>{t('settings.scan_running', { count: status.scan?.progress?.scanned ?? 0 })}</p>
+        <>
+          <p>{t('settings.scan_running', { count: status.scan?.progress?.scanned ?? 0 })}</p>
+          {scanStalled(status) && <p className="muted small">{t('settings.scan_stalled')}</p>}
+        </>
       ) : status.last_scan_at ? (
         <p>
           {t('settings.scan_summary', {

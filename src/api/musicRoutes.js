@@ -11,7 +11,7 @@ const matcher = require('../music/matcher');
 const lyricsDetector = require('../music/lyricsDetector');
 const lyricsEmbedder = require('../music/lyricsEmbedder');
 const flacTagger = require('../music/flacTagger');
-const NodeID3 = require('node-id3');
+const id3Tagger = require('../music/id3Tagger');
 const nowPlayingStore = require('../roon/nowPlayingStore');
 const { getRoonStatus } = require('../roon/roonClient');
 const userSettings = require('../storage/userSettings');
@@ -483,28 +483,21 @@ router.patch('/file-tags', async (req, res) => {
     }
 
     if (ext === '.mp3') {
-      const currentTags = NodeID3.read(resolved);
-      const apply = (key, value) => {
-        if (value == null || String(value).trim() === '') delete currentTags[key];
-        else currentTags[key] = value;
+      // Only the edited frames change; every other ID3 frame is copied byte-for-byte.
+      const MP3_FRAME_MAP = {
+        title: 'TIT2', artist: 'TPE1', albumartist: 'TPE2', album: 'TALB', year: 'YEAR',
+        genre: 'TCON', track: 'TRCK', disc: 'TPOS', composer: 'TCOM', isrc: 'TSRC', comment: 'COMM',
       };
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'title'))       apply('title', incomingTags.title);
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'artist'))      apply('artist', incomingTags.artist);
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'albumartist')) apply('performerInfo', incomingTags.albumartist);
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'album'))       apply('album', incomingTags.album);
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'year'))        apply('year', incomingTags.year);
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'genre'))       apply('genre', incomingTags.genre);
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'track'))       apply('trackNumber', incomingTags.track);
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'disc'))        apply('partOfSet', incomingTags.disc);
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'composer'))    apply('composer', incomingTags.composer);
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'isrc'))        apply('TSRC', incomingTags.isrc);
-      if (Object.prototype.hasOwnProperty.call(incomingTags, 'comment')) {
-        const v = incomingTags.comment;
-        if (!v) delete currentTags.comment;
-        else currentTags.comment = { language: 'eng', shortText: '', text: String(v) };
+      const fields = {};
+      for (const [field, frameId] of Object.entries(MP3_FRAME_MAP)) {
+        if (Object.prototype.hasOwnProperty.call(incomingTags, field)) {
+          fields[frameId] = incomingTags[field] == null ? null : String(incomingTags[field]);
+        }
       }
-      const ok = NodeID3.write(currentTags, resolved);
-      if (ok !== true) throw new Error(ok?.message || 'NodeID3.write failed');
+      if (Object.keys(fields).length === 0) {
+        return res.status(400).json(buildError(E.INVALID_REQUEST, 'No recognized tag fields in body'));
+      }
+      id3Tagger.setTextFrames(resolved, fields);
       logger.info({ path: resolved }, 'file-tags PATCH (MP3)');
       return res.json({ success: true, format: 'mp3' });
     }

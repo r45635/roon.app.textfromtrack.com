@@ -30,6 +30,8 @@ export default function App() {
   const [tftAccount, setTftAccount] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [libraryConfigured, setLibraryConfigured] = useState(true);
+  // Bumped when lyrics are written into a file, so the library card recounts.
+  const [libraryRefresh, setLibraryRefresh] = useState(0);
   const [updateInfo, setUpdateInfo] = useState(null);
   const prevTrackKeyRef = useRef(null);
   const zoneSelectorRef = useRef(null);
@@ -191,6 +193,7 @@ export default function App() {
   // ── After LRC generated: refresh everything ─────────────────────────────────
 
   function handleGenerated() {
+    setLibraryRefresh(k => k + 1);
     fetchJobs();
     fetchMatch();
     fetchTftAccount();
@@ -530,7 +533,7 @@ export default function App() {
             backendOnline={backendOnline}
             onOpenSettings={() => setSettingsOpen(true)}
           />
-          {libraryConfigured && <LibraryCard />}
+          {libraryConfigured && <LibraryCard refreshKey={libraryRefresh} />}
           <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} externalQuery={searchTrigger} />
           <JobHistory jobs={jobs} total={jobsTotal} onLoadMore={handleMoreJobs} onJobRetried={handleJobRetried} />
         </div>

@@ -450,7 +450,8 @@
     "theme_light": "Light",
     "theme_dark": "Dark",
     "privacy_mode": "Screenshot mode — hide personal names",
-    "privacy_mode_hint": "Shows neutral names instead of your Roon Core, zones, speakers, account and folders, so screenshots can be shared. Display only. Also with ?privacy=1 in the address."
+    "privacy_mode_hint": "Shows neutral names instead of your Roon Core, zones, speakers, account and folders, so screenshots can be shared. Display only. Also with ?privacy=1 in the address.",
+    "scan_stalled": "Nothing read yet. The drive may be waking up — or, on a Mac, macOS is waiting for you to allow access: look for a dialog, or System Settings → Privacy & Security → Files and Folders → TextFromTrack Companion → Network Volumes."
   },
   "lrclib": {
     "check_button": "Check LRCLIB Lyrics",

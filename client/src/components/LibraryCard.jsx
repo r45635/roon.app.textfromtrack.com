@@ -16,7 +16,7 @@ async function getJson(url, opts) {
  * Library lyrics — which scanned tracks have lyrics, and a batch that fetches the
  * missing ones from LRCLIB and writes them into the files.
  */
-export default function LibraryCard() {
+export default function LibraryCard({ refreshKey = 0 }) {
   const { t } = useTranslation();
   const [collapsed, toggleCollapsed] = useCollapsed('library-card');
   const [summary, setSummary] = useState(null);
@@ -43,8 +43,8 @@ export default function LibraryCard() {
     }
   }, [filter, debouncedQuery, page]);
 
-  useEffect(() => { loadSummary(); }, [loadSummary]);
-  useEffect(() => { if (!collapsed) loadList(); }, [loadList, collapsed]);
+  useEffect(() => { loadSummary(); }, [loadSummary, refreshKey]);
+  useEffect(() => { if (!collapsed) loadList(); }, [loadList, collapsed, refreshKey]);
 
   useEffect(() => {
     const id = setTimeout(() => { setDebouncedQuery(query.trim()); setPage(0); }, 300);

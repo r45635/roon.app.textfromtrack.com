@@ -450,7 +450,8 @@
     "theme_light": "Clair",
     "theme_dark": "Sombre",
     "privacy_mode": "Mode capture d’écran — masquer les noms personnels",
-    "privacy_mode_hint": "Affiche des noms neutres à la place de votre Core Roon, de vos zones, enceintes, compte et dossiers, pour partager des captures. Affichage seulement. Aussi avec ?privacy=1 dans l’adresse."
+    "privacy_mode_hint": "Affiche des noms neutres à la place de votre Core Roon, de vos zones, enceintes, compte et dossiers, pour partager des captures. Affichage seulement. Aussi avec ?privacy=1 dans l’adresse.",
+    "scan_stalled": "Rien de lu pour l’instant. Le disque est peut-être en train de se réveiller — ou, sur Mac, macOS attend votre autorisation : cherchez une fenêtre de dialogue, ou Réglages Système → Confidentialité et sécurité → Fichiers et dossiers → TextFromTrack Companion → Volumes réseau."
   },
   "lrclib": {
     "check_button": "Chercher sur LRCLIB",
