@@ -5,8 +5,8 @@
 Le lecteur affiche les paroles de tout ce que joue Roon sans toucher à vos fichiers. Si votre
 musique est sur cet ordinateur, sur un NAS ou un disque que le compagnon peut atteindre,
 indiquez-lui ce dossier : il peut alors aussi **écrire les paroles dans les fichiers eux-mêmes**,
-combler les manques de toute la bibliothèque, synchroniser des paroles à la main et générer
-celles qui manquent avec l'IA.
+combler les manques de toute la bibliothèque, synchroniser des paroles à la main — et bientôt
+générer celles qui manquent avec l'IA.
 
 ![Paroles de la bibliothèque : couverture, filtres et lot LRCLIB](../media/fr/library-card.png)
 
@@ -108,14 +108,14 @@ appuyez sur **Espace** au début de chaque ligne.
 **Enregistrer le timing** garde le résultat comme paroles du titre ; avec un fichier associé,
 **Enregistrer dans le fichier** les écrit ensuite dans le morceau.
 
-## Des paroles IA pour le reste
+## Des paroles IA — bientôt
 
 Pour les morceaux que personne n'a transcrits, [TextFromTrack](https://app.textfromtrack.com)
-écoute le fichier et écrit des paroles synchronisées. Créez-y une clé API, collez-la dans
-Réglages → **Clé API TextFromTrack**, et **Générer les paroles avec TextFromTrack** apparaît sous le
-fichier associé. Cela utilise des crédits de votre compte TextFromTrack (le solde s'affiche dans
-les Réglages) ; le résultat est enregistré avec vos options de Gestion des fichiers et listé dans
-l'historique.
+écoutera le fichier et écrira des paroles synchronisées. Le service est encore en développement et
+pas encore ouvert aux comptes. Le compagnon a déjà l'intégration : quand vous pourrez y créer une
+clé API, collez-la dans Réglages → **Clé API TextFromTrack**, et **Générer les paroles avec
+TextFromTrack** sous le fichier associé enregistrera le résultat avec vos options de Gestion des
+fichiers et le listera dans l'historique.
 
 ![La clé API TextFromTrack dans les Réglages](../media/fr/library-ai.png)
 

@@ -42,8 +42,8 @@ try **Other versions**.
 
 - **Your music folder** (Settings → Library Settings): read and write lyrics in your files, fill your
   whole library from LRCLIB, sync lyrics yourself — see the [library guide](guide/library.md).
-- **TextFromTrack AI** (Settings → TextFromTrack API Key): synced lyrics for songs no one has transcribed —
-  uses credits from [app.textfromtrack.com](https://app.textfromtrack.com).
+- **AI lyrics — coming soon**: [TextFromTrack](https://app.textfromtrack.com) will write synced lyrics for songs no
+  one has transcribed. The service is still in development.
 - **Access token** (`ACCESS_TOKEN`): require it from other devices on your network.
 
 ## Doesn't work?

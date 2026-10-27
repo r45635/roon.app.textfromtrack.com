@@ -16,8 +16,8 @@ whatever a zone plays, line by line and in time with the music — streaming fro
 radio or local files. Click a line and Roon jumps there; nudge the timing when a version runs
 early; go full screen, or turn a phone, a tablet or a TV browser into a lyrics display that
 follows its own zone. It needs no music folder and no account. With access to your library, it
-can also write lyrics into your files, fill a whole library in one batch, and generate AI lyrics
-for the songs no one has transcribed.
+can also write lyrics into your files and fill a whole library in one batch; AI lyrics for the
+songs no one has transcribed are coming with TextFromTrack, still in development.
 
 ## The longer story
 
@@ -36,7 +36,7 @@ leave your network to find its lyrics; a screenshot mode hides every personal na
 | Platform | macOS (Apple Silicon and Intel), Windows, Linux, Docker (amd64 / arm64) |
 | Requires | A Roon 2.x Core on the same network |
 | Install | [Latest release](https://github.com/r45635/roon.app.textfromtrack.com/releases/latest) · `ghcr.io/r45635/roon-companion` · Docker Hub `r45635/roon-companion` |
-| Lyrics | [LRCLIB](https://lrclib.net) (free); optional AI lyrics with [TextFromTrack](https://app.textfromtrack.com) |
+| Lyrics | [LRCLIB](https://lrclib.net) (free); AI lyrics with [TextFromTrack](https://app.textfromtrack.com) coming soon |
 | Languages | English, French |
 | License | MIT, free and open source |
 | Built with | Node.js, React, Electron |

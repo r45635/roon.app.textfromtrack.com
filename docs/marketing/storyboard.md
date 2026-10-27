@@ -61,7 +61,7 @@ captures and OS / Roon dialogs.
 | B3 | Batch running, then the summary (saved / not found / skipped) |
 | B4 | LRC editor: stamping lines with Space (clip) |
 | B5 | "Save to file" → File Tags show the embedded lyrics |
-| B6 | TextFromTrack AI generation: progress → synced result (credits shown) |
+| B6 | TextFromTrack AI generation — postponed: the service isn't open yet |
 | B7 | Settings: music folder with scan status; Files Management options |
 
 ## Part C — install (quick start)

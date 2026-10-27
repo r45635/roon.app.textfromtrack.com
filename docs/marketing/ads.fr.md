@@ -12,7 +12,7 @@ Chaque visuel et chaque post long porte :
 1. **Les paroles synchronisées de tout ce que joue Roon** — streaming compris, ligne par ligne, en rythme.
 2. **Rien à configurer** — ni dossier musical, ni compte : installer, activer dans Roon, écouter.
 3. **Les paroles sur tous les écrans** — plein écran, téléphone, tablette ou TV en afficheur de paroles.
-4. **Votre bibliothèque, si vous le souhaitez** — écrire les paroles dans vos fichiers, combler les manques en lot, les synchroniser vous-même, des paroles IA pour le reste.
+4. **Votre bibliothèque, si vous le souhaitez** — écrire les paroles dans vos fichiers, combler les manques en lot, les synchroniser vous-même (des paroles IA pour le reste : bientôt).
 5. **Gratuit et open source**, sur votre propre machine ou votre NAS.
 
 Accroches (une par canal) :
@@ -21,8 +21,8 @@ Accroches (une par canal) :
 - *Des paroles façon karaoké pour Roon — sur votre bureau, votre téléphone, votre TV.*
 
 Limites à annoncer franchement (dans les fils de forum) : les paroles viennent de la base
-communautaire LRCLIB, donc des titres rares peuvent ne pas en avoir (la génération IA est optionnelle
-et payante) ; la version macOS n'est pas encore notarisée (*Ouvrir quand même* au premier lancement).
+communautaire LRCLIB, donc des titres rares peuvent ne pas en avoir (les paroles IA avec TextFromTrack
+arrivent, le service n'est pas encore ouvert) ; la version macOS n'est pas encore notarisée (*Ouvrir quand même* au premier lancement).
 
 ---
 
@@ -42,7 +42,7 @@ et payante) ; la version macOS n'est pas encore notarisée (*Ouvrir quand même*
 > - Menu des zones, lecture, volume — elle sert aussi de petite télécommande avec paroles
 > - En option, si vous lui indiquez votre dossier musical : écrire des fichiers `.lrc` ou intégrer les
 >   paroles dans les tags, remplir toute la bibliothèque en un lot, synchroniser vous-même des paroles
->   simples, ou les générer par IA
+>   simples (paroles IA : bientôt)
 >
 > **Ce qu'il faut**
 > Rien côté Roon à part activer l'extension. Pas de dossier musical, pas de compte. Les paroles

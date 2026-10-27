@@ -92,7 +92,9 @@ Point the companion at your music folder and it does more:
   (every other tag and the artwork are kept, with an optional backup).
 - **Fill your whole library** from LRCLIB in one batch, without ever replacing lyrics you have.
 - **Sync lyrics yourself**: press Space on each line while Roon plays.
-- **AI lyrics** for the songs no one has transcribed, with [TextFromTrack](https://app.textfromtrack.com) (paid credits).
+- **AI lyrics — coming soon.** For songs no one has transcribed, [TextFromTrack](https://app.textfromtrack.com)
+  will listen to the file and write synced lyrics. The service is still in development; the
+  integration is already in the app.
 
 <img src="docs/media/clips/library-batch.gif" width="560" alt="Filling a library with lyrics from LRCLIB">
 
@@ -102,7 +104,7 @@ Point the companion at your music folder and it does more:
 
 - **It runs on your machine or your NAS**, next to your Roon Core. No account, no cloud of its own.
 - **Only the track's title, artist, album and length** go to LRCLIB to find lyrics. Your files go
-  to TextFromTrack only if you ask for AI lyrics.
+  to TextFromTrack only if you use AI lyrics (coming soon).
 - **Screenshot mode** replaces your Core, zone and speaker names, account and folders with neutral
   ones, to share screenshots and bug reports safely. Every picture here was taken with it.
 - Other devices can be asked for an **access token**; the update check can be turned off.
@@ -115,7 +117,7 @@ Point the companion at your music folder and it does more:
 |---|---|
 | 🚀 **Quick start** | [Five minutes to synced lyrics](docs/quickstart.md) · [en français](docs/quickstart.fr.md) |
 | 🎤 **The player** | [Lyrics, timing, versions, full screen, phone / tablet / TV, zones](docs/guide/player.md) · [en français](docs/guide/player.fr.md) |
-| 📚 **Your library** | [Lyrics in your own files](docs/guide/library.md) · [en français](docs/guide/library.fr.md) — music folder, whole-library fill, LRC editor, tags, AI lyrics |
+| 📚 **Your library** | [Lyrics in your own files](docs/guide/library.md) · [en français](docs/guide/library.fr.md) — music folder, whole-library fill, LRC editor, tags, AI lyrics (soon) |
 | 📦 **Install in depth** | [Installation guide](docs/install.md) — Docker on a NAS, Node.js, every option |
 | 🩺 **Something's off?** | [Troubleshooting](docs/quickstart.md#doesnt-work) · [open an issue](https://github.com/r45635/roon.app.textfromtrack.com/issues) |
 

@@ -12,7 +12,7 @@ Every visual and long post carries:
 1. **Synced lyrics for everything Roon plays** — streaming included, line by line, in time.
 2. **Nothing to set up** — no music folder, no account: install, enable in Roon, play.
 3. **Lyrics on any screen** — full screen, phone, a tablet or TV as a lyrics display.
-4. **Your library, if you want** — write lyrics into your files, fill the gaps in bulk, sync them yourself, AI lyrics for the rest.
+4. **Your library, if you want** — write lyrics into your files, fill the gaps in bulk, sync them yourself (AI lyrics for the rest: coming soon).
 5. **Free and open source**, runs on your own machine or NAS.
 
 Taglines (pick one per channel):
@@ -21,7 +21,7 @@ Taglines (pick one per channel):
 - *Karaoke-style lyrics for Roon — on your desk, your phone, your TV.*
 
 Honest limits to keep in mind (answer them up front in forum threads): lyrics come from LRCLIB's
-community database, so obscure tracks may have none (AI generation is optional and paid);
+community database, so obscure tracks may have none (AI lyrics with TextFromTrack are coming, the service isn't open yet);
 the macOS build is not notarized yet (*Open Anyway* on first launch).
 
 ---
@@ -41,7 +41,7 @@ the macOS build is not notarized yet (*Open Anyway* on first launch).
 > - Full-screen view, and a lyrics display page for a tablet or TV (each screen can follow its own zone)
 > - Zone menu, transport, volume — so it also works as a simple remote with lyrics
 > - Optional, if you point it at your music folder: write `.lrc` files or embed lyrics in your tags,
->   fill your whole library in one batch, sync plain lyrics yourself, or generate them with AI
+>   fill your whole library in one batch, or sync plain lyrics yourself (AI lyrics: coming soon)
 >
 > **What it needs**
 > Nothing on the Roon side beyond enabling the extension. No music folder, no account.
@@ -96,8 +96,8 @@ only allows this in its weekly threads — don't post there directly.
 ## GitHub
 
 - **About (≤ 350 chars):** Synced lyrics for everything Roon plays — line by line, full screen, on
-  your phone or TV. Optional: write lyrics into your files, fill your library from LRCLIB, AI lyrics
-  with TextFromTrack. Desktop app (macOS/Windows/Linux) or Docker.
+  your phone or TV. Optional: write lyrics into your files, fill your library from LRCLIB; AI lyrics
+  with TextFromTrack coming soon. Desktop app (macOS/Windows/Linux) or Docker.
 - **Topics:** `roon` `roon-extension` `lyrics` `synced-lyrics` `lrc` `lrclib` `karaoke` `music` `self-hosted` `docker` `electron`
 - **Social preview:** AD1 (1280×640).
 - **README first line:** *Roon plays it. You sing along — synced lyrics for everything Roon plays.*

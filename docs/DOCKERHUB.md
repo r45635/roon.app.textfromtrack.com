@@ -37,7 +37,7 @@ With Compose, use the [docker-compose.yml](https://github.com/r45635/roon.app.te
 | `UPDATE_CHECK=false` | Never ask GitHub whether a newer release exists |
 | `ALLOWED_HOSTS` | Your domain, when behind a reverse proxy |
 | `MUSIC_ROOTS` + a music volume | Only if you want it to write lyrics into your files (mount `:rw`) |
-| `TFT_TOKEN` | Optional AI lyrics with [TextFromTrack](https://app.textfromtrack.com) (paid credits) |
+| `TFT_TOKEN` | AI lyrics with [TextFromTrack](https://app.textfromtrack.com) — coming soon, the service is still in development |
 
 Every variable: [development guide](https://github.com/r45635/roon.app.textfromtrack.com/blob/main/docs/DEVELOPMENT.md#environment-variables).
 

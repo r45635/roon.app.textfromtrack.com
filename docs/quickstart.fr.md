@@ -42,8 +42,8 @@ n'en a pas, essayez **Versions**.
 
 - **Votre dossier musical** (Réglages → Paramètres bibliothèque) : lire et écrire les paroles dans vos fichiers,
   remplir toute la bibliothèque depuis LRCLIB, synchroniser vous-même — voir le [guide de la bibliothèque](guide/library.fr.md).
-- **TextFromTrack IA** (Réglages → Clé API TextFromTrack) : des paroles synchronisées pour les titres que personne
-  n'a transcrits — utilise des crédits de [app.textfromtrack.com](https://app.textfromtrack.com).
+- **Paroles IA — bientôt** : [TextFromTrack](https://app.textfromtrack.com) écrira des paroles synchronisées pour
+  les titres que personne n'a transcrits. Le service est encore en développement.
 - **Jeton d'accès** (`ACCESS_TOKEN`) : l'exiger des autres appareils du réseau.
 
 ## Ça ne marche pas ?

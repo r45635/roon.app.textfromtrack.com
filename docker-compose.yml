@@ -5,8 +5,8 @@
 #   1. docker compose up -d
 #   2. Open http://localhost:3888 and enable the extension in Roon → Settings → Extensions
 #   That's enough for live synced lyrics of whatever Roon plays (lyrics-only mode).
-#   To save lyrics into your files and generate AI lyrics, also mount your music
-#   folder and set TFT_TOKEN (both below, or in the app's settings).
+#   To save lyrics into your files, also mount your music folder (below).
+#   AI lyrics with TextFromTrack (TFT_TOKEN) are coming soon — the service is still in development.
 #
 # Image: ghcr.io/r45635/roon-companion  (also on Docker Hub: r45635/roon-companion)
 # GitHub: https://github.com/r45635/roon.app.textfromtrack.com
@@ -44,8 +44,8 @@ services:
     environment:
       # ── Optional ─────────────────────────────────────────────────────────────
 
-      # Your TextFromTrack Personal Access Token, for AI lyrics generation.
-      # Create one at https://app.textfromtrack.com/account/tokens (or paste it in the app).
+      # TextFromTrack Personal Access Token, for AI lyrics — coming soon (service in development).
+      # Once accounts open, create one at https://app.textfromtrack.com/account/tokens (or paste it in the app).
       TFT_TOKEN: ""
 
       # Path(s) to your music inside the container — must match the volume above.

@@ -5,7 +5,7 @@
 The player shows lyrics for everything Roon plays without touching your files. If your music
 lives on this computer, a NAS or a drive the companion can reach, point it at that folder and
 it can also **write lyrics into the files themselves**: fill the gaps across your whole library,
-sync lyrics by hand, and generate the missing ones with AI.
+sync lyrics by hand — and soon generate the missing ones with AI.
 
 ![Library lyrics: coverage, filters and the LRCLIB batch](../media/en/library-card.png)
 
@@ -99,13 +99,13 @@ the start of each line.
 **Save timing** keeps the result as the track's lyrics; with a matched file, **Save to file**
 then writes them into the track.
 
-## AI lyrics for the rest
+## AI lyrics — coming soon
 
-For songs no one has transcribed, [TextFromTrack](https://app.textfromtrack.com) listens to the
-file and writes synced lyrics. Create an API key there, paste it in Settings → **TextFromTrack
-API Key**, and **Generate lyrics with TextFromTrack** appears under the matched file. It uses
-credits from your TextFromTrack account (the balance shows in Settings); the result is saved
-with your Files Management options and listed in Job History.
+For songs no one has transcribed, [TextFromTrack](https://app.textfromtrack.com) will listen to
+the file and write synced lyrics. The service is still in development and not open to accounts
+yet. The companion already has the integration: once you can create an API key there, paste it
+in Settings → **TextFromTrack API Key**, and **Generate lyrics with TextFromTrack** under the
+matched file saves the result with your Files Management options and lists it in Job History.
 
 ![The TextFromTrack API key in Settings](../media/en/library-ai.png)
 
