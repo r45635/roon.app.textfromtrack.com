@@ -270,7 +270,7 @@ jobs:
             ```
             Images: `ghcr.io/r45635/roon-companion` · `r45635/roon-companion`
 
-            > Full install guide: https://r45635.github.io/roon.app.textfromtrack.com/docs/install.html
+            > Quick start: https://github.com/r45635/roon.app.textfromtrack.com/blob/main/docs/quickstart.md · documentation: https://github.com/r45635/roon.app.textfromtrack.com/tree/main/docs
             >
             > **First launch:** The app starts silently in your tray / menu bar.
             > Open the UI → authorize with Roon → you're ready.

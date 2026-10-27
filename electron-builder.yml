@@ -15,7 +15,6 @@ files:
   - "electron/**"
   - "src/**"
   - "client/dist/**"
-  - "docs/**"
   - "package.json"
   # Exclude runtime-mutable data files from the bundle — they live in userData.
   # Keep src/storage/userSettings.js (it's a required JS module, not data).
@@ -25,9 +24,6 @@ files:
   - "!tests/**"
   - "!scripts/**"
   - "!dev-tools/**"
-  # The app opens docs/user-guide.html only: leave the doc media and launch kit out
-  - "!docs/media/**"
-  - "!docs/marketing/**"
   - "!**/*.test.js"
   - "!**/.env*"
 

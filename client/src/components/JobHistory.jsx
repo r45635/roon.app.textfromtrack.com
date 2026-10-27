@@ -51,7 +51,7 @@ function getExt(filePath) {
 }
 
 export default function JobHistory({ jobs, total = 0, onLoadMore, onJobRetried }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [collapsed, toggleCollapsed] = useCollapsed('job-history');
   const [retrying, setRetrying] = useState(null);
   const [retryError, setRetryError] = useState({});
@@ -231,8 +231,8 @@ export default function JobHistory({ jobs, total = 0, onLoadMore, onJobRetried }
                 <td className="td-date" data-label={t('jobs.date')}>
                   {job.created_at ? (
                     <>
-                      <span className="td-date-day">{new Date(job.created_at).toLocaleDateString()}</span>
-                      <span className="td-date-time">{new Date(job.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      <span className="td-date-day">{new Date(job.created_at).toLocaleDateString(i18n.language)}</span>
+                      <span className="td-date-time">{new Date(job.created_at).toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' })}</span>
                     </>
                   ) : t('common.na')}
                 </td>

@@ -418,6 +418,10 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 - The library card recounts after lyrics are saved into a file
 - A scan that reads nothing for 15 s explains why (drive waking up, or macOS waiting for network-volume access)
 
+### v0.5.10 ✓ — Help and dates
+- Help (tray menu) opens the online guide in the system language; the old bundled user guide is gone, and the app no longer ships `docs/`
+- Job History dates follow the UI language
+
 ### Upcoming
 
 #### Local tag editor (mp3tag-style, lyrics-aware)

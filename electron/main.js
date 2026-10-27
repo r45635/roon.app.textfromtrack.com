@@ -651,12 +651,10 @@ async function showAbout() {
   }
 }
 
-// ── Help — open local user guide ─────────────────────────────────────────────
+// ── Help — open the online guide in the system language ─────────────────────
 function openHelp() {
-  const guidePath = app.isPackaged
-    ? path.join(process.resourcesPath, 'app', 'docs', 'user-guide.html')
-    : path.join(__dirname, '..', 'docs', 'user-guide.html');
-  shell.openPath(guidePath);
+  const guide = app.getLocale().toLowerCase().startsWith('fr') ? 'player.fr.md' : 'player.md';
+  shell.openExternal(`https://github.com/r45635/roon.app.textfromtrack.com/blob/main/docs/guide/${guide}`);
 }
 
 // ── Tray menu ────────────────────────────────────────────────────────────────
