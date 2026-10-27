@@ -1,6 +1,6 @@
 # Le lecteur — les paroles synchronisées de tout ce que joue Roon
 
-*English: [player.md](player.md) · Votre bibliothèque (fichiers, paroles IA) : [guide complet](../user-guide.md) · Installation : [démarrage rapide](../quickstart.fr.md)*
+*English: [player.md](player.md) · Votre bibliothèque (fichiers, paroles IA) : [library.fr.md](library.fr.md) · Installation : [démarrage rapide](../quickstart.fr.md)*
 
 TextFromTrack Roon Companion suit ce que joue une zone Roon et affiche ses paroles, ligne par ligne,
 au rythme de la musique. Il fonctionne avec **tout ce que joue Roon** — Qobuz, TIDAL, radio, vos
@@ -44,7 +44,7 @@ Sous le lecteur, les paroles du titre en cours. La ligne en surbrillance suit la
 
 Le badge à côté de *Paroles* indique leur origine : **LRCLIB** (récupérées à l'instant), **Copie
 enregistrée** (gardée sur votre ordinateur depuis une lecture précédente), **Fichier .lrc** ou
-**Dans les tags** (depuis vos fichiers, voir la [bibliothèque](../user-guide.md)). *Non synchronisées*
+**Dans les tags** (depuis vos fichiers, voir [votre bibliothèque](library.fr.md)). *Non synchronisées*
 signifie sans horodatage : elles s'affichent en texte simple.
 
 **D'où viennent les paroles ?** De [LRCLIB](https://lrclib.net), une base gratuite construite par
@@ -63,6 +63,13 @@ L'**icône téléphone** en haut ouvre une page avec deux QR codes :
    le navigateur d'une TV. Chaque écran peut suivre sa propre zone (bouton **Zone**) et reste allumé.
 
 ![Paroles sur une tablette](../media/fr/player-tablet.png)
+
+## Rechercher dans Roon
+
+La carte **Rechercher dans Roon** interroge votre bibliothèque Roon et vos services de streaming —
+pistes, albums, artistes. Choisissez une zone dans *Lecture sur* et appuyez sur **Lecture** sur un
+résultat ; **Ouvrir** entre dans un album ou un artiste. Cliquer sur l'artiste ou l'album dans le
+lecteur remplit la recherche pour vous.
 
 ## Quand rien ne s'affiche
 

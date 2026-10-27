@@ -1,7 +1,5 @@
 # TextFromTrack Roon Companion — Install Guide
 
-> **For the full styled guide**, open [`install.html`](install.html) in your browser.
-
 ---
 
 ## Table of Contents
@@ -343,4 +341,4 @@ Desktop app user-data:
 ---
 
 © 2024 TextFromTrack · Open source under the [MIT license](../LICENSE)  
-[User Guide](user-guide.md) · [GitHub](https://github.com/r45635/roon.app.textfromtrack.com) · [Releases](https://github.com/r45635/roon.app.textfromtrack.com/releases) · [Report Issue](https://github.com/r45635/roon.app.textfromtrack.com/issues)
+[Documentation](README.md) · [GitHub](https://github.com/r45635/roon.app.textfromtrack.com) · [Releases](https://github.com/r45635/roon.app.textfromtrack.com/releases) · [Report Issue](https://github.com/r45635/roon.app.textfromtrack.com/issues)

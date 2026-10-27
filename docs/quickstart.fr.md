@@ -41,7 +41,7 @@ n'en a pas, essayez **Versions**.
 ## 4. En option
 
 - **Votre dossier musical** (Réglages → Paramètres bibliothèque) : lire et écrire les paroles dans vos fichiers,
-  remplir toute la bibliothèque depuis LRCLIB, synchroniser vous-même.
+  remplir toute la bibliothèque depuis LRCLIB, synchroniser vous-même — voir le [guide de la bibliothèque](guide/library.fr.md).
 - **TextFromTrack IA** (Réglages → Clé API TextFromTrack) : des paroles synchronisées pour les titres que personne
   n'a transcrits — utilise des crédits de [app.textfromtrack.com](https://app.textfromtrack.com).
 - **Jeton d'accès** (`ACCESS_TOKEN`) : l'exiger des autres appareils du réseau.
@@ -55,7 +55,7 @@ n'en a pas, essayez **Versions**.
 | L'extension n'apparaît pas dans Roon | Redémarrez le compagnon ; vérifiez que le Core est en Roon 2.x (port 9330). |
 | « LRCLIB est surchargée » | La base gratuite est occupée ; l'app réessaie seule. |
 
-Plus : [guide du lecteur](guide/player.fr.md) · [guide d'installation complet](install.md) ·
+Plus : [guide du lecteur](guide/player.fr.md) · [guide de la bibliothèque](guide/library.fr.md) · [guide d'installation complet](install.md) ·
 [signaler un problème](https://github.com/r45635/roon.app.textfromtrack.com/issues)
 
 *Sans lien avec Roon Labs.*

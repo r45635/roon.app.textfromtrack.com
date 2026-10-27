@@ -1,6 +1,6 @@
 # The player — synced lyrics for everything Roon plays
 
-*Français : [player.fr.md](player.fr.md) · Your library (files, AI lyrics): [full user guide](../user-guide.md) · Install: [quick start](../quickstart.md)*
+*Français : [player.fr.md](player.fr.md) · Your library (files, AI lyrics): [library.md](library.md) · Install: [quick start](../quickstart.md)*
 
 TextFromTrack Roon Companion follows what a Roon zone plays and shows its lyrics, line by line,
 in time with the music. It works with **everything Roon plays** — Qobuz, TIDAL, radio, your own
@@ -43,7 +43,7 @@ Under the player, the lyrics of the current track. The highlighted line follows 
 
 The badge next to *Lyrics* says where they come from: **LRCLIB** (fetched just now), **Saved copy**
 (kept on your computer from a previous play), **.lrc file** or **In file tags** (from your files,
-see [library](../user-guide.md)). *Not time-synced* means the lyrics have no timestamps: they are shown
+see [your library](library.md)). *Not time-synced* means the lyrics have no timestamps: they are shown
 as plain text.
 
 **Where do lyrics come from?** From [LRCLIB](https://lrclib.net), a free, community-built database.
@@ -61,6 +61,12 @@ The **phone icon** in the top bar opens a page with two QR codes:
    display can follow its own zone (**Zone** button) and keeps the screen awake.
 
 ![Lyrics on a tablet](../media/en/player-tablet.png)
+
+## Search Roon
+
+The **Search Roon** card searches your Roon library and streaming services — tracks, albums,
+artists. Pick a zone in *Play on* and press **Play** on a result; **Open** goes into an album or
+an artist. Clicking the artist or album name in the player fills the search for you.
 
 ## When nothing shows
 

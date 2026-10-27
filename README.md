@@ -94,6 +94,10 @@ Point the companion at your music folder and it does more:
 - **Sync lyrics yourself**: press Space on each line while Roon plays.
 - **AI lyrics** for the songs no one has transcribed, with [TextFromTrack](https://app.textfromtrack.com) (paid credits).
 
+<img src="docs/media/clips/library-batch.gif" width="560" alt="Filling a library with lyrics from LRCLIB">
+
+[How it works →](docs/guide/library.md)
+
 ## Private and local
 
 - **It runs on your machine or your NAS**, next to your Roon Core. No account, no cloud of its own.
@@ -111,7 +115,7 @@ Point the companion at your music folder and it does more:
 |---|---|
 | 🚀 **Quick start** | [Five minutes to synced lyrics](docs/quickstart.md) · [en français](docs/quickstart.fr.md) |
 | 🎤 **The player** | [Lyrics, timing, versions, full screen, phone / tablet / TV, zones](docs/guide/player.md) · [en français](docs/guide/player.fr.md) |
-| 📚 **Your library** | [Full user guide](docs/user-guide.md) — music folder, library lyrics, LRC editor, tags, AI lyrics |
+| 📚 **Your library** | [Lyrics in your own files](docs/guide/library.md) · [en français](docs/guide/library.fr.md) — music folder, whole-library fill, LRC editor, tags, AI lyrics |
 | 📦 **Install in depth** | [Installation guide](docs/install.md) — Docker on a NAS, Node.js, every option |
 | 🩺 **Something's off?** | [Troubleshooting](docs/quickstart.md#doesnt-work) · [open an issue](https://github.com/r45635/roon.app.textfromtrack.com/issues) |
 

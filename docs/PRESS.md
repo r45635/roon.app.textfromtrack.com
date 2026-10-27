@@ -67,9 +67,12 @@ Not affiliated with Roon Labs. Roon is a trademark of Roon Labs.
 | Full screen | [fullscreen.mp4](media/clips/fullscreen.mp4) · [.gif](media/clips/fullscreen.gif) — [FR](media/clips/fr/fullscreen.mp4) · [.gif](media/clips/fr/fullscreen.gif) |
 | Phone and tablet | [phone-tv.mp4](media/clips/phone-tv.mp4) · [.gif](media/clips/phone-tv.gif) — [FR](media/clips/fr/phone-tv.mp4) · [.gif](media/clips/fr/phone-tv.gif) |
 | Zone menu | [zones.mp4](media/clips/zones.mp4) · [.gif](media/clips/zones.gif) — [FR](media/clips/fr/zones.mp4) · [.gif](media/clips/fr/zones.gif) |
+| Lyrics saved into a file | [library-save.mp4](media/clips/library-save.mp4) · [.gif](media/clips/library-save.gif) — [FR](media/clips/fr/library-save.mp4) · [.gif](media/clips/fr/library-save.gif) |
+| Filling a library from LRCLIB | [library-batch.mp4](media/clips/library-batch.mp4) · [.gif](media/clips/library-batch.gif) — [FR](media/clips/fr/library-batch.mp4) · [.gif](media/clips/fr/library-batch.gif) |
 
 **Screenshots:** [English](media/en/) · [French](media/fr/) — player (light and dark), full
-screen, zones, versions, settings, phone, tablet, QR page.
+screen, zones, versions, settings, phone, tablet, QR page; library card, matched file, file tags,
+LRC editor, library settings, job history.
 
 Ready-made posts for the Roon forum, Reddit, X, Mastodon and Facebook:
 [ads.en.md](marketing/ads.en.md) · [ads.fr.md](marketing/ads.fr.md).
