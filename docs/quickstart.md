@@ -55,7 +55,7 @@ try **Other versions**.
 | No extension in Roon's list | Restart the companion; check the Core is Roon 2.x (port 9330). |
 | "LRCLIB is overloaded" | The free database is busy; it retries by itself. |
 
-More: [player guide](guide/player.md) · [library guide](guide/library.md) · [full install guide](install.md) ·
+More: [FAQ](faq.md) · [player guide](guide/player.md) · [library guide](guide/library.md) · [full install guide](install.md) ·
 [issues](https://github.com/r45635/roon.app.textfromtrack.com/issues)
 
 *Not affiliated with Roon Labs.*

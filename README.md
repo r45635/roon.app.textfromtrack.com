@@ -119,6 +119,7 @@ Point the companion at your music folder and it does more:
 | 🎤 **The player** | [Lyrics, timing, versions, full screen, phone / tablet / TV, zones](docs/guide/player.md) · [en français](docs/guide/player.fr.md) |
 | 📚 **Your library** | [Lyrics in your own files](docs/guide/library.md) · [en français](docs/guide/library.fr.md) — music folder, whole-library fill, LRC editor, tags, AI lyrics (soon) |
 | 📦 **Install in depth** | [Installation guide](docs/install.md) — Docker on a NAS, Node.js, every option |
+| ❓ **Questions** | [FAQ](docs/faq.md) · [en français](docs/faq.fr.md) — rare songs, Roon ARC, macOS prompts, what leaves your network |
 | 🩺 **Something's off?** | [Troubleshooting](docs/quickstart.md#doesnt-work) · [open an issue](https://github.com/r45635/roon.app.textfromtrack.com/issues) |
 
 ## Good to know

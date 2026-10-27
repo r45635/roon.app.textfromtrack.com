@@ -55,7 +55,7 @@ n'en a pas, essayez **Versions**.
 | L'extension n'apparaît pas dans Roon | Redémarrez le compagnon ; vérifiez que le Core est en Roon 2.x (port 9330). |
 | « LRCLIB est surchargée » | La base gratuite est occupée ; l'app réessaie seule. |
 
-Plus : [guide du lecteur](guide/player.fr.md) · [guide de la bibliothèque](guide/library.fr.md) · [guide d'installation complet](install.md) ·
+Plus : [FAQ](faq.fr.md) · [guide du lecteur](guide/player.fr.md) · [guide de la bibliothèque](guide/library.fr.md) · [guide d'installation complet](install.md) ·
 [signaler un problème](https://github.com/r45635/roon.app.textfromtrack.com/issues)
 
 *Sans lien avec Roon Labs.*
