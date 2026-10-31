@@ -13,7 +13,7 @@ const scanner = require('../music/scanner');
 const matcher = require('../music/matcher');
 const musicRoots = require('../music/musicRoots');
 const lyricsWriter = require('../music/lyricsWriter');
-const userSettings = require('../storage/userSettings');
+const userSettings = require('../settings/userSettings');
 const jobStore = require('../textfromtrack/jobStore');
 const lyricsResolver = require('./lyricsResolver');
 

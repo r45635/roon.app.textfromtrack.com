@@ -2,7 +2,7 @@
 
 const path = require('path');
 const config = require('../config');
-const userSettings = require('../storage/userSettings');
+const userSettings = require('../settings/userSettings');
 
 /**
  * The configured music roots: the UI setting when non-empty, else MUSIC_ROOTS.

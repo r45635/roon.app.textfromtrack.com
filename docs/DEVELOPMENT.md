@@ -39,9 +39,10 @@ roon.app.textfromtrack.com/
 │   │   ├── lrclibRoutes.js     /api/lrclib/*
 │   │   ├── lyricsRoutes.js     /api/lyrics/* (lyrics stage, kiosk)
 │   │   └── textfromtrackRoutes.js  /api/tft/*
-│   ├── storage/
+│   ├── settings/
 │   │   ├── userSettings.js     Read/write user-settings.json (music roots, embed/backup defaults)
-│   │   ├── lyricsPrefs.js      Per-track timing offset and picked LRCLIB version (lyrics-prefs.json)
+│   │   └── lyricsPrefs.js      Per-track timing offset and picked LRCLIB version (lyrics-prefs.json)
+│   ├── storage/                Runtime data only, no code: Docker users mount a folder over it
 │   │   ├── music-index.json    Local music library index (runtime)
 │   │   ├── user-settings.json  Persistent user preferences (runtime, created on first save)
 │   │   └── jobs.json           Transcription job history (runtime)

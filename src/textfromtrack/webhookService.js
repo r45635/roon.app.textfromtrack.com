@@ -12,7 +12,7 @@
 const crypto = require('crypto');
 const tftClient = require('./tftClient');
 const jobStore = require('./jobStore');
-const userSettings = require('../storage/userSettings');
+const userSettings = require('../settings/userSettings');
 const sseService = require('../utils/sseService');
 const logger = require('../utils/logger');
 

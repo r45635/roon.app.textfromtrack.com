@@ -17,7 +17,6 @@ files:
   - "client/dist/**"
   - "package.json"
   # Exclude runtime-mutable data files from the bundle — they live in userData.
-  # Keep src/storage/userSettings.js (it's a required JS module, not data).
   - "!src/storage/*.json"
   - "!src/storage/lrc-cache/**"
   # Exclude dev/test artefacts

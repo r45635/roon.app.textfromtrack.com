@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const logger = require('../utils/logger');
-const userSettings = require('../storage/userSettings');
+const userSettings = require('../settings/userSettings');
 const lyricsEmbedder = require('./lyricsEmbedder');
 const lyricsDetector = require('./lyricsDetector');
 

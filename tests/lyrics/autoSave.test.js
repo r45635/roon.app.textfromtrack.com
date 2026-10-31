@@ -9,7 +9,7 @@ process.env.TFT_USER_DATA_DIR = tmpDir;
 
 const { test, describe, after } = require('node:test');
 const assert = require('node:assert/strict');
-const userSettings = require('../../src/storage/userSettings');
+const userSettings = require('../../src/settings/userSettings');
 const jobStore = require('../../src/textfromtrack/jobStore');
 const { autoSave } = require('../../src/lyrics/nowPlayingLyrics');
 

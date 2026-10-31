@@ -14,7 +14,7 @@ const logger = require('../utils/logger');
 const { AppError, E } = require('../utils/normalize');
 const lrcCache = require('../utils/lrcCache');
 const lyricsDetector = require('../music/lyricsDetector');
-const lyricsPrefs = require('../storage/lyricsPrefs');
+const lyricsPrefs = require('../settings/lyricsPrefs');
 const lrclibClient = require('./lrclibClient');
 
 const NOT_FOUND_TTL_MS = 30 * 60 * 1000;

@@ -132,10 +132,10 @@ curl -O https://raw.githubusercontent.com/r45635/roon.app.textfromtrack.com/main
 
 Or download it directly from the [GitHub repository](https://github.com/r45635/roon.app.textfromtrack.com).
 
-**2. Edit the two required settings**
+**2. Set your music folder**
 
 Open `docker-compose.yml` and set:
-- `TFT_TOKEN` — your [TextFromTrack Personal Access Token](https://app.textfromtrack.com/account/tokens)
+- `TFT_TOKEN` is optional and only used for AI lyrics: leave it empty. TextFromTrack sign-ups are closed for now, so new users cannot get a token yet.
 - The music volume path (left side of `- /path/to/your/music:/music:ro`) — the directory where your FLAC/MP3 files live on the host
 
 **3. Start**

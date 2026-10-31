@@ -41,7 +41,8 @@ COPY src/ src/
 # Copy built client from builder stage
 COPY --from=builder /build/client/dist client/dist/
 
-# Persistent storage — settings, job history, lrc-cache
+# Persistent storage — settings, job history, lrc-cache. Data only: a mount replaces
+# this whole directory, so no code may live in it (see tests/utils/storageLayout.test.js).
 # Mount a host directory or named volume here: -v ./data:/app/src/storage
 VOLUME ["/app/src/storage"]
 

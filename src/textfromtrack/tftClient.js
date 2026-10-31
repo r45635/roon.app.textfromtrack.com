@@ -5,7 +5,7 @@ const path = require('path');
 const config = require('../config');
 const logger = require('../utils/logger');
 const { AppError, E, mapTftError } = require('../utils/normalize');
-const userSettings = require('../storage/userSettings');
+const userSettings = require('../settings/userSettings');
 
 /**
  * Returns the effective TFT token: user settings take priority, the TFT_TOKEN env var is the

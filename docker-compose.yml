@@ -45,7 +45,7 @@ services:
       # ── Optional ─────────────────────────────────────────────────────────────
 
       # TextFromTrack Personal Access Token, for AI lyrics — coming soon (service in development).
-      # Once accounts open, create one at https://app.textfromtrack.com/account/tokens (or paste it in the app).
+      # Sign-ups are closed for now, so new users cannot get a token yet. Leave it empty.
       TFT_TOKEN: ""
 
       # Path(s) to your music inside the container — must match the volume above.

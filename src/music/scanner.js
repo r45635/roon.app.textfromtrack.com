@@ -6,7 +6,7 @@ const config = require('../config');
 const logger = require('../utils/logger');
 const { writeJson, readJson } = require('../utils/fileUtils');
 const lyricsDetector = require('./lyricsDetector');
-const userSettings = require('../storage/userSettings');
+const userSettings = require('../settings/userSettings');
 
 const SUPPORTED_EXTENSIONS = new Set(['.mp3', '.flac', '.wav', '.aiff', '.aif', '.m4a']);
 
