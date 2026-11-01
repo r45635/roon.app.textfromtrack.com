@@ -103,7 +103,8 @@ Point the companion at your music folder and it does more:
 ## Private and local
 
 - **It runs on your machine or your NAS**, next to your Roon Core. No account, no cloud of its own.
-- **Only the track's title, artist, album and length** go to LRCLIB to find lyrics. Your files go
+- **Only the track's title, artist, album and length** go to LRCLIB (lrclib.net, or the mirrors
+  you list) to find lyrics. Your files go
   to TextFromTrack only if you use AI lyrics (coming soon).
 - **Screenshot mode** replaces your Core, zone and speaker names, account and folders with neutral
   ones, to share screenshots and bug reports safely. Every picture here was taken with it.
@@ -127,6 +128,9 @@ Point the companion at your music folder and it does more:
 - **Requirements:** a Roon 2.x Core, and the companion on the same network (or `ROON_CORE_HOST`
   pointing at the Core).
 - **Lyrics coverage:** LRCLIB is community-built — most popular songs are there, rare ones may not be.
+- **lrclib.net overloaded?** Settings → **Lyrics Sources** takes an ordered list of LRCLIB servers:
+  put a mirror you run (its server is open source, its database a public download) before
+  lrclib.net, and lookups fall back from one to the next.
 - **macOS:** the app isn't notarized yet — the first launch needs *Open Anyway* in System Settings →
   Privacy & Security, then *Allow* for Local Network access.
 - **Languages:** English and French.

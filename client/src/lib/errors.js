@@ -1,4 +1,5 @@
 import i18n from '../i18n/index.js';
+import { maskAddresses } from './privacy.js';
 
 // System errors that reach the UI as raw messages, and what the user can do about them.
 const MESSAGE_PATTERNS = [
@@ -8,11 +9,15 @@ const MESSAGE_PATTERNS = [
   [/Failed to fetch|NetworkError|Load failed/i, 'BACKEND_UNREACHABLE'],
 ];
 
-/** Message for an LRCLIB lookup that failed: busy (503/429) reads differently from down. */
+/**
+ * Message for an LRCLIB lookup that failed: busy (503/429) reads differently from down. With
+ * several servers the message names each one ("a: …; b: …"): it is "busy" only when all were.
+ */
 export function lrclibProblem(message) {
-  return /HTTP (503|429)/.test(message || '')
+  const parts = String(message || '').split('; ');
+  return parts.every(p => /HTTP (503|429)/.test(p))
     ? i18n.t('stage.lrclib_busy')
-    : i18n.t('stage.lrclib_unreachable', { msg: message });
+    : i18n.t('stage.lrclib_unreachable', { msg: maskAddresses(message) });
 }
 
 /**

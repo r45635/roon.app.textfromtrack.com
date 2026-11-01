@@ -138,8 +138,11 @@ async function resolve(track, { audioPath = null, refresh = false } = {}) {
       track_id: null, lrclib_id: null, offset_ms: 0 };
   }
   const trackId = _trackId(track);
-  // "Retry": forget a remembered miss or error and ask LRCLIB again.
-  if (refresh) _memo.delete(trackId);
+  // "Retry": forget a remembered miss or error and ask LRCLIB again, skipped servers included.
+  if (refresh) {
+    _memo.delete(trackId);
+    lrclibClient.clearCooldowns();
+  }
   const prefs = lyricsPrefs.get(trackId);
   const base = { track_id: trackId, lrclib_id: prefs.lrclib_id ?? null, offset_ms: prefs.offset_ms || 0 };
 

@@ -33,6 +33,14 @@ const config = {
     .map(s => s.trim())
     .filter(Boolean),
 
+  // ── LRCLIB ──────────────────────────────────────────────────────────────────
+  // Ordered LRCLIB servers (comma-separated), e.g. a home mirror first, then lrclib.net.
+  // The app setting overrides it; empty = lrclib.net alone.
+  lrclibUrls: (process.env.LRCLIB_URLS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean),
+
   // ── TextFromTrack API ───────────────────────────────────────────────────────
   tftBaseUrl:
     process.env.TFT_BASE_URL || 'https://app.textfromtrack.com/api/v1',

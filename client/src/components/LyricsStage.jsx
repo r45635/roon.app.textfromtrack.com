@@ -7,6 +7,7 @@ import { useTrackLyrics } from '../hooks/useTrackLyrics.js';
 import { shiftLrc } from '../lib/lrc.js';
 import { describeError, lrclibProblem } from '../lib/errors.js';
 import { qrPageUrl } from '../lib/qrPage.js';
+import { maskAddresses } from '../lib/privacy.js';
 
 const OFFSET_STEP_MS = 500;
 const HINT_DISMISSED_KEY = 'tft:libraryHintDismissed';
@@ -168,7 +169,7 @@ export default function LyricsStage({
   } else if (lyrics?.error) {
     body = (
       <div className="tft-lyrics-stage-msg">
-        <p title={lyrics.error}>{lrclibProblem(lyrics.error)}</p>
+        <p title={maskAddresses(lyrics.error)}>{lrclibProblem(lyrics.error)}</p>
         <button type="button" className="btn btn-ghost" onClick={() => reload(true)}>{t('common.retry')}</button>
       </div>
     );

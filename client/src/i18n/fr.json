@@ -453,6 +453,23 @@
     "privacy_mode_hint": "Affiche des noms neutres à la place de votre Core Roon, de vos zones, enceintes, compte et dossiers, pour partager des captures. Affichage seulement. Aussi avec ?privacy=1 dans l’adresse.",
     "scan_stalled": "Rien de lu pour l’instant. Le disque est peut-être en train de se réveiller — ou, sur Mac, macOS attend votre autorisation : cherchez une fenêtre de dialogue, ou Réglages Système → Confidentialité et sécurité → Fichiers et dossiers → TextFromTrack Companion → Volumes réseau."
   },
+  "lyrics_sources": {
+    "title": "Sources de paroles",
+    "hint": "Les serveurs LRCLIB où chercher les paroles, par ordre de préférence. Quand un serveur est en panne ou surchargé, ou n'a pas la chanson, le suivant est interrogé. Un miroir est une copie de la base de LRCLIB sur un serveur que vous gérez, par exemple un NAS à la maison : les paroles continuent d'arriver quand lrclib.net est surchargé.",
+    "add_placeholder": "http://192.168.1.20:3300",
+    "test": "Tester",
+    "testing": "Test…",
+    "test_ok": "✓ {{ms}} ms",
+    "test_failed": "✕ Échec",
+    "move_up": "Monter",
+    "move_down": "Descendre",
+    "reset": "Revenir au réglage par défaut (lrclib.net)",
+    "no_lrclib_warning": "lrclib.net n'est pas dans la liste : les chansons ajoutées à LRCLIB après la copie de votre miroir ne seront pas trouvées.",
+    "from_env": "Cette liste vient du réglage LRCLIB_URLS du serveur. Une liste enregistrée ici la remplace.",
+    "privacy": "Chaque serveur interrogé reçoit le titre, l'artiste, l'album et la durée du morceau — rien d'autre.",
+    "mirror_help": "Tout le monde peut héberger un miroir : le serveur LRCLIB est open source et sa base est publiée en téléchargement.",
+    "mirror_link": "Serveur LRCLIB sur GitHub"
+  },
   "lrclib": {
     "check_button": "Chercher sur LRCLIB",
     "checking": "Recherche LRCLIB…",

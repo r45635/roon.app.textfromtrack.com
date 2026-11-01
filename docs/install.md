@@ -167,6 +167,16 @@ ROON_CORE_HOST: 192.168.1.10   # ← replace with your Roon Core IP
 
 If the extension does not appear in Roon, check the container logs: `Roon direct connect failed` means the Core is not reachable at that IP/port.
 
+### LRCLIB mirror
+
+To fetch lyrics from your own LRCLIB mirror before lrclib.net, set `LRCLIB_URLS` (or use Settings → **Lyrics Sources**, which overrides it):
+
+```yaml
+LRCLIB_URLS: http://192.168.1.20:3300,https://lrclib.net   # ← your mirror first
+```
+
+The container must reach the mirror's address: **Test** in Lyrics Sources checks it from the container.
+
 ### Updating to a new version
 
 ```bash

@@ -138,6 +138,7 @@ Copy `.env.example` to `.env` and fill in the values.
 | `ROON_CORE_PORT` | `9330` | Roon Core extension port used with `ROON_CORE_HOST` (Roon 2.x: `9330`; legacy 1.x: `9100`) |
 | `ALLOWED_HOSTS` | _(empty)_ | Extra host names allowed to reach the UI/API, comma-separated (e.g. a reverse-proxy domain). `localhost`, IP addresses and LAN names (`*.local`, `*.lan`, single-label like `nas`) are always allowed; `*` disables the check |
 | `MUSIC_ROOTS` | _(empty)_ | Comma-separated absolute paths to scan |
+| `LRCLIB_URLS` | _(empty = `https://lrclib.net`)_ | LRCLIB servers in order of preference, comma-separated — e.g. `http://192.168.1.20:3300,https://lrclib.net` for a home mirror first. A request falls through to the next server when one fails or doesn't have the record; a miss is only trusted from the last one. Mirrors get a 5 s deadline, lrclib.net 20 s |
 | `TFT_BASE_URL` | `https://app.textfromtrack.com/api/v1` | TextFromTrack API base URL |
 | `TFT_TOKEN` | _(empty)_ | Your Personal Access Token |
 | `TFT_DEFAULT_EXPORT_FORMAT` | `lrc` | Export format (`lrc`, `srt`, `txt`, `json`) |
@@ -157,6 +158,7 @@ Copy `.env.example` to `.env` and fill in the values.
 | Key | Default | Description |
 |---|---|---|
 | `music_roots` | `[]` | Music root paths (overrides `MUSIC_ROOTS`) |
+| `lrclib_urls` | `[]` | LRCLIB servers in order of preference (overrides `LRCLIB_URLS` when not empty) |
 | `embed_lyrics_default` | `false` | Default state of the **embed `[LYRICS]` tag** checkbox |
 | `backup_before_embed_default` | `true` | Default state of the **save `.org` backup** checkbox |
 | `save_lrc_beside_source_default` | `false` | Default state of the **save LRC beside source** checkbox |
@@ -207,7 +209,10 @@ Copy `.env.example` to `.env` and fill in the values.
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/lrclib/lookup` | Look up lyrics from [lrclib.net](https://lrclib.net). Query: `?title=...&artist=...&album=...&duration=...&path=...` |
+| `GET` | `/api/lrclib/lookup` | Look up lyrics from LRCLIB (the servers of `/api/lyrics-sources`). Query: `?title=...&artist=...&album=...&duration=...&path=...` |
+| `GET` | `/api/lyrics-sources` | The LRCLIB servers in use: `{ urls, source: 'user_settings' \| 'env' \| 'default' }` |
+| `POST` | `/api/lyrics-sources` | Store the ordered list. Body: `{ urls: string[] }` (`[]` = back to the default); an invalid URL is refused with 400 |
+| `POST` | `/api/lyrics-sources/test` | Ask one server for record 1. Body: `{ url }`. Returns `{ ok, status, ms, error }` |
 | `POST` | `/api/lrclib/save` | Save an LRCLIB result to disk and/or embed it. Body: `{ path, lrc_content, embed, backup, save_beside }` |
 
 ### Lyrics endpoints (with or without a music folder)

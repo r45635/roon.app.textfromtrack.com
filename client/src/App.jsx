@@ -9,6 +9,7 @@ import LibrarySettings from './components/LibrarySettings.jsx';
 import AppPrefs from './components/AppPrefs.jsx';
 import TftApiKey from './components/TftApiKey.jsx';
 import FilesManagement from './components/FilesManagement.jsx';
+import LyricsSources from './components/LyricsSources.jsx';
 import LibraryCard from './components/LibraryCard.jsx';
 import { useAppPrefs } from './hooks/useAppPrefs.js';
 import { maskZones, maskNowPlaying, maskRoonStatus, maskAccount, setKnownRoots } from './lib/privacy.js';
@@ -480,6 +481,7 @@ export default function App() {
               <TftApiKey onTokenSaved={fetchTftAccount} />
               <AppPrefs prefs={prefs} setPref={setPref} />
               <FilesManagement />
+              <LyricsSources />
               <LibrarySettings onRescanStarted={handleRescanStarted} />
             </div>
           </aside>

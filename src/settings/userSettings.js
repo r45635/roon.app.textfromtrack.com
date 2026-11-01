@@ -22,6 +22,8 @@ const DEFAULTS = {
   save_lrc_beside_source_default: false,
   // Write synced LRCLIB lyrics into the playing track's file when it has none.
   auto_save_lrclib: false,
+  // Ordered LRCLIB servers; empty = the LRCLIB_URLS env var, else lrclib.net alone.
+  lrclib_urls: [],
   tft_token: '',
   webhook_id: '',
   webhook_secret: '',

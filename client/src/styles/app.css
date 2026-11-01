@@ -1653,6 +1653,18 @@ button.tft-search-link:hover { color: rgba(255,255,255,0.95); text-decoration: u
   color: var(--text);
 }
 
+/* Lyrics Sources: the order is the preference order, so number the rows. */
+.lyrics-sources-list { counter-reset: lyrics-source; }
+.lyrics-sources-list > .settings-root-item { flex-wrap: wrap; }
+/* Keep the address readable: the buttons wrap below it in a narrow drawer. */
+.lyrics-sources-list .settings-root-path { min-width: 15em; }
+.lyrics-sources-list > .settings-root-item::before {
+  counter-increment: lyrics-source;
+  content: counter(lyrics-source) ".";
+  font-size: 12px;
+  opacity: .6;
+}
+
 .settings-remove-btn {
   flex-shrink: 0;
   background: none;

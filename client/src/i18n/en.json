@@ -453,6 +453,23 @@
     "privacy_mode_hint": "Shows neutral names instead of your Roon Core, zones, speakers, account and folders, so screenshots can be shared. Display only. Also with ?privacy=1 in the address.",
     "scan_stalled": "Nothing read yet. The drive may be waking up — or, on a Mac, macOS is waiting for you to allow access: look for a dialog, or System Settings → Privacy & Security → Files and Folders → TextFromTrack Companion → Network Volumes."
   },
+  "lyrics_sources": {
+    "title": "Lyrics Sources",
+    "hint": "LRCLIB servers lyrics are fetched from, in order of preference. When a server is down or busy, or doesn't have the song, the next one is asked. A mirror is a copy of LRCLIB's database on a server you run, for instance on a NAS at home: it keeps lyrics coming when lrclib.net is overloaded.",
+    "add_placeholder": "http://192.168.1.20:3300",
+    "test": "Test",
+    "testing": "Testing…",
+    "test_ok": "✓ {{ms}} ms",
+    "test_failed": "✕ Failed",
+    "move_up": "Move up",
+    "move_down": "Move down",
+    "reset": "Back to the default (lrclib.net)",
+    "no_lrclib_warning": "lrclib.net is not in the list: songs added to LRCLIB after your mirror's copy won't be found.",
+    "from_env": "This list comes from the LRCLIB_URLS setting of the server. A list saved here replaces it.",
+    "privacy": "Each server asked receives the track's title, artist, album and length — nothing else.",
+    "mirror_help": "Anyone can run a mirror: the LRCLIB server is open source and its database is published as a download.",
+    "mirror_link": "LRCLIB server on GitHub"
+  },
   "lrclib": {
     "check_button": "Check LRCLIB Lyrics",
     "checking": "Checking LRCLIB…",

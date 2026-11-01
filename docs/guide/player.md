@@ -78,6 +78,7 @@ an artist. Clicking the artist or album name in the player fills the search for 
 | *Server unreachable* | The companion itself isn't running (app quit, container stopped). |
 | *No lyrics found* | LRCLIB has nothing for this title — try **Other versions** with a simpler title. |
 | *Instrumental* | LRCLIB marks the track as instrumental. |
+| *LRCLIB is unreachable / overloaded* | No LRCLIB server answered; the app tries again every minute. A mirror helps — see *Lyrics Sources* below. |
 
 ## Preferences
 
@@ -87,6 +88,12 @@ Settings (gear icon) → **App Preferences**:
 - **Screenshot mode** — replaces your Core, zone and speaker names, account and folders with
   neutral ones on screen, to share screenshots safely.
 - **Volume step** and **refresh interval** of the player.
+
+Settings → **Lyrics Sources**: the LRCLIB servers lyrics come from, in order of preference —
+lrclib.net by default. Add a mirror (a copy of LRCLIB's database on a server you run, e.g.
+`http://192.168.1.20:3300`), move it with ↑ ↓, and check it with **Test**. When a server is down,
+busy or doesn't have the song, the next one is asked. Each server asked receives the track's title,
+artist, album and length.
 
 The desktop app also shows a notice when a new version is out, and can notify you when a batch
 or an AI transcription ends (menu bar → *Notifications*).

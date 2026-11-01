@@ -117,3 +117,25 @@ export function maskPath(p) {
   const parts = p.split('/').filter(Boolean);
   return '/Music/' + parts.slice(-3).join('/');
 }
+
+const IPV4 = /\b(?:\d{1,3}\.){3}\d{1,3}\b/g;
+
+/**
+ * An LRCLIB server URL as shown in the UI: lrclib.net stays as is; another host (a home mirror,
+ * someone's own server) becomes 192.168.1.20 for an IP, lyrics.example.com for a name.
+ */
+export function maskServerUrl(url) {
+  if (!isPrivacyMode() || !url) return url;
+  try {
+    const u = new URL(url);
+    if (u.hostname === 'lrclib.net') return url;
+    u.hostname = /^[\d.]+$|^\[/.test(u.hostname) ? '192.168.1.20' : 'lyrics.example.com';
+    return u.href.replace(/\/$/, '');
+  } catch { return url; }
+}
+
+/** IP addresses inside a message (an LRCLIB error naming a mirror) become 192.168.1.20. */
+export function maskAddresses(text) {
+  if (!isPrivacyMode() || !text) return text;
+  return String(text).replace(IPV4, '192.168.1.20');
+}

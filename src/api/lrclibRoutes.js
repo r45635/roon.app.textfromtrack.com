@@ -15,15 +15,6 @@ const { lrclibGet } = lrclibClient;
 
 const router = Router();
 
-/** A busy or failing LRCLIB (503 ServerOverloaded, 429, 5xx) is an error, not "no lyrics". */
-function throwIfBusy(result) {
-  if (result && (result.status === 429 || result.status >= 500)) {
-    const detail = result.body && (result.body.message || result.body.name);
-    throw new Error(`LRCLIB HTTP ${result.status}${detail ? `: ${detail}` : ''}`);
-  }
-  return result;
-}
-
 /**
  * GET /api/lrclib/lookup
  * Query params: title, artist, album (optional), duration (optional, seconds)
@@ -62,13 +53,13 @@ router.get('/lookup', async (req, res) => {
     if (duration) params.set('duration', String(Math.round(Number(duration))));
 
     logger.info({ title, artist, album, duration }, 'LRCLIB lookup /api/get');
-    const result = throwIfBusy(await lrclibGet(`/api/get?${params.toString()}`));
+    const result = await lrclibGet(`/api/get?${params.toString()}`);
 
     // Not found, error response, or missing body → try search fallback
     if (!result || result.status < 200 || result.status >= 300 || !result.body) {
       logger.info({ title, artist }, 'LRCLIB /api/get not found, trying /api/search');
       const searchParams = new URLSearchParams({ track_name: title, artist_name: artist });
-      const searchResult = throwIfBusy(await lrclibGet(`/api/search?${searchParams.toString()}`));
+      const searchResult = await lrclibGet(`/api/search?${searchParams.toString()}`);
 
       if (!searchResult || !searchResult.body || !Array.isArray(searchResult.body) || searchResult.body.length === 0) {
         return res.json({ found: false });
@@ -142,7 +133,7 @@ router.get('/hit/:id', async (req, res) => {
     return res.status(400).json(buildError('INVALID_ID', 'id must be a numeric LRCLIB track id'));
   }
   try {
-    const result = throwIfBusy(await lrclibGet(`/api/get/${id}`));
+    const result = await lrclibGet(`/api/get/${id}`);
     if (!result || !result.body) {
       return res.json({ found: false });
     }

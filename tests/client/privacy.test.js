@@ -74,4 +74,15 @@ describe('screenshot mode (client/src/lib/privacy.js)', () => {
     localStorage.removeItem('i18nextLng');
     p.setPrivacyMode(false);
   });
+
+  test('on: LRCLIB servers other than lrclib.net and IPs in messages are hidden', () => {
+    p.setPrivacyMode(true);
+    assert.equal(p.maskServerUrl('https://lrclib.net'), 'https://lrclib.net');
+    assert.equal(p.maskServerUrl('http://10.0.0.7:3300'), 'http://192.168.1.20:3300');
+    assert.equal(p.maskServerUrl('https://lyrics.vincent.home/lrclib'), 'https://lyrics.example.com/lrclib');
+    assert.equal(p.maskAddresses('10.0.0.7:3300: timed out; lrclib.net: LRCLIB HTTP 503'),
+      '192.168.1.20:3300: timed out; lrclib.net: LRCLIB HTTP 503');
+    p.setPrivacyMode(false);
+    assert.equal(p.maskServerUrl('http://10.0.0.7:3300'), 'http://10.0.0.7:3300');
+  });
 });

@@ -14,6 +14,14 @@ des titres connus y sont, les plus rares peut-être pas. Essayez **Versions** av
 simplifié. Des paroles IA pour le reste, avec TextFromTrack, arriveront plus tard — ce service est
 encore en développement.
 
+**« LRCLIB est injoignable » ou « surchargée » — que faire ?**
+lrclib.net, le serveur gratuit derrière les paroles, est parfois en panne ou surchargé pendant des
+heures ; l'app réessaie chaque minute, et **Réessayer** relance tout de suite. Pour ne plus en
+dépendre, hébergez un miroir — une copie de la base de LRCLIB sur votre propre serveur ou NAS : son
+[serveur](https://github.com/tranxuanthang/lrclib) est open source et la base se télécharge
+librement. Puis Réglages → **Sources de paroles** : ajoutez le miroir et placez-le avant lrclib.net.
+Chaque recherche essaie les serveurs dans cet ordre, et **Tester** en vérifie un.
+
 **Est-ce que ça marche avec Roon ARC ?**
 Non. Le compagnon est une page web servie sur votre réseau local (`http://<ordinateur>:3888`) ; il
 n'ajoute pas de paroles dans Roon ARC. Sur votre téléphone à la maison, scannez le QR code (icône
@@ -52,7 +60,7 @@ suit sa propre zone (bouton **Zone**).
 
 **Qu'est-ce qui sort de mon réseau ?**
 Pour trouver les paroles, le titre, l'artiste, l'album et la durée d'un morceau partent vers
-LRCLIB. Toutes les quelques heures, l'app demande à GitHub si une nouvelle version existe
+LRCLIB (lrclib.net, ou les serveurs listés dans Réglages → Sources de paroles). Toutes les quelques heures, l'app demande à GitHub si une nouvelle version existe
 (`UPDATE_CHECK=false` le désactive). Rien d'autre. Les autres appareils du réseau peuvent devoir
 fournir un jeton (`ACCESS_TOKEN`).
 

@@ -81,6 +81,7 @@ lecteur remplit la recherche pour vous.
 | *Serveur injoignable* | Le compagnon lui-même ne tourne pas (app quittée, conteneur arrêté). |
 | *Aucune parole trouvée* | LRCLIB n'a rien pour ce titre — essayez **Versions** avec un titre simplifié. |
 | *Instrumental* | LRCLIB indique un titre instrumental. |
+| *LRCLIB est injoignable / surchargée* | Aucun serveur LRCLIB n'a répondu ; l'app réessaie chaque minute. Un miroir aide — voir *Sources de paroles* ci-dessous. |
 
 ## Préférences
 
@@ -90,6 +91,12 @@ Réglages (roue dentée) → **Préférences de l'application** :
 - **Mode capture d'écran** — remplace à l'écran votre Core, vos zones, enceintes, compte et dossiers
   par des noms neutres, pour partager des captures sans risque.
 - **Pas de volume** et **intervalle de rafraîchissement** du lecteur.
+
+Réglages → **Sources de paroles** : les serveurs LRCLIB d'où viennent les paroles, par ordre de
+préférence — lrclib.net par défaut. Ajoutez un miroir (une copie de la base de LRCLIB sur un serveur
+que vous gérez, par ex. `http://192.168.1.20:3300`), déplacez-le avec ↑ ↓ et vérifiez-le avec
+**Tester**. Quand un serveur est en panne, surchargé ou n'a pas la chanson, le suivant est
+interrogé. Chaque serveur interrogé reçoit le titre, l'artiste, l'album et la durée du morceau.
 
 L'app de bureau signale aussi les nouvelles versions et peut vous prévenir à la fin d'un lot ou d'une
 transcription IA (barre des menus → *Notifications*).

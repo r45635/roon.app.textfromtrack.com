@@ -12,6 +12,14 @@ Lyrics come from [LRCLIB](https://lrclib.net), a free community database: most p
 there, rare ones may not be. Try **Other versions** with a simpler title. AI lyrics for the rest,
 with TextFromTrack, are coming later — that service is still in development.
 
+**"LRCLIB is unreachable" or "overloaded" — what can I do?**
+lrclib.net, the free server behind the lyrics, is sometimes down or overloaded for hours; the app
+tries again every minute, and **Retry** asks at once. To stop depending on it, run a mirror — a
+copy of LRCLIB's database on your own server or NAS: its [server](https://github.com/tranxuanthang/lrclib)
+is open source and the database is a public download. Then Settings → **Lyrics Sources**: add the
+mirror and move it above lrclib.net. Each lookup tries the servers in that order, and **Test**
+checks one.
+
 **Does it work with Roon ARC?**
 No. The companion is a web page served on your home network (`http://<computer>:3888`); it doesn't
 add lyrics inside Roon ARC. On your phone at home, scan the QR code (phone icon in the top bar).
@@ -45,7 +53,8 @@ Yes. Every phone, tablet or TV browser can open the lyrics display, and each one
 zone (**Zone** button).
 
 **What leaves my network?**
-To find lyrics, a track's title, artist, album and length go to LRCLIB. Once every few hours the
+To find lyrics, a track's title, artist, album and length go to LRCLIB (lrclib.net, or the servers
+listed in Settings → Lyrics Sources). Once every few hours the
 app asks GitHub whether a new version exists (`UPDATE_CHECK=false` turns that off). Nothing else.
 Other devices on your network can be asked for a token (`ACCESS_TOKEN`).
 
