@@ -600,6 +600,14 @@ button.tft-search-link:hover { color: rgba(255,255,255,0.95); text-decoration: u
 .tft-round-btn.active {
   background: rgba(111,217,154,0.18); border-color: rgba(111,217,154,0.34); color: #a9e8bd;
 }
+/* The settings drawer is paper, not the dark player: there the round buttons follow the theme. */
+.tft-settings-drawer .tft-round-btn {
+  color: var(--tft-ink-2); background: var(--tft-paper-2); border-color: var(--tft-line);
+}
+.tft-settings-drawer .tft-round-btn:hover:not(:disabled) { background: var(--tft-line-2); border-color: var(--tft-ink-3); }
+.tft-settings-drawer .tft-round-btn.active {
+  background: rgba(111,217,154,0.18); border-color: rgba(76,175,80,0.55); color: var(--tft-ink);
+}
 
 /* ── Volume card ──────────────────────────────────────────────────────────── */
 .tft-np-side { order: 6; display: flex; align-items: center; }

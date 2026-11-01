@@ -136,6 +136,7 @@ export default function TftApiKey({ onTokenSaved }) {
                     : t('tft_key.placeholder_enter', 'Paste your API key here…')}
                   value={inputValue}
                   onChange={e => { setInputValue(e.target.value); setSaveResult(null); }}
+                  onKeyDown={e => { if (e.key === 'Enter' && inputValue.trim() && !saving) handleSave(); }}
                   autoComplete="off"
                   spellCheck={false}
                 />
@@ -154,8 +155,8 @@ export default function TftApiKey({ onTokenSaved }) {
               </div>
 
               <button
-                className="tft-round-btn"
-                style={{ height: 30, padding: '0 14px', fontSize: 12, borderRadius: 6, whiteSpace: 'nowrap' }}
+                className="btn btn-primary btn-sm"
+                style={{ whiteSpace: 'nowrap' }}
                 disabled={saving || !inputValue.trim()}
                 onClick={() => handleSave()}
               >
@@ -164,8 +165,8 @@ export default function TftApiKey({ onTokenSaved }) {
 
               {tokenSource === 'user_settings' && (
                 <button
-                  className="tft-round-btn"
-                  style={{ height: 30, padding: '0 14px', fontSize: 12, borderRadius: 6, whiteSpace: 'nowrap', color: 'var(--tft-red, #e55)' }}
+                  className="btn btn-ghost btn-sm"
+                  style={{ whiteSpace: 'nowrap', color: 'var(--tft-red, #e55)' }}
                   disabled={saving}
                   onClick={() => { setInputValue(''); handleSave(''); }}
                   title={t('tft_key.clear_title', 'Remove the saved API key')}
