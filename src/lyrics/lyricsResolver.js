@@ -224,6 +224,21 @@ function saveCustom(track, text) {
   return { ..._fromText(text), source: 'cache', track_id: trackId, lrclib_id: null, offset_ms: 0 };
 }
 
+/**
+ * What is already known about a track's lyrics, without reading files or asking LRCLIB:
+ * the metadata cache, then a remembered LRCLIB answer.
+ * @param {{ title, artist, album }} track
+ * @returns {'synced'|'plain'|'instrumental'|'none'|'unknown'} 'unknown' also after an error
+ */
+function peek(track) {
+  if (!track || !track.title || !track.artist) return 'unknown';
+  const cached = lrcCache.getByMeta(track.artist, track.title, track.album);
+  if (cached) return isSynced(cached) ? 'synced' : 'plain';
+  const memo = _memo.get(_trackId(track));
+  if (!memo || memo.expires <= Date.now() || memo.result.error) return 'unknown';
+  return memo.result.instrumental ? 'instrumental' : 'none';
+}
+
 /** Test hook: forget remembered LRCLIB results. */
 function _resetMemo() {
   _memo.clear();
@@ -239,4 +254,4 @@ function lookupLrclib(track) {
   return _fetchFromLrclib(track);
 }
 
-module.exports = { resolve, choose, setOffset, saveCustom, lookupLrclib, isSynced, pickHit, simplify, _resetMemo };
+module.exports = { resolve, peek, choose, setOffset, saveCustom, lookupLrclib, isSynced, pickHit, simplify, _resetMemo };

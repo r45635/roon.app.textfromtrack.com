@@ -2698,6 +2698,8 @@ button.synced-line:hover { opacity: 0.9; background: var(--tft-hover); }
 .tft-version.selected { border-color: var(--tft-signal); background: var(--tft-signal-soft); }
 .tft-version-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tft-version-album { color: var(--tft-mute); font-size: 12px; max-width: 35%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tft-queue .tft-versions-list { max-height: 320px; }
+.tft-queue-cover { width: 32px; height: 32px; flex-shrink: 0; border-radius: 4px; object-fit: cover; background: var(--tft-paper-2); }
 
 @media (max-width: 620px) {
   .tft-lyrics-stage { padding: 14px 16px 12px; }

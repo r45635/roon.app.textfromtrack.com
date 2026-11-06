@@ -10,9 +10,11 @@ const {
   changeSettings,
   transferZone, groupOutputs, ungroupOutputs,
   standbyOutput, convenienceSwitchOutput,
+  getQueue, playFromHere,
   browseCatalog, loadBrowse, searchRoon, playOnZone,
 } = require('../roon/roonClient');
 const nowPlayingStore = require('../roon/nowPlayingStore');
+const queuePrefetch = require('../lyrics/queuePrefetch');
 const { E, buildError } = require('../utils/normalize');
 
 const LOCAL_NETWORK_SETTINGS_URL = 'x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork';
@@ -121,6 +123,53 @@ router.post('/control', async (req, res) => {
 
   try {
     await controlZone(state.zone_id, action);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(503).json(buildError(E.ROON_NOT_CONNECTED, err.message));
+  }
+});
+
+/**
+ * GET /api/roon/queue
+ * The play queue of the active zone, or of `?zone_id=`: the playing track first, each item with
+ * what is known of its lyrics ('synced'|'plain'|'instrumental'|'none'|'unknown', no lookup).
+ */
+router.get('/queue', async (req, res) => {
+  const state = nowPlayingFor(req.query.zone_id);
+  if (!state) {
+    if (!getRoonStatus().connected) {
+      return res.status(503).json(buildError(E.ROON_NOT_CONNECTED, 'Roon Core is not connected'));
+    }
+    return res.status(404).json(buildError(E.NO_CURRENT_TRACK, 'No active zone'));
+  }
+  try {
+    const items = await getQueue(state.zone_id);
+    res.json({
+      success: true,
+      zone_id: state.zone_id,
+      items: items.map(item => ({ ...item, lyrics: queuePrefetch.statusOf(item) })),
+    });
+  } catch (err) {
+    res.status(503).json(buildError(E.ROON_NOT_CONNECTED, err.message));
+  }
+});
+
+/**
+ * POST /api/roon/queue/play
+ * Play the zone's queue from one of its items.
+ * Body: { queue_item_id, zone_id? } — queue_item_id as GET /queue returned it
+ */
+router.post('/queue/play', async (req, res) => {
+  const { queue_item_id: queueItemId, zone_id: zoneId } = req.body || {};
+  if (!Number.isInteger(queueItemId) && !(typeof queueItemId === 'string' && queueItemId)) {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'queue_item_id is required'));
+  }
+  const state = nowPlayingFor(zoneId);
+  if (!state) {
+    return res.status(404).json(buildError(E.NO_CURRENT_TRACK, 'No active zone'));
+  }
+  try {
+    await playFromHere(state.zone_id, queueItemId);
     res.json({ success: true });
   } catch (err) {
     res.status(503).json(buildError(E.ROON_NOT_CONNECTED, err.message));

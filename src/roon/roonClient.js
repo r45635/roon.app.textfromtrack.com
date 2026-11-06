@@ -66,25 +66,40 @@ function _watchRegistration() {
 
 // ─── Helper: extract now-playing state from a Roon zone object ────────────────
 
+/**
+ * Track identity from a Roon now_playing or queue item (both carry the same
+ * one_line / two_line / three_line, length and image_key fields).
+ */
+function trackFromLines(item) {
+  const three = item.three_line || {};
+  const two = item.two_line || {};
+  const one = item.one_line || {};
+  return {
+    title: three.line1 || two.line1 || one.line1 || null,
+    artist: three.line2 || two.line2 || null,
+    album: three.line3 || null,
+    duration_seconds: item.length || null,
+    image_key: item.image_key || null,
+  };
+}
+
 function _extractNowPlaying(zone) {
   const np = zone.now_playing || null;
   if (!np) return null;
 
-  const three = np.three_line || {};
-  const two = np.two_line || {};
-  const one = np.one_line || {};
   const settings = zone.settings || {};
+  const track = trackFromLines(np);
 
   return {
     zone_id: zone.zone_id,
     zone_name: zone.display_name,
     state: zone.state || 'stopped',
-    title: three.line1 || two.line1 || one.line1 || null,
-    artist: three.line2 || two.line2 || null,
-    album: three.line3 || null,
-    duration_seconds: np.length || null,
+    title: track.title,
+    artist: track.artist,
+    album: track.album,
+    duration_seconds: track.duration_seconds,
     seek_position_seconds: np.seek_position ?? 0,
-    image_key: np.image_key || null,
+    image_key: track.image_key,
     queue_items_remaining: zone.queue_items_remaining ?? null,
     queue_time_remaining: zone.queue_time_remaining ?? null,
     shuffle: settings.shuffle || false,
@@ -187,7 +202,10 @@ function _handleZonesChanged(changed) {
 }
 
 function _handleZonesRemoved(removed) {
-  for (const id of removed) _zones.delete(id);
+  for (const id of removed) {
+    _zones.delete(id);
+    _unsubscribeQueue(id);
+  }
   _refreshActiveZone();
 }
 
@@ -321,6 +339,8 @@ function startRoon() {
         if (cmd === 'Subscribed') {
           _handleZones(data.zones || []);
         } else if (cmd === 'Changed') {
+          // A new zone (e.g. outputs just grouped) arrives in zones_added, not zones_changed.
+          if (data.zones_added) _handleZonesChanged(data.zones_added);
           if (data.zones_changed) _handleZonesChanged(data.zones_changed);
           if (data.zones_removed) _handleZonesRemoved(data.zones_removed);
           if (data.zones_seek_changed) _handleZonesSeekChanged(data.zones_seek_changed);
@@ -338,6 +358,8 @@ function startRoon() {
       _coreVersion = null;
       _roonImageBase = null;
       _zones.clear();
+      // The connection is gone: its queue subscriptions went with it, nothing to unsubscribe.
+      _queues.clear();
       _autoZoneId = null;
       nowPlayingStore.clear();
       if (_svcStatus) _svcStatus.set_status('Disconnected from Roon', true);
@@ -621,6 +643,116 @@ function convenienceSwitchOutput(outputId) {
   });
 }
 
+// ─── Play queue ───────────────────────────────────────────────────────────────
+
+// Queue subscriptions are opened on demand, for at most QUEUE_MAX_SUBS zones: the least
+// recently asked one is dropped. zone_id → { handle, items, used, ready, failed }
+const QUEUE_MAX_SUBS = 2;
+const QUEUE_MAX_ITEMS = 20;
+const QUEUE_READY_TIMEOUT_MS = 5000;
+const _queues = new Map();
+let _queueClock = 0; // order of use (Date.now() ties within a millisecond)
+let _queueShapeLogged = false;
+
+/** Apply a Subscribed / Changed message to a queue's items. False for any other message. */
+function _applyQueue(items, cmd, data) {
+  if (cmd === 'Subscribed') {
+    items.splice(0, items.length, ...(data.items || []));
+    return true;
+  }
+  if (cmd !== 'Changed') return false;
+  for (const change of data.changes || []) {
+    if (change.operation === 'remove') items.splice(change.index, change.count);
+    else if (change.operation === 'insert') items.splice(change.index, 0, ...(change.items || []));
+  }
+  return true;
+}
+
+function _unsubscribeQueue(zoneId) {
+  const entry = _queues.get(zoneId);
+  if (!entry) return;
+  _queues.delete(zoneId);
+  try {
+    if (entry.handle) entry.handle.unsubscribe(() => {});
+  } catch (err) {
+    logger.debug({ zone_id: zoneId, err: err.message }, 'Roon queue unsubscribe failed');
+  }
+}
+
+function _subscribeQueue(zoneId) {
+  if (_queues.size >= QUEUE_MAX_SUBS) {
+    const [oldest] = [..._queues.entries()].sort((a, b) => a[1].used - b[1].used)[0];
+    _unsubscribeQueue(oldest);
+  }
+  const entry = { handle: null, items: [], used: ++_queueClock, failed: null };
+  let markReady;
+  entry.ready = new Promise(resolve => { markReady = resolve; });
+  _queues.set(zoneId, entry);
+
+  entry.handle = _transport.subscribe_queue(_zones.get(zoneId), QUEUE_MAX_ITEMS, (cmd, data) => {
+    if (_queues.get(zoneId) !== entry) return; // replaced or dropped meanwhile
+    if (!_queueShapeLogged && cmd === 'Subscribed') {
+      // Roon doesn't document queue items: record their fields once, never their titles.
+      _queueShapeLogged = true;
+      const first = (data && data.items && data.items[0]) || {};
+      logger.info({ item_count: (data && data.items || []).length, item_fields: Object.keys(first) }, 'Roon queue subscribed');
+    }
+    if (_applyQueue(entry.items, cmd, data || {})) {
+      markReady();
+      events.emit('queue_changed', zoneId);
+    } else if (cmd !== 'Unsubscribed') {
+      logger.warn({ zone_id: zoneId, cmd }, 'Roon queue subscription failed');
+      entry.failed = String(cmd);
+      _queues.delete(zoneId);
+      markReady();
+    }
+  });
+  return entry;
+}
+
+/**
+ * The play queue of a zone: up to QUEUE_MAX_ITEMS items, the playing track first.
+ * Subscribes on first use. Rejects when Roon or the zone is unavailable.
+ * @param {string} zoneId
+ * @returns {Promise<Array<{queue_item_id, title, artist, album, duration_seconds, image_key}>>}
+ */
+async function getQueue(zoneId) {
+  if (!_transport) throw new Error('Roon transport not available');
+  if (!_zones.has(zoneId)) throw new Error(`Zone not found: ${zoneId}`);
+  const entry = _queues.get(zoneId) || _subscribeQueue(zoneId);
+  entry.used = ++_queueClock;
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error('Roon queue did not answer')), QUEUE_READY_TIMEOUT_MS);
+  });
+  try {
+    await Promise.race([entry.ready, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+  if (entry.failed) throw new Error(`Roon queue subscription failed: ${entry.failed}`);
+  return entry.items.map(item => ({ queue_item_id: item.queue_item_id, ...trackFromLines(item) }));
+}
+
+/** Zones whose queue is currently subscribed. */
+function queueZoneIds() {
+  return [..._queues.keys()];
+}
+
+/** Start playing a zone from one of its queue items. */
+function playFromHere(zoneId, queueItemId) {
+  return new Promise((resolve, reject) => {
+    if (!_transport) return reject(new Error('Roon transport not available'));
+    const zone = _findZone(zoneId);
+    if (!zone) return reject(new Error(`Zone not found: ${zoneId}`));
+    // Unlike control/seek, play_from_here hands back the raw message, not an error string.
+    _transport.play_from_here(zone, queueItemId, (msg) => {
+      if (msg && msg.name === 'Success') resolve();
+      else reject(new Error(msg ? String(msg.name) : 'NetworkError'));
+    });
+  });
+}
+
 // ─── Browse / Search ──────────────────────────────────────────────────────────
 
 /**
@@ -794,5 +926,6 @@ module.exports = {
   changeSettings,
   transferZone, groupOutputs, ungroupOutputs,
   standbyOutput, convenienceSwitchOutput,
+  getQueue, queueZoneIds, playFromHere, trackFromLines,
   browseCatalog, loadBrowse, searchRoon, playOnZone,
 };

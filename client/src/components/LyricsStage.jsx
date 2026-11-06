@@ -45,6 +45,7 @@ export default function LyricsStage({
   const [fullscreen, setFullscreen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [versionsOpen, setVersionsOpen] = useState(false);
+  const [queueOpen, setQueueOpen] = useState(false);
   const [notice, setNotice] = useState(null); // { tone: 'ok'|'error', text }
   const [saving, setSaving] = useState(false);
   const [hintDismissed, setHintDismissed] = useState(readDismissed);
@@ -199,7 +200,20 @@ export default function LyricsStage({
               <button type="button" className="tft-offset-btn" onClick={() => changeOffset(offsetMs + OFFSET_STEP_MS)} title={t('stage.offset_later')} aria-label={t('stage.offset_later')}>+</button>
             </div>
           )}
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setVersionsOpen(v => !v)} aria-expanded={versionsOpen}>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => { setQueueOpen(v => !v); setVersionsOpen(false); }}
+            aria-expanded={queueOpen}
+          >
+            {t('queue.toggle')}
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => { setVersionsOpen(v => !v); setQueueOpen(false); }}
+            aria-expanded={versionsOpen}
+          >
             {t('stage.versions')}
           </button>
           {found && !editing && (
@@ -225,6 +239,14 @@ export default function LyricsStage({
 
       {notice && (
         <p className={`tft-lyrics-stage-notice ${notice.tone}`} role={notice.tone === 'error' ? 'alert' : 'status'}>{notice.text}</p>
+      )}
+
+      {queueOpen && (
+        <UpNext
+          np={np}
+          trackKey={trackKey}
+          onError={(msg) => flash('error', t('queue.play_failed', { msg }))}
+        />
       )}
 
       {versionsOpen && (
@@ -286,6 +308,98 @@ export default function LyricsStage({
           onControl={onControl}
           onClose={() => setFullscreen(false)}
         />
+      )}
+    </div>
+  );
+}
+
+const PREFETCH_SETTLE_MS = 4000;
+
+const QUEUE_PILLS = {
+  synced: { cls: 'tft-pill signal', key: 'stage.synced' },
+  plain: { cls: 'tft-pill', key: 'stage.not_synced' },
+  instrumental: { cls: 'tft-pill', key: 'stage.instrumental_short' },
+  none: { cls: 'tft-pill', key: 'queue.no_lyrics' },
+};
+
+/**
+ * The tracks after the playing one in the zone's Roon queue, with what is known of their
+ * lyrics (the backend looks the next ones up in advance). A click plays from that track.
+ * Re-read at each track change.
+ */
+function UpNext({ np, trackKey, onError }) {
+  const { t } = useTranslation();
+  const [items, setItems] = useState(null);
+  const [err, setErr] = useState(null);
+  const [playing, setPlaying] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = () => fetch(`/api/roon/queue?zone_id=${encodeURIComponent(np.zone_id)}`)
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return;
+        if (!data.success) throw new Error(data.error?.message || 'error');
+        // Roon lists the playing track first.
+        const all = data.items || [];
+        const idx = all.findIndex(i => i.title === np.title && i.artist === np.artist);
+        setErr(null);
+        setItems(all.slice(idx >= 0 ? idx + 1 : 1));
+      })
+      .catch(e => { if (!cancelled) { setErr(e.message); setItems(null); } });
+    load();
+    // The lookahead takes a few seconds after a track change: read the markers again once.
+    const again = setTimeout(load, PREFETCH_SETTLE_MS);
+    return () => { cancelled = true; clearTimeout(again); };
+  }, [trackKey]);
+
+  async function play(item) {
+    setPlaying(item.queue_item_id);
+    try {
+      const res = await fetch('/api/roon/queue/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ zone_id: np.zone_id, queue_item_id: item.queue_item_id }),
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error?.message || `HTTP ${res.status}`);
+    } catch (e) {
+      onError(e.message);
+    } finally {
+      setPlaying(null);
+    }
+  }
+
+  return (
+    <div className="tft-versions tft-queue">
+      <p className="muted small">{t('queue.hint')}</p>
+      {err && <p className="tft-lyrics-stage-notice error" role="alert">{t('queue.load_failed', { msg: err })}</p>}
+      {items && items.length === 0 && <p className="muted small">{t('queue.empty')}</p>}
+      {items && items.length > 0 && (
+        <ul className="tft-versions-list">
+          {items.map(item => {
+            const pill = QUEUE_PILLS[item.lyrics];
+            return (
+              <li key={item.queue_item_id}>
+                <button
+                  type="button"
+                  className="tft-version"
+                  onClick={() => play(item)}
+                  disabled={playing != null}
+                  title={t('queue.play_tip')}
+                >
+                  {item.image_key
+                    ? <img className="tft-queue-cover" src={`/api/roon/image/${item.image_key}?w=40&h=40`} alt="" loading="lazy" />
+                    : <span className="tft-queue-cover" aria-hidden="true" />}
+                  <span className="tft-version-name">{item.title}{item.artist ? ` — ${item.artist}` : ''}</span>
+                  {pill
+                    ? <span className={pill.cls}>{t(pill.key)}</span>
+                    : <span className="tft-pill" title={t('queue.unknown')} aria-label={t('queue.unknown')}>…</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

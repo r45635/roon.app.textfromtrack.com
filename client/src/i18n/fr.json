@@ -649,5 +649,16 @@
     "lines_label": "Lignes des paroles",
     "saved": "Timing enregistré — ces paroles défilent maintenant en rythme.",
     "saved_file_hint": "Timing enregistré. Utilisez « Enregistrer dans le fichier » pour l’écrire dans le titre."
+  },
+  "queue": {
+    "title": "À suivre",
+    "toggle": "À suivre",
+    "empty": "Rien d'autre dans la file après ce morceau.",
+    "load_failed": "Impossible de lire la file d'attente : {{msg}}",
+    "play_failed": "Impossible de lire ce morceau : {{msg}}",
+    "play_tip": "Lire à partir d'ici",
+    "no_lyrics": "Sans paroles",
+    "unknown": "Pas encore vérifié",
+    "hint": "Les paroles des morceaux suivants sont cherchées à l'avance."
   }
 }

@@ -649,5 +649,16 @@
     "lines_label": "Lyrics lines",
     "saved": "Timing saved — these lyrics now play in sync.",
     "saved_file_hint": "Timing saved. Use “Save to file” to write it into the track."
+  },
+  "queue": {
+    "title": "Up next",
+    "toggle": "Up next",
+    "empty": "Nothing else in the queue after this track.",
+    "load_failed": "Couldn't read the queue: {{msg}}",
+    "play_failed": "Couldn't play this track: {{msg}}",
+    "play_tip": "Play from here",
+    "no_lyrics": "No lyrics",
+    "unknown": "Not checked yet",
+    "hint": "Lyrics of the next tracks are looked up in advance."
   }
 }

@@ -167,3 +167,129 @@ describe('setActiveZone', () => {
     assert.equal(nowPlayingStore.get()?.zone_id, 'z-play');
   });
 });
+
+describe('play queue', () => {
+  const zoneA = {
+    zone_id: 'z-a', display_name: 'Kitchen', state: 'playing', outputs: [],
+    now_playing: { three_line: { line1: 'Song', line2: 'Artist' }, length: 200 },
+  };
+  const zoneB = { ...zoneA, zone_id: 'z-b', display_name: 'Office' };
+  const zoneC = { ...zoneA, zone_id: 'z-c', display_name: 'Den' };
+  const item = (id, title) => ({
+    queue_item_id: id, length: 180, image_key: `img${id}`,
+    three_line: { line1: title, line2: 'Band', line3: 'Record' },
+  });
+
+  // Pair with a fake transport that records queue subscriptions: zone_id → { cb, unsubscribed }.
+  function pair(client, zones, { playResult = { name: 'Success' } } = {}) {
+    config.roonCoreHost = null;
+    client.startRoon();
+    const subs = {};
+    const plays = [];
+    let onZones;
+    lastRoonApi.opts.core_paired({
+      display_name: 'Core', display_version: '2.0', services: {
+        RoonApiTransport: {
+          subscribe_zones: (cb) => { onZones = cb; },
+          subscribe_queue: (zone, max, cb) => {
+            const sub = { cb, max, unsubscribed: false };
+            subs[zone.zone_id] = sub;
+            return { unsubscribe: () => { sub.unsubscribed = true; } };
+          },
+          play_from_here: (zone, id, cb) => { plays.push([zone.zone_id, id]); cb(playResult); },
+        },
+        RoonApiBrowse: {},
+      },
+    });
+    onZones('Subscribed', { zones });
+    return { subs, plays, changed: (data) => onZones('Changed', data) };
+  }
+
+  test('subscribes on first use and maps items like now_playing', async () => {
+    const client = loadClient();
+    const { subs } = pair(client, [zoneA]);
+    const queue = client.getQueue('z-a');
+    subs['z-a'].cb('Subscribed', { items: [item(1, 'Song'), item(2, 'Next')] });
+    assert.deepEqual(await queue, [
+      { queue_item_id: 1, title: 'Song', artist: 'Band', album: 'Record', duration_seconds: 180, image_key: 'img1' },
+      { queue_item_id: 2, title: 'Next', artist: 'Band', album: 'Record', duration_seconds: 180, image_key: 'img2' },
+    ]);
+    assert.equal(subs['z-a'].max, 20);
+  });
+
+  test('applies Changed insert and remove operations, and emits queue_changed', async () => {
+    const client = loadClient();
+    const { subs } = pair(client, [zoneA]);
+    const seen = [];
+    client.events.on('queue_changed', id => seen.push(id));
+    const first = client.getQueue('z-a');
+    subs['z-a'].cb('Subscribed', { items: [item(1, 'A'), item(2, 'B'), item(3, 'C')] });
+    await first;
+    subs['z-a'].cb('Changed', { changes: [
+      { operation: 'remove', index: 0, count: 1 },
+      { operation: 'insert', index: 1, items: [item(4, 'D')] },
+    ] });
+    assert.deepEqual((await client.getQueue('z-a')).map(i => i.title), ['B', 'D', 'C']);
+    assert.deepEqual(seen, ['z-a', 'z-a']);
+  });
+
+  test('keeps at most two subscriptions, dropping the least recently used', async () => {
+    const client = loadClient();
+    const { subs } = pair(client, [zoneA, zoneB, zoneC]);
+    for (const id of ['z-a', 'z-b']) {
+      const q = client.getQueue(id);
+      subs[id].cb('Subscribed', { items: [] });
+      await q;
+    }
+    await client.getQueue('z-a'); // z-a is now more recent than z-b
+    const q = client.getQueue('z-c');
+    subs['z-c'].cb('Subscribed', { items: [] });
+    await q;
+    assert.equal(subs['z-b'].unsubscribed, true);
+    assert.equal(subs['z-a'].unsubscribed, false);
+    assert.deepEqual(client.queueZoneIds().sort(), ['z-a', 'z-c']);
+  });
+
+  test('a failed subscription rejects and is retried on the next call', async () => {
+    const client = loadClient();
+    const { subs } = pair(client, [zoneA]);
+    const q = client.getQueue('z-a');
+    subs['z-a'].cb('InvalidRequest', {});
+    await assert.rejects(q, /InvalidRequest/);
+    assert.deepEqual(client.queueZoneIds(), []);
+  });
+
+  test('a removed zone is unsubscribed; an unpaired Core forgets every subscription', async () => {
+    const client = loadClient();
+    const { subs, changed } = pair(client, [zoneA, zoneB]);
+    for (const id of ['z-a', 'z-b']) {
+      const q = client.getQueue(id);
+      subs[id].cb('Subscribed', { items: [] });
+      await q;
+    }
+    changed({ zones_removed: ['z-a'] });
+    assert.equal(subs['z-a'].unsubscribed, true);
+    lastRoonApi.opts.core_unpaired({ display_name: 'Core' });
+    assert.deepEqual(client.queueZoneIds(), []);
+    await assert.rejects(client.getQueue('z-b'), /not available/);
+  });
+
+  test('playFromHere checks the raw reply of play_from_here', async () => {
+    const ok = loadClient();
+    const { plays } = pair(ok, [zoneA]);
+    await ok.playFromHere('z-a', 7);
+    assert.deepEqual(plays, [['z-a', 7]]);
+
+    const failing = loadClient();
+    pair(failing, [zoneA], { playResult: { name: 'InvalidItem' } });
+    await assert.rejects(failing.playFromHere('z-a', 7), /InvalidItem/);
+    await assert.rejects(failing.playFromHere('z-missing', 7), /Zone not found/);
+  });
+
+  test('a zone added after subscribing (zones_added) becomes known', () => {
+    const client = loadClient();
+    const { changed } = pair(client, [zoneA]);
+    changed({ zones_added: [zoneB] });
+    assert.deepEqual(client.getAllZones().map(z => z.zone_id).sort(), ['z-a', 'z-b']);
+  });
+});
