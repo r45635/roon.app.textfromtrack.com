@@ -24,6 +24,8 @@ const DEFAULTS = {
   auto_save_lrclib: false,
   // Ordered LRCLIB servers; empty = the LRCLIB_URLS env var, else lrclib.net alone.
   lrclib_urls: [],
+  // Zone followed at startup, chosen in Roon → Settings → Extensions: { output_id, name } | null.
+  default_zone: null,
   tft_token: '',
   webhook_id: '',
   webhook_secret: '',

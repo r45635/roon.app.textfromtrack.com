@@ -13,7 +13,7 @@ const lyricsEmbedder = require('../music/lyricsEmbedder');
 const flacTagger = require('../music/flacTagger');
 const id3Tagger = require('../music/id3Tagger');
 const nowPlayingStore = require('../roon/nowPlayingStore');
-const { getRoonStatus } = require('../roon/roonClient');
+const { getRoonStatus, refreshSettingsPage } = require('../roon/roonClient');
 const userSettings = require('../settings/userSettings');
 const lrcCache = require('../utils/lrcCache');
 const musicRoots = require('../music/musicRoots');
@@ -107,6 +107,8 @@ router.post('/config', (req, res) => {
   }
   userSettings.set(update);
   logger.info(update, 'Music library config updated');
+  // The same switch is on the companion's page in Roon's settings.
+  if ('auto_save_lrclib' in update) refreshSettingsPage();
   res.json(musicConfigResponse());
 });
 

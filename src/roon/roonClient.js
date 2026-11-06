@@ -10,12 +10,15 @@ const RoonApiStatus = require('node-roon-api-status');
 
 const config = require('../config');
 const logger = require('../utils/logger');
+const userSettings = require('../settings/userSettings');
 const nowPlayingStore = require('./nowPlayingStore');
+const { createSettingsService } = require('./roonSettings');
 
 // ─── Module state ─────────────────────────────────────────────────────────────
 
 let _roon = null;
 let _svcStatus = null;
+let _settingsPage = null; // { service, refresh } — the companion's page in Roon's settings
 let _transport = null;
 let _browse = null;
 let _connected = false;
@@ -28,6 +31,24 @@ const _zones = new Map();
 
 // Manually selected active zone_id (null = auto-select playing zone)
 let _activeZoneId = null;
+
+// Output of the default zone chosen in Roon's settings (null = none). Read at startup and on
+// save, not on every refresh: seek ticks refresh the active zone every second.
+let _defaultOutputId = null;
+
+function _loadDefaultZone() {
+  const z = userSettings.get().default_zone;
+  _defaultOutputId = (z && z.output_id) || null;
+}
+
+/** zone_id holding the default zone's output (outputs move between zones when grouped). */
+function _defaultZoneId() {
+  if (!_defaultOutputId) return null;
+  for (const zone of _zones.values()) {
+    if ((zone.outputs || []).some(o => o.output_id === _defaultOutputId)) return zone.zone_id;
+  }
+  return null;
+}
 
 // Last auto-selected zone_id — kept sticky so transient state changes
 // (e.g. 'loading' during a track transition) don't cause zone flapping.
@@ -140,6 +161,15 @@ function _refreshActiveZone() {
     // Explicitly selected zone is gone — fall through to auto but don't cling
     // to a stale _activeZoneId (let the UI re-select).
     _activeZoneId = null;
+  }
+
+  // ── Default zone from Roon's settings, while it exists ────────────────────
+  const defaultZoneId = _defaultZoneId();
+  if (defaultZoneId) {
+    const state = _extractNowPlaying(_zones.get(defaultZoneId));
+    if (state) nowPlayingStore.set(state);
+    else nowPlayingStore.clear();
+    return;
   }
 
   // ── Auto-selection with sticky behaviour ──────────────────────────────────
@@ -367,10 +397,14 @@ function startRoon() {
   });
 
   _svcStatus = new RoonApiStatus(_roon);
+  _loadDefaultZone();
+  _settingsPage = createSettingsService(_roon, {
+    onSaved: () => { _loadDefaultZone(); _refreshActiveZone(); },
+  });
 
   _roon.init_services({
     required_services: [RoonApiTransport, RoonApiBrowse],
-    provided_services: [_svcStatus],
+    provided_services: [_svcStatus, _settingsPage.service],
   });
 
   _svcStatus.set_status('Waiting for Roon...', false);
@@ -487,7 +521,9 @@ function getAllZones() {
       // Roon gives no device type or icon; standby comes from the output's source control.
       standby: (o.source_controls || []).some(sc => sc.status === 'standby'),
     })),
-    is_active: _activeZoneId ? z.zone_id === _activeZoneId : z.state === 'playing',
+    is_active: (_activeZoneId || _defaultZoneId())
+      ? z.zone_id === (_activeZoneId || _defaultZoneId())
+      : z.state === 'playing',
   }));
 }
 
@@ -499,6 +535,11 @@ function getAllZones() {
 function getNowPlaying(zoneId) {
   const zone = _zones.get(zoneId);
   return zone ? _extractNowPlaying(zone) : null;
+}
+
+/** Show the web interface's change of a value on the companion's page in Roon's settings. */
+function refreshSettingsPage() {
+  if (_settingsPage) _settingsPage.refresh();
 }
 
 /** Set the zone the user wants to control. Immediately refreshes the now-playing store. */
@@ -927,5 +968,6 @@ module.exports = {
   transferZone, groupOutputs, ungroupOutputs,
   standbyOutput, convenienceSwitchOutput,
   getQueue, queueZoneIds, playFromHere, trackFromLines,
+  refreshSettingsPage,
   browseCatalog, loadBrowse, searchRoon, playOnZone,
 };

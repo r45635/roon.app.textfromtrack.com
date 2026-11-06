@@ -1,6 +1,13 @@
 'use strict';
 
-const { test, describe, beforeEach } = require('node:test');
+const fs = require('node:fs');
+const os = require('node:os');
+
+// User settings (default zone) go to a temp dir, never the repo's src/storage.
+const tmpDir = fs.mkdtempSync(require('node:path').join(os.tmpdir(), 'tft-roon-client-'));
+process.env.TFT_USER_DATA_DIR = tmpDir;
+
+const { test, describe, beforeEach, after } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
@@ -35,6 +42,13 @@ stubModule('node-roon-api-status', FakeRoonApiStatus);
 stubModule('node-roon-api-transport', function RoonApiTransport() {});
 stubModule('node-roon-api-browse', function RoonApiBrowse() {});
 
+let settingsOpts;
+class FakeRoonApiSettings {
+  constructor(roon, opts) { settingsOpts = opts; this.updates = []; }
+  update_settings(layout) { this.updates.push(layout); }
+}
+stubModule('node-roon-api-settings', FakeRoonApiSettings);
+
 const config = require('../../src/config');
 
 // roonClient keeps module state — load a fresh copy for each test
@@ -42,6 +56,8 @@ function loadClient() {
   delete require.cache[CLIENT_PATH];
   return require(CLIENT_PATH);
 }
+
+after(() => fs.rmSync(tmpDir, { recursive: true, force: true }));
 
 beforeEach(() => {
   wsConnects = [];
@@ -291,5 +307,101 @@ describe('play queue', () => {
     const { changed } = pair(client, [zoneA]);
     changed({ zones_added: [zoneB] });
     assert.deepEqual(client.getAllZones().map(z => z.zone_id).sort(), ['z-a', 'z-b']);
+  });
+});
+
+describe('settings page in Roon', () => {
+  const userSettings = require('../../src/settings/userSettings');
+  const nowPlayingStore = require('../../src/roon/nowPlayingStore');
+  const kitchen = {
+    zone_id: 'z-kitchen', display_name: 'Kitchen', state: 'playing', outputs: [{ output_id: 'o-kitchen' }],
+    now_playing: { three_line: { line1: 'Song', line2: 'Artist' }, length: 200 },
+  };
+  const office = {
+    zone_id: 'z-office', display_name: 'Office', state: 'paused', outputs: [{ output_id: 'o-office' }],
+    now_playing: { three_line: { line1: 'Other', line2: 'Band' }, length: 100 },
+  };
+
+  function fakeReq() {
+    const req = { replies: [] };
+    req.send_complete = (name, body) => req.replies.push({ name, body });
+    return req;
+  }
+
+  function start(zones) {
+    config.roonCoreHost = null;
+    const client = loadClient();
+    client.startRoon();
+    let onZones;
+    lastRoonApi.opts.core_paired({
+      display_name: 'Core', display_version: '2.0', services: {
+        RoonApiTransport: { subscribe_zones: (cb) => { onZones = cb; } },
+        RoonApiBrowse: {},
+      },
+    });
+    onZones('Subscribed', { zones });
+    return client;
+  }
+
+  beforeEach(() => userSettings.set({ default_zone: null, auto_save_lrclib: false }));
+
+  test('the page shows the web address but never the access token', () => {
+    config.accessToken = 'secret-token-123';
+    try {
+      start([kitchen]);
+      let layout;
+      settingsOpts.get_settings(l => { layout = l; });
+      const text = JSON.stringify(layout);
+      assert.doesNotMatch(text, /secret-token-123/);
+      const { getLanAddress } = require('../../src/utils/lanAddress');
+      if (getLanAddress()) {
+        assert.match(layout.layout[0].title, new RegExp(`:${config.port}`));
+        assert.match(layout.layout[0].title, /access token/);
+      } else {
+        assert.match(layout.layout[0].title, /no network address/);
+      }
+      assert.deepEqual(layout.values, { default_zone: null, auto_save_lrclib: 'off' });
+    } finally {
+      config.accessToken = '';
+    }
+  });
+
+  test('a dry run validates without saving; an invalid value is NotValid', () => {
+    start([kitchen]);
+    const dry = fakeReq();
+    settingsOpts.save_settings(dry, true, { values: { auto_save_lrclib: 'on' } });
+    assert.equal(dry.replies[0].name, 'Success');
+    assert.equal(userSettings.get().auto_save_lrclib, false);
+
+    const bad = fakeReq();
+    settingsOpts.save_settings(bad, false, { values: { auto_save_lrclib: 'maybe', default_zone: 'z' } });
+    assert.equal(bad.replies[0].name, 'NotValid');
+    assert.equal(bad.replies[0].body.settings.has_error, true);
+    assert.equal(userSettings.get().auto_save_lrclib, false);
+  });
+
+  test('a saved default zone is followed, survives a restart, and a web choice still wins', () => {
+    let client = start([kitchen, office]);
+    assert.equal(nowPlayingStore.get()?.zone_id, 'z-kitchen'); // auto: the playing zone
+
+    const req = fakeReq();
+    settingsOpts.save_settings(req, false, { values: { default_zone: { output_id: 'o-office', name: 'Office' }, auto_save_lrclib: 'on' } });
+    assert.equal(req.replies[0].name, 'Success');
+    assert.deepEqual(userSettings.get().default_zone, { output_id: 'o-office', name: 'Office' });
+    assert.equal(userSettings.get().auto_save_lrclib, true);
+    assert.equal(nowPlayingStore.get()?.zone_id, 'z-office');
+
+    client = start([kitchen, office]); // restart
+    assert.equal(nowPlayingStore.get()?.zone_id, 'z-office');
+    assert.deepEqual(client.getAllZones().filter(z => z.is_active).map(z => z.zone_id), ['z-office']);
+
+    client.setActiveZone('z-kitchen');
+    assert.equal(nowPlayingStore.get()?.zone_id, 'z-kitchen');
+  });
+
+  test('a default zone that is not there falls back to the automatic choice', () => {
+    userSettings.set({ default_zone: { output_id: 'o-gone', name: 'Gone' } });
+    start([kitchen, office]);
+    assert.equal(nowPlayingStore.get()?.zone_id, 'z-kitchen');
   });
 });
