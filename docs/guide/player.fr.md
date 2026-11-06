@@ -38,6 +38,7 @@ Sous le lecteur, les paroles du titre en cours. La ligne en surbrillance suit la
 |---|---|
 | **Aller à une ligne** | Cliquez dessus — Roon s'y place. |
 | **Corriger le décalage** | **Décalage − / +** déplace de 0,5 s (− = plus tôt, + = plus tard). Mémorisé pour ce titre ; cliquez sur la valeur pour revenir à zéro. |
+| **La suite** | **À suivre** liste les morceaux suivants de la file Roon de la zone, chacun avec ce qu'on sait de ses paroles (synchronisées, texte seul, aucune). Cliquez sur l'un pour lire à partir de lui. |
 | **Une autre version** | **Versions** cherche dans la base de paroles par titre et artiste (modifiables) et vous laisse choisir. |
 | **Plein écran** | **Plein écran** ou la touche **F** ; **Échap** pour sortir. De grandes lignes sur la pochette floutée, avec les commandes. |
 | **Copier / Télécharger** | Copier le texte, ou télécharger un fichier `.lrc` avec votre décalage appliqué. |
@@ -48,7 +49,8 @@ enregistrée** (gardée sur votre ordinateur depuis une lecture précédente), *
 signifie sans horodatage : elles s'affichent en texte simple.
 
 **D'où viennent les paroles ?** De [LRCLIB](https://lrclib.net), une base gratuite construite par
-la communauté. Le compagnon les cherche au début du titre et en garde une copie : la fois suivante,
+la communauté. Le compagnon les cherche au début du titre — et pour les trois suivants de la file pendant que
+le titre en cours joue — et en garde une copie : la fois suivante,
 c'est instantané. Quand LRCLIB est surchargée, la page l'indique et réessaie seule — ou cliquez sur
 **Réessayer**.
 
@@ -64,12 +66,26 @@ L'**icône téléphone** en haut ouvre une page avec deux QR codes :
 
 ![Paroles sur une tablette](../media/fr/player-tablet.png)
 
-## Rechercher dans Roon
+## La bibliothèque Roon
 
-La carte **Rechercher dans Roon** interroge votre bibliothèque Roon et vos services de streaming —
-pistes, albums, artistes. Choisissez une zone dans *Lecture sur* et appuyez sur **Lecture** sur un
-résultat ; **Ouvrir** entre dans un album ou un artiste. Cliquer sur l'artiste ou l'album dans le
-lecteur remplit la recherche pour vous.
+La carte **Bibliothèque Roon** a deux onglets :
+
+- **Rechercher** — votre bibliothèque Roon et vos services de streaming : pistes, albums,
+  artistes. Cliquer sur l'artiste ou l'album dans le lecteur remplit la recherche pour vous.
+- **Parcourir** — les menus de Roon lui-même : Library, Playlists, My Live Radio, Internet Radio,
+  Genres… Les longues listes se complètent avec **Afficher plus** ; le chemin en haut permet de
+  revenir en arrière.
+
+Choisissez une zone dans *Lecture sur* et appuyez sur **▶** sur un élément pour choisir Play Now,
+Add Next, Queue ou Start Radio ; **›** ouvre un album, un artiste ou une playlist.
+
+## Les réglages dans Roon
+
+Dans Roon → **Settings → Extensions**, le compagnon a sa propre page **Settings** : l'adresse de
+l'interface web et de l'écran paroles (pratique pour un téléphone ou une TV), une **zone par
+défaut** que le compagnon suit au démarrage, et l'enregistrement automatique des paroles LRCLIB
+dans vos fichiers. Une zone choisie dans l'interface web reste prioritaire jusqu'au prochain
+redémarrage du compagnon.
 
 ## Quand rien ne s'affiche
 

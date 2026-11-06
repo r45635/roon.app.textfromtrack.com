@@ -54,7 +54,7 @@ zone (**Zone** button).
 
 **What leaves my network?**
 To find lyrics, a track's title, artist, album and length go to LRCLIB (lrclib.net, or the servers
-listed in Settings → Lyrics Sources). Once every few hours the
+listed in Settings → Lyrics Sources) — for the playing track and the next three in the zone's queue. Once every few hours the
 app asks GitHub whether a new version exists (`UPDATE_CHECK=false` turns that off). Nothing else.
 Other devices on your network can be asked for a token (`ACCESS_TOKEN`).
 

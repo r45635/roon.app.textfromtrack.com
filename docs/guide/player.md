@@ -37,6 +37,7 @@ Under the player, the lyrics of the current track. The highlighted line follows 
 |---|---|
 | **Jump to a line** | Click it — Roon seeks there. |
 | **Fix the timing** | **Timing − / +** shifts by 0.5 s (− = earlier, + = later). Remembered for that track; click the value to reset. |
+| **What's next** | **Up next** lists the next tracks of the zone's Roon queue, each with what is known of its lyrics (synced, plain, none). Click one to play from there. |
 | **Another version** | **Other versions** searches the lyrics database by title and artist (both editable) and lets you pick one. |
 | **Full screen** | **Full screen** or the **F** key; **Esc** to leave. Big lines over the blurred cover, with the transport. |
 | **Copy / Download** | Copy the text, or download a `.lrc` file with your timing applied. |
@@ -47,7 +48,8 @@ see [your library](library.md)). *Not time-synced* means the lyrics have no time
 as plain text.
 
 **Where do lyrics come from?** From [LRCLIB](https://lrclib.net), a free, community-built database.
-The companion looks them up when a track starts and keeps a copy, so the next time is instant. When
+The companion looks them up when a track starts — and for the next three tracks of the queue while
+the current one plays — and keeps a copy, so the next time is instant. When
 LRCLIB is overloaded, the page says so and tries again by itself — or press **Retry**.
 
 ![Full-screen lyrics](../media/en/player-fullscreen.png)
@@ -62,11 +64,24 @@ The **phone icon** in the top bar opens a page with two QR codes:
 
 ![Lyrics on a tablet](../media/en/player-tablet.png)
 
-## Search Roon
+## The Roon library
 
-The **Search Roon** card searches your Roon library and streaming services — tracks, albums,
-artists. Pick a zone in *Play on* and press **Play** on a result; **Open** goes into an album or
-an artist. Clicking the artist or album name in the player fills the search for you.
+The **Roon library** card has two tabs:
+
+- **Search** — your Roon library and streaming services: tracks, albums, artists. Clicking the
+  artist or album name in the player fills the search for you.
+- **Browse** — Roon's own menus: Library, Playlists, My Live Radio, Internet Radio, Genres…
+  Long lists load more with **Show more**; the path at the top goes back.
+
+Pick a zone in *Play on* and press **▶** on an item to choose Play Now, Add Next, Queue or Start
+Radio; **›** opens an album, an artist or a playlist.
+
+## Settings inside Roon
+
+In Roon → **Settings → Extensions**, the companion has its own **Settings** page: the address of
+the web interface and of the lyrics screen (handy for a phone or a TV), a **default zone** the
+companion follows when it starts, and the automatic saving of LRCLIB lyrics into your files.
+A zone picked in the web interface still wins until the companion restarts.
 
 ## When nothing shows
 

@@ -80,7 +80,10 @@ lyrics display. Each screen follows its own zone and stays awake.</td>
 
 The player mirrors the zone you follow: cover, progress, volume (dB or steps), shuffle and
 repeat. Open the zone menu to see what every zone plays, switch, **transfer the queue** or
-**group speakers**. Light or dark theme, keyboard and touch friendly.
+**group speakers**. **Up next** shows the zone's queue, with the next tracks' lyrics fetched in
+advance; the **Roon library** card searches or browses Roon (playlists, radio, genres), and the
+companion has its own page in Roon's settings (web address, default zone). Light or dark theme,
+keyboard and touch friendly.
 
 <br clear="right">
 
@@ -104,7 +107,7 @@ Point the companion at your music folder and it does more:
 
 - **It runs on your machine or your NAS**, next to your Roon Core. No account, no cloud of its own.
 - **Only the track's title, artist, album and length** go to LRCLIB (lrclib.net, or the mirrors
-  you list) to find lyrics. Your files go
+  you list) to find lyrics — for the playing track and the next three in the queue. Your files go
   to TextFromTrack only if you use AI lyrics (coming soon).
 - **Screenshot mode** replaces your Core, zone and speaker names, account and folders with neutral
   ones, to share screenshots and bug reports safely. Every picture here was taken with it.

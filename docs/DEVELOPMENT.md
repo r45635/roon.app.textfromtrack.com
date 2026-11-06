@@ -159,6 +159,7 @@ Copy `.env.example` to `.env` and fill in the values.
 |---|---|---|
 | `music_roots` | `[]` | Music root paths (overrides `MUSIC_ROOTS`) |
 | `lrclib_urls` | `[]` | LRCLIB servers in order of preference (overrides `LRCLIB_URLS` when not empty) |
+| `default_zone` | `null` | `{ output_id, name }` of the zone followed at startup, set from the companion's page in Roon → Settings → Extensions. A zone picked in the UI wins until restart |
 | `embed_lyrics_default` | `false` | Default state of the **embed `[LYRICS]` tag** checkbox |
 | `backup_before_embed_default` | `true` | Default state of the **save `.org` backup** checkbox |
 | `save_lrc_beside_source_default` | `false` | Default state of the **save LRC beside source** checkbox |
@@ -184,8 +185,10 @@ Copy `.env.example` to `.env` and fill in the values.
 | `POST` | `/api/roon/transfer` | Transfer the queue to another zone |
 | `POST` | `/api/roon/group` / `/ungroup` | Group / ungroup outputs |
 | `GET` | `/api/roon/search` | Search Roon library (`?q=...&category=tracks\|albums\|artists`) |
-| `POST` | `/api/roon/browse` | Low-level browse call (drill into items) |
-| `POST` | `/api/roon/browse/load` | Load items from the current browse level |
+| `GET` | `/api/roon/queue` | Play queue of the active zone, or of `?zone_id=` (playing track first, at most 20). Each item: `{ queue_item_id, title, artist, album, duration_seconds, image_key, lyrics }`, `lyrics` = what is already known (`synced`/`plain`/`instrumental`/`none`/`unknown`), no lookup |
+| `POST` | `/api/roon/queue/play` | Play from a queue item. Body: `{ queue_item_id, zone_id? }` |
+| `POST` | `/api/roon/browse` | One browse step. Body: `hierarchy` (`browse`, `playlists`, `internet_radio`, `genres`, `albums`, `artists`, `composers`, `search`) plus `multi_session_key`, `item_key`, `input`, `zone_or_output_id`, `pop_all`, `pop_levels`, `refresh_list`, `set_display_offset` — any other field is a 400. 502 when Roon refuses, 503 when disconnected |
+| `POST` | `/api/roon/browse/load` | Load items of a browse level. Body: `hierarchy`, `multi_session_key`, `level`, `offset`, `count` (≤ 500), `set_display_offset` |
 | `POST` | `/api/roon/play-item` | Trigger "Play Now" on a previously-browsed item. Body: `{ item_key, hierarchy?, zone_or_output_id }` |
 
 ### Music endpoints

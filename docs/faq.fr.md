@@ -60,7 +60,7 @@ suit sa propre zone (bouton **Zone**).
 
 **Qu'est-ce qui sort de mon réseau ?**
 Pour trouver les paroles, le titre, l'artiste, l'album et la durée d'un morceau partent vers
-LRCLIB (lrclib.net, ou les serveurs listés dans Réglages → Sources de paroles). Toutes les quelques heures, l'app demande à GitHub si une nouvelle version existe
+LRCLIB (lrclib.net, ou les serveurs listés dans Réglages → Sources de paroles), pour le morceau en cours et les trois suivants de la file. Toutes les quelques heures, l'app demande à GitHub si une nouvelle version existe
 (`UPDATE_CHECK=false` le désactive). Rien d'autre. Les autres appareils du réseau peuvent devoir
 fournir un jeton (`ACCESS_TOKEN`).
 
