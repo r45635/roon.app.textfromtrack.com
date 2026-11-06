@@ -660,5 +660,13 @@
     "no_lyrics": "Sans paroles",
     "unknown": "Pas encore vérifié",
     "hint": "Les paroles des morceaux suivants sont cherchées à l'avance."
+  },
+  "browse": {
+    "card_title": "Bibliothèque Roon",
+    "tab_search": "Rechercher",
+    "tab_browse": "Parcourir",
+    "root": "Bibliothèque",
+    "home": "Accueil",
+    "load_more": "Afficher plus ({{shown}} sur {{count}})"
   }
 }

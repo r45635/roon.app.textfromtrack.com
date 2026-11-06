@@ -2449,6 +2449,18 @@ button.tft-search-link:hover { color: rgba(255,255,255,0.95); text-decoration: u
   display: flex; align-items: center; flex-wrap: wrap; gap: 2px;
   margin-bottom: 8px; font-size: 12px;
 }
+.search-tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 10px; border-bottom: 1px solid var(--tft-line); }
+.search-tab {
+  padding: 6px 12px; font-size: 13px; color: var(--tft-ink-3); background: none; cursor: pointer;
+  border: none; border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.search-tab:hover { color: var(--tft-ink-2); }
+.search-tab.active { color: var(--tft-ink); border-bottom-color: var(--tft-signal); font-weight: 500; }
+.search-tab-home { margin-left: auto; }
+.search-more { display: block; width: 100%; margin-top: 6px; }
+.search-message { margin: 4px 0 8px; }
+.search-prompt { display: flex; gap: 6px; margin-top: 6px; }
+.search-prompt .search-input { flex: 1; min-width: 0; }
 .search-breadcrumb-sep { color: var(--tft-mute); margin: 0 2px; }
 .search-breadcrumb-item {
   background: none; border: none; cursor: pointer; padding: 2px 4px;
@@ -2879,6 +2891,8 @@ button.synced-line:hover { opacity: 0.9; background: var(--tft-hover); }
 @media (max-width: 620px) {
   .lyrics-fs-btn, .tft-offset-btn, .tft-offset-val, .lib-filter, .lrc-folder-btn { min-height: 44px; }
   .lrc-folder-btn { min-width: 44px; }
+  .search-tab, .search-drill-btn, .search-play-btn, .search-action-item, .search-more { min-height: 44px; }
+  .search-drill-btn, .search-play-btn { min-width: 44px; }
   .tft-lyrics-stage-actions .btn-sm { min-height: 40px; }
 }
 

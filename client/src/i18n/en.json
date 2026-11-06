@@ -660,5 +660,13 @@
     "no_lyrics": "No lyrics",
     "unknown": "Not checked yet",
     "hint": "Lyrics of the next tracks are looked up in advance."
+  },
+  "browse": {
+    "card_title": "Roon library",
+    "tab_search": "Search",
+    "tab_browse": "Browse",
+    "root": "Library",
+    "home": "Top",
+    "load_more": "Show more ({{shown}} of {{count}})"
   }
 }

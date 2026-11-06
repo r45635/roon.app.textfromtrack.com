@@ -476,41 +476,74 @@ router.get('/search', async (req, res) => {
   }
 });
 
+// ─── Browse ───────────────────────────────────────────────────────────────────
+
+// What the client may send through to Roon's browse service — nothing else.
+const HIERARCHIES = ['browse', 'playlists', 'internet_radio', 'genres', 'albums', 'artists', 'composers', 'search'];
+const STRING = v => typeof v === 'string' && v.length > 0 && v.length <= 512;
+const BOOL = v => typeof v === 'boolean';
+const COUNT = max => v => Number.isInteger(v) && v >= 0 && v <= max;
+const BROWSE_FIELDS = {
+  hierarchy: STRING, multi_session_key: STRING, item_key: STRING, input: v => typeof v === 'string' && v.length <= 512,
+  zone_or_output_id: STRING, pop_all: BOOL, pop_levels: COUNT(100), refresh_list: BOOL, set_display_offset: COUNT(100000),
+};
+const LOAD_FIELDS = {
+  hierarchy: STRING, multi_session_key: STRING, level: COUNT(100), offset: COUNT(100000), count: COUNT(500),
+  set_display_offset: COUNT(100000),
+};
+
+/** The body checked against an allow-list, or { error } naming the first bad field. */
+function browseOpts(body, fields) {
+  const opts = body && typeof body === 'object' && !Array.isArray(body) ? body : {};
+  if (!HIERARCHIES.includes(opts.hierarchy)) {
+    return { error: `hierarchy must be one of: ${HIERARCHIES.join(', ')}` };
+  }
+  for (const [key, value] of Object.entries(opts)) {
+    if (value === undefined || value === null) continue;
+    if (!fields[key]) return { error: `Unknown field: ${key}` };
+    if (!fields[key](value)) return { error: `Invalid value for ${key}` };
+  }
+  if (opts.pop_all && opts.item_key) return { error: 'pop_all and item_key cannot be combined' };
+  return { opts };
+}
+
+// Roon disconnected → 503; Roon refusing the request (e.g. a stale item_key) → 502.
+function browseFailed(res, err) {
+  if (!getRoonStatus().connected) {
+    return res.status(503).json(buildError(E.ROON_NOT_CONNECTED, 'Roon Core is not connected'));
+  }
+  res.status(502).json(buildError('ROON_BROWSE_FAILED', err.message));
+}
+
 /**
  * POST /api/roon/browse
- * Low-level browse call for custom hierarchical navigation.
- * Body: browse opts as per RoonApiBrowse.browse()
+ * One step in a Roon browse hierarchy (open, drill in, pop, run an action).
+ * Body: RoonApiBrowse.browse() options, limited to BROWSE_FIELDS.
  */
 router.post('/browse', async (req, res) => {
-  const opts = req.body || {};
-  if (!opts.hierarchy) {
-    return res.status(400).json(buildError(E.INVALID_REQUEST, 'hierarchy is required'));
-  }
-
+  const { opts, error } = browseOpts(req.body, BROWSE_FIELDS);
+  if (error) return res.status(400).json(buildError(E.INVALID_REQUEST, error));
   try {
     const result = await browseCatalog(opts);
     res.json({ success: true, ...result });
   } catch (err) {
-    res.status(503).json(buildError(E.ROON_NOT_CONNECTED, err.message));
+    browseFailed(res, err);
   }
 });
 
 /**
  * POST /api/roon/browse/load
- * Load items from the current browse level.
- * Body: load opts as per RoonApiBrowse.load()
+ * Load items from a level of the current browse session.
+ * Body: RoonApiBrowse.load() options, limited to LOAD_FIELDS.
  */
 router.post('/browse/load', async (req, res) => {
-  const opts = req.body || {};
-  if (!opts.hierarchy) {
-    return res.status(400).json(buildError(E.INVALID_REQUEST, 'hierarchy is required'));
-  }
-
+  const { opts, error } = browseOpts(req.body, LOAD_FIELDS);
+  if (error) return res.status(400).json(buildError(E.INVALID_REQUEST, error));
   try {
     const result = await loadBrowse(opts);
     res.json({ success: true, ...result });
   } catch (err) {
-    res.status(503).json(buildError(E.ROON_NOT_CONNECTED, err.message));
+    browseFailed(res, err);
   }
 });
 
@@ -528,6 +561,9 @@ router.post('/play-item', async (req, res) => {
   if (!item_key || typeof item_key !== 'string') {
     return res.status(400).json(buildError(E.INVALID_REQUEST, 'item_key is required'));
   }
+  if (!HIERARCHIES.includes(hierarchy)) {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, `hierarchy must be one of: ${HIERARCHIES.join(', ')}`));
+  }
   if (!zone_or_output_id || typeof zone_or_output_id !== 'string') {
     return res.status(400).json(buildError(E.INVALID_REQUEST, 'zone_or_output_id is required'));
   }
@@ -535,7 +571,7 @@ router.post('/play-item', async (req, res) => {
     const result = await playOnZone(item_key, hierarchy, zone_or_output_id);
     res.json({ success: true, ...result });
   } catch (err) {
-    res.status(503).json(buildError(E.ROON_NOT_CONNECTED, err.message));
+    browseFailed(res, err);
   }
 });
 

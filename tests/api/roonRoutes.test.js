@@ -116,3 +116,44 @@ describe('POST /queue/play', () => {
     assert.equal((await call('POST', '/queue/play', { zone_id: 'z', queue_item_id: 1 })).status, 503);
   });
 });
+
+describe('POST /browse and /browse/load — allow-list', () => {
+  test('passes known fields through to Roon', async () => {
+    const opts = { hierarchy: 'browse', multi_session_key: 'tab-1', pop_all: true, zone_or_output_id: 'z' };
+    assert.equal((await call('POST', '/browse', opts)).status, 200);
+    assert.deepEqual(roon.browseCalls, [opts]);
+    const load = { hierarchy: 'browse', multi_session_key: 'tab-1', offset: 100, count: 100, level: 1 };
+    assert.equal((await call('POST', '/browse/load', load)).status, 200);
+    assert.deepEqual(roon.loadCalls, [load]);
+  });
+
+  test('400 for an unknown hierarchy, an unknown field or a bad value; Roon is not called', async () => {
+    const bad = [
+      { hierarchy: 'everything' },
+      {},
+      { hierarchy: 'browse', evil: 1 },
+      { hierarchy: 'browse', pop_levels: -1 },
+      { hierarchy: 'browse', item_key: 42 },
+      { hierarchy: 'browse', pop_all: true, item_key: 'k' },
+    ];
+    for (const body of bad) {
+      const { status, body: res } = await call('POST', '/browse', body);
+      assert.equal(status, 400, JSON.stringify(body));
+      assert.equal(res.error.code, 'INVALID_REQUEST');
+    }
+    assert.equal((await call('POST', '/browse/load', { hierarchy: 'browse', count: 10000 })).status, 400);
+    assert.equal((await call('POST', '/browse/load', { hierarchy: 'browse', item_key: 'k' })).status, 400);
+    assert.equal((await call('POST', '/play-item', { item_key: 'k', hierarchy: 'x', zone_or_output_id: 'z' })).status, 400);
+    assert.deepEqual(roon.browseCalls, []);
+    assert.deepEqual(roon.loadCalls, []);
+  });
+
+  test('Roon refusing the request is a 502, Roon disconnected a 503', async () => {
+    roon.browseError = 'InvalidItemKey';
+    const refused = await call('POST', '/browse', { hierarchy: 'browse', item_key: 'old' });
+    assert.equal(refused.status, 502);
+    assert.equal(refused.body.error.code, 'ROON_BROWSE_FAILED');
+    roon.connected = false;
+    assert.equal((await call('POST', '/browse/load', { hierarchy: 'browse' })).status, 503);
+  });
+});
