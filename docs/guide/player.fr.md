@@ -39,7 +39,7 @@ Sous le lecteur, les paroles du titre en cours. La ligne en surbrillance suit la
 | **Aller à une ligne** | Cliquez dessus — Roon s'y place. |
 | **Corriger le décalage** | **Décalage − / +** déplace de 0,5 s (− = plus tôt, + = plus tard). Mémorisé pour ce titre ; cliquez sur la valeur pour revenir à zéro. |
 | **La suite** | **À suivre** liste les morceaux suivants de la file Roon de la zone, chacun avec ce qu'on sait de ses paroles (synchronisées, texte seul, aucune). Cliquez sur l'un pour lire à partir de lui. |
-| **Une autre version** | **Versions** cherche dans la base de paroles par titre et artiste (modifiables) et vous laisse choisir. |
+| **Une autre version** | **Versions** cherche dans la base de paroles par titre et artiste (modifiables) et vous laisse choisir. Chaque version affiche sa durée, la plus proche en premier ; une durée grisée n'est pas celle du morceau joué — un autre enregistrement (un live, un montage), dont le minutage décalerait. |
 | **Plein écran** | **Plein écran** ou la touche **F** ; **Échap** pour sortir. De grandes lignes sur la pochette floutée, avec les commandes. |
 | **Copier / Télécharger** | Copier le texte, ou télécharger un fichier `.lrc` avec votre décalage appliqué. |
 
@@ -96,6 +96,7 @@ redémarrage du compagnon. La page se termine par la version du compagnon et son
 | *macOS bloque la connexion* | Réglages Système → Confidentialité et sécurité → Réseau local → autorisez l'app. |
 | *Serveur injoignable* | Le compagnon lui-même ne tourne pas (app quittée, conteneur arrêté). |
 | *Aucune parole trouvée* | LRCLIB n'a rien pour ce titre — essayez **Versions** avec un titre simplifié. |
+| *Texte seul, non synchronisé* | LRCLIB n'a des paroles synchronisées que pour un autre enregistrement (un live, une autre durée). Le texte du bon est affiché plutôt que des paroles qui décalent ; **Versions** permet toujours de choisir la version synchronisée. |
 | *Instrumental* | LRCLIB indique un titre instrumental. |
 | *LRCLIB est injoignable / surchargée* | Aucun serveur LRCLIB n'a répondu ; l'app réessaie chaque minute. Un miroir aide — voir *Sources de paroles* ci-dessous. |
 
