@@ -452,7 +452,7 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 ### v0.5.15 ✓ — API key Save button
 - The TextFromTrack API key Save button was invisible in the settings drawer
 
-### v0.6.0 — Play queue, Roon library, settings in Roon
+### v0.6.0 ✓ — Play queue, Roon library, settings in Roon
 - **Up next**: the zone's play queue next to the lyrics, with a lyrics marker per track; a click plays from there. The next three tracks' lyrics are looked up in advance (one at a time, 1 s apart, stopping at the first error), so they show at once at the track change
 - **Roon library** card: Search and Browse tabs (playlists, radio, genres, library…), paging past 100 items, Back that moves Roon's session up too, text prompts, Roon's messages shown
 - **Settings inside Roon** (Settings → Extensions → Settings): web and lyrics-screen addresses (never the access token), a **default zone** followed at startup, automatic LRCLIB saving in step with the web UI, version and GitHub address
