@@ -44,19 +44,67 @@ function _fromRecord(rec) {
   return { found: true, instrumental: false, text, synced: !!rec.syncedLyrics, lrclib_id: rec.id ?? null };
 }
 
+// Words that mark a different recording of the same song: a live take has other timings, an
+// instrumental has no words. Looked for in the title and the album, on both sides.
+const VERSION_WORDS = /\b(live|en public|en concert|in concert|en direct|unplugged|acoustic|acoustique|remix|instrumental|karaoke)\b/i;
+
+function _versionMark(...parts) {
+  return VERSION_WORDS.test(parts.filter(Boolean).join(' '));
+}
+
 /**
- * Pick the best search hit: synced and close in duration, then any synced, then close in
- * duration, then the first usable one.
+ * How well an LRCLIB record fits the playing track, as a sort key (lower is better):
+ * 1. its length — the same recording first (within DURATION_TOLERANCE_S), then a record with
+ *    no length, then the others, closest first;
+ * 2. the same kind of recording (live / instrumental / remix… on both sides or on neither);
+ * 3. synced lyrics before plain ones.
+ * The length comes first on purpose: synced lyrics of another recording (a live take 30 s
+ * longer) drift away from the music, while plain lyrics of the right one are just not synced.
  */
-function pickHit(hits, durationSeconds) {
-  const usable = hits.filter(h => h && (h.syncedLyrics || h.plainLyrics || h.instrumental));
-  const near = h => !durationSeconds || !h.duration
-    || Math.abs(h.duration - durationSeconds) <= DURATION_TOLERANCE_S;
-  return usable.find(h => h.syncedLyrics && near(h))
-    || usable.find(h => h.syncedLyrics)
-    || usable.find(near)
-    || usable[0]
-    || null;
+function _fitKey(hit, track) {
+  const want = Number(track.duration_seconds) || 0;
+  const delta = want && hit.duration ? Math.abs(hit.duration - want) : null;
+  const lengthClass = delta == null ? 1 : delta <= DURATION_TOLERANCE_S ? 0 : 2;
+  const otherKind = _versionMark(track.title, track.album) !== _versionMark(hit.trackName, hit.albumName) ? 1 : 0;
+  return [lengthClass, lengthClass === 2 ? delta : 0, otherKind, hit.syncedLyrics ? 0 : 1, delta || 0];
+}
+
+function _compareKeys(a, b) {
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i];
+  return 0;
+}
+
+/**
+ * LRCLIB records sorted from the best fit to the worst (see _fitKey), duplicates dropped.
+ * Records with no lyrics at all (and not instrumental) are left out unless keepEmpty.
+ * @param {object[]} hits LRCLIB records
+ * @param {{ title?, album?, duration_seconds? }|number} track the playing track (or its length)
+ */
+function rankHits(hits, track, { keepEmpty = false } = {}) {
+  const t = typeof track === 'number' || track == null ? { duration_seconds: track } : track;
+  const seen = new Set();
+  const usable = (hits || []).filter(h => {
+    if (!h || (!keepEmpty && !(h.syncedLyrics || h.plainLyrics || h.instrumental))) return false;
+    if (h.id != null && seen.has(h.id)) return false;
+    if (h.id != null) seen.add(h.id);
+    return true;
+  });
+  return usable
+    .map((h, i) => ({ h, i, key: _fitKey(h, t) }))
+    .sort((a, b) => _compareKeys(a.key, b.key) || a.i - b.i)
+    .map(x => x.h);
+}
+
+/** The best fit among LRCLIB records, or null (see rankHits). */
+function pickHit(hits, track) {
+  return rankHits(hits, track)[0] || null;
+}
+
+/** Synced, the right length (or no length to compare) and the same kind of recording. */
+function _isIdeal(hit, track) {
+  if (!hit || !hit.syncedLyrics) return false;
+  const [lengthClass, , otherKind] = _fitKey(hit, track);
+  return lengthClass < 2 && otherKind === 0;
 }
 
 /**
@@ -78,15 +126,20 @@ async function _fetchFromLrclib(track) {
   const exact = await lrclibClient.getTrack({ title, artist, album, duration });
   if (exact && (exact.syncedLyrics || exact.instrumental)) return _fromRecord(exact);
 
-  // No exact record, or one with plain lyrics only: a search may find a synced version.
-  let best = pickHit(await lrclibClient.search({ title, artist }), duration);
+  // No exact record, or one with plain lyrics only: a search may find a synced copy of the
+  // same recording. The exact record stays a candidate — first, so it wins a tie.
+  const candidates = exact ? [exact] : [];
+  candidates.push(...await lrclibClient.search({ title, artist }));
+  let best = pickHit(candidates, track);
+
   const simple = simplify(track);
-  if (!(best && best.syncedLyrics) && (simple.title !== title || simple.artist !== artist)) {
-    const retry = pickHit(await lrclibClient.search(simple), duration);
-    if (retry && (retry.syncedLyrics || !best)) best = retry;
+  // "Last night (instrumental)" simplified is "Last night", whose hits are the sung version.
+  const dropsKind = /instrumental|karaoke/i.test(title) && !/instrumental|karaoke/i.test(simple.title);
+  if (!_isIdeal(best, track) && !dropsKind && (simple.title !== title || simple.artist !== artist)) {
+    candidates.push(...await lrclibClient.search(simple));
+    best = pickHit(candidates, track);
   }
-  if (best && (best.syncedLyrics || !exact)) return _fromRecord(best);
-  return exact ? _fromRecord(exact) : { found: false };
+  return best ? _fromRecord(best) : { found: false };
 }
 
 function _remember(trackId, result, ttlMs) {
@@ -94,12 +147,26 @@ function _remember(trackId, result, ttlMs) {
   _memo.set(trackId, { result, expires: Date.now() + ttlMs });
 }
 
-function _lrclib(trackId, track) {
+/**
+ * The version the user picked in "Other versions" when there is one (its cached copy may have
+ * been cleared), else the best fit.
+ */
+async function _fetchChosenOrBest(track, pickedId) {
+  if (pickedId) {
+    const rec = await lrclibClient.getById(pickedId);
+    const result = rec ? _fromRecord(rec) : { found: false };
+    if (result.found) return result;
+    logger.info({ lrclib_id: pickedId, title: track.title }, 'Picked LRCLIB version gone, choosing again');
+  }
+  return _fetchFromLrclib(track);
+}
+
+function _lrclib(trackId, track, pickedId = null) {
   const memo = _memo.get(trackId);
   if (memo && memo.expires > Date.now()) return Promise.resolve(memo.result);
   if (_inFlight.has(trackId)) return _inFlight.get(trackId);
 
-  const promise = _fetchFromLrclib(track)
+  const promise = _fetchChosenOrBest(track, pickedId)
     .then(result => {
       if (result.found && result.text) {
         lrcCache.setByMeta(track.artist, track.title, track.album, result.text);
@@ -160,7 +227,7 @@ async function resolve(track, { audioPath = null, refresh = false } = {}) {
   const cached = lrcCache.getByMeta(track.artist, track.title, track.album);
   if (cached) return { ...base, ..._fromText(cached), source: 'cache' };
 
-  const remote = await _lrclib(trackId, track);
+  const remote = await _lrclib(trackId, track, prefs.lrclib_id);
   return {
     ...base,
     text: null,
@@ -254,4 +321,6 @@ function lookupLrclib(track) {
   return _fetchFromLrclib(track);
 }
 
-module.exports = { resolve, peek, choose, setOffset, saveCustom, lookupLrclib, isSynced, pickHit, simplify, _resetMemo };
+module.exports = {
+  resolve, peek, choose, setOffset, saveCustom, lookupLrclib, isSynced, pickHit, rankHits, simplify, _resetMemo,
+};

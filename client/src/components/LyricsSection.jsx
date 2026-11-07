@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import SyncedLyrics from './SyncedLyrics.jsx';
 import { useCollapsed } from '../hooks/useCollapsed.js';
 import { describeError } from '../lib/errors.js';
+import { formatLength } from '../lib/lrc.js';
 
 // ── Custom Hits Dropdown ──────────────────────────────────────────────────
 // Native <select> can't be styled on iOS — use a custom accessible dropdown.
@@ -33,6 +34,7 @@ function HitsDropdown({ hits, value, onChange, t }) {
       h.trackName,
       h.artistName ? `— ${h.artistName}` : '',
       h.albumName  ? `· ${h.albumName}`  : '',
+      h.duration   ? `· ${formatLength(h.duration)}` : '',
       `(${lrcType})`,
     ].filter(Boolean).join(' ');
   }
@@ -411,6 +413,8 @@ export default function LyricsSection({
     setLrclibLoadingVersions(true);
     try {
       const params = new URLSearchParams({ title: searchTitle, artist: searchArtist });
+      if (searchAlbum)    params.set('album', searchAlbum);
+      if (searchDuration) params.set('duration', String(Math.round(searchDuration)));
       const res = await fetch(`/api/lrclib/search?${params.toString()}`);
       const data = await res.json();
       const hits = data.hits || [];

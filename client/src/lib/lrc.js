@@ -86,3 +86,19 @@ export function shiftLrc(text, offsetMs) {
     .map(line => line.replace(TIMESTAMP_RE, (_, mm, ss) => formatStamp(parseInt(mm, 10) * 60 + parseFloat(ss) + shift)))
     .join('\n');
 }
+
+/** "2:18" from seconds; '' when unknown. */
+export function formatLength(seconds) {
+  const s = Math.round(Number(seconds));
+  if (!Number.isFinite(s) || s <= 0) return '';
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+// Same tolerance as the server's automatic choice (lyricsResolver DURATION_TOLERANCE_S).
+const SAME_LENGTH_S = 5;
+
+/** True when an LRCLIB version is clearly not the playing recording (both lengths known). */
+export function isOtherLength(versionSeconds, trackSeconds) {
+  if (!versionSeconds || !trackSeconds) return false;
+  return Math.abs(versionSeconds - trackSeconds) > SAME_LENGTH_S;
+}

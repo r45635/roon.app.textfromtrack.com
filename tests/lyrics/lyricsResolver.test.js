@@ -63,8 +63,43 @@ describe('pickHit', () => {
       { id: 3, syncedLyrics: SYNCED, duration: 330 },
     ];
     assert.equal(resolver.pickHit(hits, 332).id, 3);
-    assert.equal(resolver.pickHit(hits.slice(0, 2), 332).id, 2);
     assert.equal(resolver.pickHit([], 332), null);
+  });
+
+  test('plain lyrics of the playing recording beat synced lyrics of another one', () => {
+    // Yves Duteil, "Le labyrinthe": studio 138 s has plain lyrics, the live 170 s take is synced.
+    const hits = [
+      { id: 1, trackName: 'Le labyrinthe', albumName: "J'attends", plainLyrics: PLAIN, duration: 138 },
+      { id: 2, trackName: 'Le labyrinthe (Live)', albumName: 'Yves Duteil en public', syncedLyrics: SYNCED, duration: 169.7 },
+    ];
+    assert.equal(resolver.pickHit(hits, { title: 'Le Labyrinthe', duration_seconds: 138 }).id, 1);
+    assert.equal(resolver.pickHit(hits.slice(1), { title: 'Le Labyrinthe', duration_seconds: 138 }).id, 2,
+      'another recording is still better than nothing');
+  });
+
+  test('without a length, the same kind of recording wins over synced', () => {
+    const hits = [
+      { id: 1, trackName: 'C\'est le mashed potatoes (Live à l\'Olympia)', syncedLyrics: SYNCED, duration: 188 },
+      { id: 2, trackName: 'C\'est le mashed potatoes', albumName: "L'idole des jeunes", plainLyrics: PLAIN, duration: 127 },
+    ];
+    assert.equal(resolver.pickHit(hits, { title: "C'est le mashed potatoes" }).id, 2);
+    assert.equal(resolver.pickHit(hits, { title: "C'est le mashed potatoes (Live)" }).id, 1);
+  });
+
+  test('a far recording: the closest length first', () => {
+    const hits = [
+      { id: 1, syncedLyrics: SYNCED, duration: 260 },
+      { id: 2, plainLyrics: PLAIN, duration: 212 },
+      { id: 3, syncedLyrics: SYNCED, duration: 215 },
+    ];
+    assert.equal(resolver.pickHit(hits, 200).id, 2);
+    assert.deepEqual(resolver.rankHits(hits, 200).map(h => h.id), [2, 3, 1]);
+  });
+
+  test('rankHits drops duplicates and, unless asked, records without lyrics', () => {
+    const hits = [{ id: 1, duration: 100 }, { id: 2, plainLyrics: PLAIN, duration: 100 }, { id: 2, plainLyrics: PLAIN }];
+    assert.deepEqual(resolver.rankHits(hits, 100).map(h => h.id), [2]);
+    assert.deepEqual(resolver.rankHits(hits, 100, { keepEmpty: true }).map(h => h.id), [1, 2]);
   });
 });
 
@@ -122,6 +157,21 @@ describe('resolve', () => {
     assert.equal(r.lrclib_id, 1);
     assert.equal(r.synced, false);
     assert.equal(r.text, PLAIN);
+  });
+
+  test('keeps the plain exact hit over synced lyrics of another recording', async () => {
+    lrclib.get = { id: 1, plainLyrics: PLAIN, duration: 332 };
+    lrclib.search = [{ id: 7, trackName: 'Moonlight Drive (Live)', syncedLyrics: SYNCED, duration: 290 }];
+    const r = await resolver.resolve(TRACK);
+    assert.equal(r.lrclib_id, 1);
+    assert.equal(r.synced, false);
+  });
+
+  test('an instrumental title is not searched again without "(instrumental)"', async () => {
+    const track = { ...TRACK, title: 'Last night (instrumental)' };
+    const r = await resolver.resolve(track);
+    assert.equal(r.found, false);
+    assert.deepEqual(calls.filter(c => c[0] === 'search').map(c => c[1].title), [track.title]);
   });
 
   test('retries the search with a simplified title', async () => {
@@ -203,6 +253,19 @@ describe('choose and setOffset', () => {
     const r = await resolver.resolve(TRACK);
     assert.equal(r.text, SYNCED);
     assert.equal(r.lrclib_id, 99);
+  });
+
+  test('a picked version comes back when its cached copy is gone', async () => {
+    lrclib.byId = { id: 99, syncedLyrics: SYNCED };
+    await resolver.choose(TRACK, 99);
+    fs.rmSync(config.lrcCacheDir, { recursive: true, force: true });
+    resolver._resetMemo();
+    lrclib.get = { id: 5, syncedLyrics: '[00:01.00]Another version' };
+    calls = [];
+    const r = await resolver.resolve(TRACK);
+    assert.equal(r.lrclib_id, 99);
+    assert.equal(r.text, SYNCED);
+    assert.deepEqual(calls.map(c => c[0]), ['byId']);
   });
 
   test('choose rejects an unknown record', async () => {

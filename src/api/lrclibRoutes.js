@@ -12,6 +12,7 @@ const musicRoots = require('../music/musicRoots');
 const jobStore = require('../textfromtrack/jobStore');
 const lrclibClient = require('../lyrics/lrclibClient');
 const { lrclibGet } = lrclibClient;
+const lyricsResolver = require('../lyrics/lyricsResolver');
 
 const router = Router();
 
@@ -65,9 +66,11 @@ router.get('/lookup', async (req, res) => {
         return res.json({ found: false });
       }
 
-      // Pick the first result that has synced lyrics; else the first overall
-      const hits = searchResult.body;
-      const best = hits.find(h => h.syncedLyrics) || hits[0];
+      // Same choice as the player (lyricsResolver.rankHits): the right length first, then the
+      // same kind of recording, then synced. The list is returned best fit first.
+      const track = { title, album, duration_seconds: Number(duration) > 0 ? Number(duration) : null };
+      const hits = lyricsResolver.rankHits(searchResult.body, track, { keepEmpty: true });
+      const best = lyricsResolver.pickHit(hits, track) || hits[0];
       const bestIdx = hits.indexOf(best);
 
       // Expose hit metadata (no lyrics) so the client can render a version picker without
@@ -80,6 +83,7 @@ router.get('/lookup', async (req, res) => {
         trackName: h.trackName || null,
         artistName: h.artistName || null,
         albumName: h.albumName || null,
+        duration: Number.isFinite(h.duration) ? h.duration : null,
       }));
 
       return res.json({
@@ -156,28 +160,30 @@ router.get('/hit/:id', async (req, res) => {
 
 /**
  * GET /api/lrclib/search
- * Query params: title, artist
+ * Query params: title, artist; optional album, duration (seconds) of the playing track
  *
- * Runs /api/search on lrclib.net and returns the full list of hits (metadata
- * only, no lyrics). Used by the "See other versions" button on the client when
- * the initial /lookup returned an exact match via /api/get and the user wants
- * to browse alternatives.
+ * Runs /api/search on the LRCLIB servers and returns the full list of hits (metadata
+ * only, no lyrics), best fit first when the track is given — the order the automatic choice
+ * uses. Used by the "Other versions" picker.
  */
 router.get('/search', async (req, res) => {
-  const { title, artist } = req.query;
+  const { title, artist, album } = req.query;
   if (!title || !artist) {
     return res.status(400).json(buildError('MISSING_PARAMS', 'title and artist are required'));
   }
+  const duration = Number(req.query.duration) > 0 ? Number(req.query.duration) : null;
   try {
     logger.info({ title, artist }, 'LRCLIB /search (on-demand versions)');
     const records = await lrclibClient.search({ title, artist });
-    const hits = records.map(h => ({
+    const ranked = lyricsResolver.rankHits(records, { title, album, duration_seconds: duration }, { keepEmpty: true });
+    const hits = ranked.map(h => ({
       id: h.id,
       instrumental: !!h.instrumental,
       hasSynced: !!h.syncedLyrics,
       trackName: h.trackName || null,
       artistName: h.artistName || null,
       albumName: h.albumName || null,
+      duration: Number.isFinite(h.duration) ? h.duration : null,
     }));
     return res.json({ hits });
   } catch (err) {

@@ -4,7 +4,7 @@ import SyncedLyrics from './SyncedLyrics.jsx';
 import LyricsFullscreen from './LyricsFullscreen.jsx';
 import LrcEditor from './LrcEditor.jsx';
 import { useTrackLyrics } from '../hooks/useTrackLyrics.js';
-import { shiftLrc } from '../lib/lrc.js';
+import { shiftLrc, formatLength, isOtherLength } from '../lib/lrc.js';
 import { describeError, lrclibProblem } from '../lib/errors.js';
 import { qrPageUrl } from '../lib/qrPage.js';
 import { maskAddresses } from '../lib/privacy.js';
@@ -426,6 +426,9 @@ function VersionPicker({ np, currentId, onChoose }) {
     setErr(null);
     try {
       const qs = new URLSearchParams({ title: title.trim(), artist: artist.trim() });
+      // The playing track, so the list comes best fit first (same order as the automatic choice).
+      if (np.album) qs.set('album', np.album);
+      if (np.duration_seconds) qs.set('duration', String(Math.round(np.duration_seconds)));
       const res = await fetch(`/api/lrclib/search?${qs.toString()}`);
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
@@ -462,6 +465,14 @@ function VersionPicker({ np, currentId, onChoose }) {
               >
                 <span className="tft-version-name">{h.trackName} — {h.artistName}</span>
                 {h.albumName && <span className="tft-version-album">{h.albumName}</span>}
+                {h.duration ? (
+                  <span
+                    className={`tft-version-length tft-mono${isOtherLength(h.duration, np.duration_seconds) ? ' off' : ''}`}
+                    title={isOtherLength(h.duration, np.duration_seconds) ? t('stage.other_length') : undefined}
+                  >
+                    {formatLength(h.duration)}
+                  </span>
+                ) : null}
                 <span className={`tft-pill${h.hasSynced ? ' signal' : ''}`}>
                   {h.instrumental ? t('stage.instrumental_short') : h.hasSynced ? t('stage.synced') : t('stage.not_synced')}
                 </span>
