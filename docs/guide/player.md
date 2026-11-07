@@ -38,6 +38,8 @@ Under the player, the lyrics of the current track. The highlighted line follows 
 | **Jump to a line** | Click it — Roon seeks there. |
 | **Fix the timing** | **Timing − / +** shifts by 0.5 s (− = earlier, + = later). Remembered for that track; click the value to reset. |
 | **What's next** | **Up next** lists the next tracks of the zone's Roon queue, each with what is known of its lyrics (synced, plain, none). Click one to play from there. |
+| **Wrong lyrics** | LRCLIB is written by its users, and sometimes holds another song's words. **Wrong lyrics** shows none for this track from now on; the panel then offers **Paste lyrics**, **Other versions**, or **Show anyway** (undo). |
+| **Paste lyrics** | When a track has no lyrics, or you marked them wrong: paste the words (plain text, or LRC with timestamps). They're kept for this track, and **Sync lyrics** adds the timing. |
 | **Another version** | **Other versions** searches the lyrics database by title and artist (both editable) and lets you pick one. Each version shows its length, best fit first; a greyed length is not the playing track's — another recording (a live take, an edit), whose timing would drift. |
 | **Full screen** | **Full screen** or the **F** key; **Esc** to leave. Big lines over the blurred cover, with the transport. |
 | **Copy / Download** | Copy the text, or download a `.lrc` file with your timing applied. |

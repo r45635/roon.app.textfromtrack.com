@@ -39,6 +39,8 @@ Sous le lecteur, les paroles du titre en cours. La ligne en surbrillance suit la
 | **Aller à une ligne** | Cliquez dessus — Roon s'y place. |
 | **Corriger le décalage** | **Décalage − / +** déplace de 0,5 s (− = plus tôt, + = plus tard). Mémorisé pour ce titre ; cliquez sur la valeur pour revenir à zéro. |
 | **La suite** | **À suivre** liste les morceaux suivants de la file Roon de la zone, chacun avec ce qu'on sait de ses paroles (synchronisées, texte seul, aucune). Cliquez sur l'un pour lire à partir de lui. |
+| **Paroles fausses** | LRCLIB est écrit par ses utilisateurs et contient parfois les paroles d'une autre chanson. **Paroles fausses** n'en affiche plus aucune pour ce morceau ; le panneau propose alors **Coller les paroles**, **Versions**, ou **Afficher quand même** (annuler). |
+| **Coller les paroles** | Quand un morceau n'a pas de paroles, ou que vous les avez marquées fausses : collez le texte (brut, ou LRC avec repères). Il est gardé pour ce morceau, et **Synchroniser** ajoute le minutage. |
 | **Une autre version** | **Versions** cherche dans la base de paroles par titre et artiste (modifiables) et vous laisse choisir. Chaque version affiche sa durée, la plus proche en premier ; une durée grisée n'est pas celle du morceau joué — un autre enregistrement (un live, un montage), dont le minutage décalerait. |
 | **Plein écran** | **Plein écran** ou la touche **F** ; **Échap** pour sortir. De grandes lignes sur la pochette floutée, avec les commandes. |
 | **Copier / Télécharger** | Copier le texte, ou télécharger un fichier `.lrc` avec votre décalage appliqué. |

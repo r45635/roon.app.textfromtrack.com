@@ -229,7 +229,8 @@ Copy `.env.example` to `.env` and fill in the values.
 |---|---|---|
 | `GET` | `/api/lyrics/current` | Lyrics of the track playing in a zone: matched file (sidecar, embedded), cache, then LRCLIB. Query: `?zone_id=...&path=...` (both optional; `path` must be under a music root). Returns `{ track, library_configured, audio_path, lyrics: { found, source, text, synced, instrumental, lrclib_id, offset_ms, error? } }` |
 | `POST` | `/api/lyrics/choose` | Use a specific LRCLIB record for a track. Body: `{ title, artist, album?, lrclib_id }` |
-| `POST` | `/api/lyrics/custom` | Save edited lyrics (LRC editor) as the track's lyrics in the local cache. Body: `{ title, artist, album?, lrc }` |
+| `POST` | `/api/lyrics/custom` | Save edited or pasted lyrics (LRC editor, Paste lyrics) as the track's lyrics in the local cache. Body: `{ title, artist, album?, lrc }` |
+| `POST` | `/api/lyrics/wrong` | Mark the lyrics a track gets as wrong (none shown for it), or undo it. Body: `{ title, artist, album?, wrong: boolean }` |
 | `POST` | `/api/lyrics/offset` | Save a track's timing offset (positive = later). Body: `{ title, artist, album?, offset_ms }` |
 
 ### Library endpoints (music folder required)
@@ -465,6 +466,11 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 - Fix: a version picked in **Other versions** is fetched again by its id when its cached copy is gone, instead of being replaced by the automatic choice
 - A title marked instrumental or karaoke is no longer searched again without that word (its hits are the sung version)
 - Version pickers show each version's length, best fit first, other lengths greyed
+
+### v0.6.2 ✓ — Wrong lyrics, paste lyrics
+- **Wrong lyrics** button: LRCLIB sometimes holds another song's words (all three records of Louis Chédid's "Révolution" do). The track then gets no lyrics, whatever the source (`lyrics-prefs.json` `wrong: true`, `POST /api/lyrics/wrong`), until undone (**Show anyway**), another version is picked, or lyrics are pasted; Up next counts it as no lyrics
+- **Paste lyrics** for a track with no lyrics or marked wrong: plain text or LRC, kept in the local cache like the LRC editor's result
+- Fix: between records of the right length, the same album wins (the exact record), not another album's copy a fraction of a second closer
 
 ### Upcoming
 
