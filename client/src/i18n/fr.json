@@ -668,5 +668,19 @@
     "root": "Bibliothèque",
     "home": "Accueil",
     "load_more": "Afficher plus ({{shown}} sur {{count}})"
+  },
+  "about": {
+    "title": "À propos",
+    "version": "Version",
+    "build": "Build",
+    "updates": "Mises à jour",
+    "up_to_date": "À jour",
+    "check_off": "Vérification des mises à jour désactivée (UPDATE_CHECK=false)",
+    "check_failed": "GitHub injoignable pour vérifier",
+    "repo": "Code source sur GitHub",
+    "release_notes": "Notes de cette version",
+    "guide": "Guide d'utilisation",
+    "report": "Signaler un problème ou proposer une idée",
+    "legal": "Licence MIT · © 2025–2026 Vincent Cruvellier · Non affilié à Roon Labs."
   }
 }

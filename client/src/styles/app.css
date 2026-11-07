@@ -2929,3 +2929,18 @@ button.synced-line:hover { opacity: 0.9; background: var(--tft-hover); }
 .zone-selector-trigger .zone-art { width: 22px; height: 22px; border-radius: 4px; }
 a.btn { text-decoration: none; }
 .lyrics-fs-btn { display: inline-flex; align-items: center; justify-content: center; }
+
+/* ── Settings → About ─────────────────────────────────────────────────────── */
+.about-body { display: flex; flex-direction: column; gap: 10px; }
+.about-name { font-weight: 600; color: var(--text); }
+.about-table { border-collapse: collapse; font-size: 13px; }
+.about-table td { padding: 2px 0; vertical-align: top; }
+.about-table td:first-child { padding-right: 14px; color: var(--text-sub); white-space: nowrap; }
+.about-body a { color: var(--accent); }
+.about-body a:hover { color: var(--accent-hover); }
+.about-links { margin: 0; padding-left: 18px; font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+.about-repo { margin: 0; font-size: 11px; color: var(--text-sub); word-break: break-all; }
+.about-legal { margin: 0; font-size: 11px; color: var(--text-sub); }
+@media (max-width: 620px) {
+  .about-links li a { display: inline-block; padding: 10px 0; }
+}

@@ -7,6 +7,7 @@ import SearchPanel from './components/SearchPanel.jsx';
 import JobHistory from './components/JobHistory.jsx';
 import LibrarySettings from './components/LibrarySettings.jsx';
 import AppPrefs from './components/AppPrefs.jsx';
+import AboutCard from './components/AboutCard.jsx';
 import TftApiKey from './components/TftApiKey.jsx';
 import FilesManagement from './components/FilesManagement.jsx';
 import LyricsSources from './components/LyricsSources.jsx';
@@ -483,6 +484,7 @@ export default function App() {
               <FilesManagement />
               <LyricsSources />
               <LibrarySettings onRescanStarted={handleRescanStarted} />
+              <AboutCard updateInfo={updateInfo} />
             </div>
           </aside>
         </div>

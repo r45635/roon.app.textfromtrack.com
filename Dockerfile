@@ -19,7 +19,9 @@ RUN cd client && npm ci
 
 # Copy client source and build
 COPY client/ client/
-RUN cd client && npm run build
+# Commit shown in Settings → About (the build context has no .git); the release workflow passes it.
+ARG BUILD_COMMIT=""
+RUN cd client && BUILD_COMMIT="$BUILD_COMMIT" npm run build
 
 
 # ── Stage 2: production runtime ───────────────────────────────────────────────

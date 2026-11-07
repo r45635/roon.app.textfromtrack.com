@@ -13,6 +13,9 @@ const config = require('../config');
 const logger = require('../utils/logger');
 const userSettings = require('../settings/userSettings');
 const { getLanAddress } = require('../utils/lanAddress');
+const { version } = require('../../package.json');
+
+const ABOUT_LINES = ['', `Version ${version} · github.com/r45635/roon.app.textfromtrack.com`];
 
 const ON = 'on';
 const OFF = 'off';
@@ -28,12 +31,13 @@ function currentValues() {
 
 function addressLines() {
   const ip = getLanAddress();
-  if (!ip) return ['Web interface: this computer has no network address right now.'];
+  if (!ip) return ['Web interface: this computer has no network address right now.', ...ABOUT_LINES];
   const base = `http://${ip}:${config.port}`;
   const lines = [`Web interface: ${base}`, `Lyrics screen (TV, tablet): ${base}/#/lyrics`];
   if (config.accessToken) {
     lines.push('These addresses need the access token: scan the QR code shown by the app on this computer.');
   }
+  lines.push(...ABOUT_LINES);
   return lines;
 }
 
