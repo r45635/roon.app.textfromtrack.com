@@ -81,7 +81,8 @@ Radio; **›** opens an album, an artist or a playlist.
 In Roon → **Settings → Extensions**, the companion has its own **Settings** page: the address of
 the web interface and of the lyrics screen (handy for a phone or a TV), a **default zone** the
 companion follows when it starts, and the automatic saving of LRCLIB lyrics into your files.
-A zone picked in the web interface still wins until the companion restarts.
+A zone picked in the web interface still wins until the companion restarts. The page ends with
+the companion's version and its GitHub address.
 
 ## When nothing shows
 
@@ -110,8 +111,14 @@ lrclib.net by default. Add a mirror (a copy of LRCLIB's database on a server you
 busy or doesn't have the song, the next one is asked. Each server asked receives the track's title,
 artist, album and length.
 
-The desktop app also shows a notice when a new version is out, and can notify you when a batch
-or an AI transcription ends (menu bar → *Notifications*).
+Settings → **About**, at the bottom: the version and the build it was made from (a commit, with
+its date), whether a newer version is out, and links to the source code on GitHub, this version's
+release notes, this guide and the page to report a problem. Quote the version and build when you
+report one.
+
+A notice in the top bar says when a new version is out (`UPDATE_CHECK=false` turns the check off).
+The desktop app can also notify you when a batch or an AI transcription ends (menu bar →
+*Notifications*).
 
 ---
 

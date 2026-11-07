@@ -85,7 +85,7 @@ Dans Roon → **Settings → Extensions**, le compagnon a sa propre page **Setti
 l'interface web et de l'écran paroles (pratique pour un téléphone ou une TV), une **zone par
 défaut** que le compagnon suit au démarrage, et l'enregistrement automatique des paroles LRCLIB
 dans vos fichiers. Une zone choisie dans l'interface web reste prioritaire jusqu'au prochain
-redémarrage du compagnon.
+redémarrage du compagnon. La page se termine par la version du compagnon et son adresse GitHub.
 
 ## Quand rien ne s'affiche
 
@@ -114,8 +114,14 @@ que vous gérez, par ex. `http://192.168.1.20:3300`), déplacez-le avec ↑ ↓ 
 **Tester**. Quand un serveur est en panne, surchargé ou n'a pas la chanson, le suivant est
 interrogé. Chaque serveur interrogé reçoit le titre, l'artiste, l'album et la durée du morceau.
 
-L'app de bureau signale aussi les nouvelles versions et peut vous prévenir à la fin d'un lot ou d'une
-transcription IA (barre des menus → *Notifications*).
+Réglages → **À propos**, tout en bas : la version et le build dont elle est issue (un commit, avec
+sa date), la disponibilité d'une version plus récente, et des liens vers le code source sur GitHub,
+les notes de cette version, ce guide et la page pour signaler un problème. Indiquez la version et le
+build quand vous en signalez un.
+
+Une pastille en haut de l'écran annonce les nouvelles versions (`UPDATE_CHECK=false` désactive la
+vérification). L'app de bureau peut aussi vous prévenir à la fin d'un lot ou d'une transcription IA
+(barre des menus → *Notifications*).
 
 ---
 

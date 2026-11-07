@@ -7,8 +7,9 @@
 A small Node service and web UI that pairs with your Roon Core and shows synced lyrics for
 whatever a zone plays — Qobuz, TIDAL, radio or local files. Click a line and Roon jumps there,
 nudge the timing, go full screen, or turn a phone, tablet or TV browser into a lyrics display
-(each screen follows its own zone). Lyrics come from [LRCLIB](https://lrclib.net); no music
-folder and no account needed.
+(each screen follows its own zone). See what plays next, with its lyrics fetched in advance, and
+browse Roon's playlists, radio and genres from the same page. Lyrics come from
+[LRCLIB](https://lrclib.net); no music folder and no account needed.
 
 Images: `r45635/roon-companion` (Docker Hub) and `ghcr.io/r45635/roon-companion` — **amd64 and arm64**.
 

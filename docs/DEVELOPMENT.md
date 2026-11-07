@@ -106,6 +106,11 @@ npm run build   # builds client/dist/
 npm start       # Express serves API + static frontend at :3888
 ```
 
+> Settings → About shows the commit the client was built from: `git rev-parse` at build time, with
+> `-dirty` when tracked files have uncommitted changes. The Docker build context has no `.git`, so
+> the release workflow passes it as a build argument (`docker build --build-arg BUILD_COMMIT=$(git rev-parse HEAD) .`);
+> without it the row is hidden.
+
 ```bash
 # Electron app
 npm run electron:dev
@@ -430,6 +435,30 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 ### v0.5.10 ✓ — Help and dates
 - Help (tray menu) opens the online guide in the system language; the old bundled user guide is gone, and the app no longer ships `docs/`
 - Job History dates follow the UI language
+
+### v0.5.11 ✓ — Docker data folder, FAQ
+- Docker: code no longer lives in the mounted data folder
+- FAQ in English and French
+
+### v0.5.12 ✓ — Docker pairing kept
+- The Roon pairing survives re-creating the container
+
+### v0.5.13 ✓ — LRCLIB mirrors
+- Settings → Lyrics Sources: an ordered list of LRCLIB servers; mirrors you run are asked before lrclib.net, each server falling back to the next
+
+### v0.5.14 ✓ — Dependency fix
+- minimatch 11 where the vulnerable code exists (GHSA-g3hv-75wg-m249)
+
+### v0.5.15 ✓ — API key Save button
+- The TextFromTrack API key Save button was invisible in the settings drawer
+
+### v0.6.0 — Play queue, Roon library, settings in Roon
+- **Up next**: the zone's play queue next to the lyrics, with a lyrics marker per track; a click plays from there. The next three tracks' lyrics are looked up in advance (one at a time, 1 s apart, stopping at the first error), so they show at once at the track change
+- **Roon library** card: Search and Browse tabs (playlists, radio, genres, library…), paging past 100 items, Back that moves Roon's session up too, text prompts, Roon's messages shown
+- **Settings inside Roon** (Settings → Extensions → Settings): web and lyrics-screen addresses (never the access token), a **default zone** followed at startup, automatic LRCLIB saving in step with the web UI, version and GitHub address
+- Settings → **About**: version, build commit and date, update status, links to GitHub, release notes, guide and issues
+- Fix: a zone created after startup (speakers grouped) appears at once, not at its first change
+- Browse API hardened: allow-listed hierarchies and fields, Roon errors returned as 502
 
 ### Upcoming
 
