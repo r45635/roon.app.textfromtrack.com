@@ -460,7 +460,7 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 - Fix: a zone created after startup (speakers grouped) appears at once, not at its first change
 - Browse API hardened: allow-listed hierarchies and fields, Roon errors returned as 502
 
-### v0.6.1 — Picking the right lyrics
+### v0.6.1 ✓ — Picking the right lyrics
 - Fix: the automatic choice no longer swaps the playing recording's plain lyrics for synced lyrics of another one (a live take 30 s longer). LRCLIB records are ranked by length first (±5 s), then the same kind of recording (live, instrumental, remix… on both sides or neither), then synced before plain (`lyricsResolver.rankHits`); the player, the library card's lookup and both version pickers use the same order
 - Fix: a version picked in **Other versions** is fetched again by its id when its cached copy is gone, instead of being replaced by the automatic choice
 - A title marked instrumental or karaoke is no longer searched again without that word (its hits are the sung version)
