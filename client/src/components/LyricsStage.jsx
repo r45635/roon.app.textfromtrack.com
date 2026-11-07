@@ -39,7 +39,7 @@ export default function LyricsStage({
 }) {
   const { t } = useTranslation();
   const np = nowPlaying;
-  const { status, data, error, reload, setOffset, choose, saveCustom } = useTrackLyrics(np, { path, refreshKey });
+  const { status, data, error, reload, setOffset, choose, saveCustom, markWrong } = useTrackLyrics(np, { path, refreshKey });
   const lyrics = data?.lyrics || null;
 
   const [fullscreen, setFullscreen] = useState(false);
@@ -49,10 +49,11 @@ export default function LyricsStage({
   const [notice, setNotice] = useState(null); // { tone: 'ok'|'error', text }
   const [saving, setSaving] = useState(false);
   const [hintDismissed, setHintDismissed] = useState(readDismissed);
+  const [pasting, setPasting] = useState(false);
 
   // New track: close the versions picker and clear notices.
   const trackKey = np ? `${np.zone_id}|${np.title}|${np.artist}|${np.album}` : '';
-  useEffect(() => { setVersionsOpen(false); setNotice(null); setEditing(false); }, [trackKey]);
+  useEffect(() => { setVersionsOpen(false); setNotice(null); setEditing(false); setPasting(false); }, [trackKey]);
 
   const editingRef = useRef(false);
   editingRef.current = editing;
@@ -137,6 +138,15 @@ export default function LyricsStage({
     }
   }
 
+  async function handleWrong(wrong) {
+    try {
+      await markWrong(wrong);
+      if (wrong) flash('ok', t('stage.wrong_done'));
+    } catch (err) {
+      flash('error', t('stage.wrong_failed', { msg: err.message }));
+    }
+  }
+
   // After editing, the lyrics live in the local cache: "Save to file" writes them when a file matched.
   const canSaveAfterEdit = !!data?.audio_path;
 
@@ -150,6 +160,28 @@ export default function LyricsStage({
       <div className="tft-lyrics-stage-msg">
         <p>{t('stage.load_failed', { msg: error })}</p>
         <button type="button" className="btn btn-ghost" onClick={() => reload(true)}>{t('common.retry')}</button>
+      </div>
+    );
+  } else if (pasting) {
+    body = (
+      <PasteLyrics
+        onCancel={() => setPasting(false)}
+        onSave={async (text) => {
+          await saveCustom(text);
+          setPasting(false);
+          flash('ok', canSaveAfterEdit ? t('editor.saved_file_hint') : t('editor.saved'));
+        }}
+      />
+    );
+  } else if (lyrics?.marked_wrong) {
+    body = (
+      <div className="tft-lyrics-stage-msg">
+        <p>{t('stage.marked_wrong')}</p>
+        <div className="tft-lyrics-stage-msg-actions">
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPasting(true)}>{t('stage.paste')}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setVersionsOpen(true); setQueueOpen(false); }}>{t('stage.versions')}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleWrong(false)}>{t('stage.show_anyway')}</button>
+        </div>
       </div>
     );
   } else if (lyrics?.instrumental) {
@@ -175,10 +207,16 @@ export default function LyricsStage({
       </div>
     );
   } else if (lyrics) {
-    body = <p className="tft-lyrics-stage-msg">{t('stage.not_found')}</p>;
+    body = (
+      <div className="tft-lyrics-stage-msg">
+        <p>{t('stage.not_found')}</p>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPasting(true)}>{t('stage.paste')}</button>
+      </div>
+    );
   }
 
   const fsMessage = status === 'loading' ? t('stage.loading')
+    : lyrics?.marked_wrong ? t('stage.marked_wrong_short')
     : lyrics?.instrumental ? t('stage.instrumental')
     : lyrics?.error ? lrclibProblem(lyrics.error)
     : t('stage.not_found_short');
@@ -219,6 +257,11 @@ export default function LyricsStage({
           {found && !editing && (
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(true)}>
               {lyrics.synced ? t('editor.edit_timing') : t('editor.sync_lyrics')}
+            </button>
+          )}
+          {found && !editing && (
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => handleWrong(true)} title={t('stage.wrong_title')}>
+              {t('stage.wrong')}
             </button>
           )}
           {found && <button type="button" className="btn btn-ghost btn-sm" onClick={handleCopy}>{t('stage.copy')}</button>}
@@ -401,6 +444,42 @@ function UpNext({ np, trackKey, onError }) {
           })}
         </ul>
       )}
+    </div>
+  );
+}
+
+/**
+ * Type or paste this track's lyrics (plain text or LRC) — for a song LRCLIB lacks or has wrong.
+ * Saved like the LRC editor's result: in the local cache, then "Sync" can add the timing.
+ */
+function PasteLyrics({ onSave, onCancel }) {
+  const { t } = useTranslation();
+  const [text, setText] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState(null);
+  async function save() {
+    setSaving(true);
+    setErr(null);
+    try { await onSave(text.trim()); } catch (e) { setErr(e.message); setSaving(false); }
+  }
+  return (
+    <div className="tft-paste">
+      <textarea
+        className="tft-paste-text"
+        value={text}
+        onChange={e => setText(e.target.value)}
+        placeholder={t('stage.paste_placeholder')}
+        aria-label={t('stage.paste')}
+        rows={10}
+        autoFocus
+      />
+      {err && <p className="tft-lyrics-stage-notice error" role="alert">{err}</p>}
+      <div className="tft-paste-actions">
+        <button type="button" className="btn btn-primary btn-sm" onClick={save} disabled={saving || !text.trim()}>
+          {saving ? t('stage.saving') : t('stage.paste_save')}
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onCancel} disabled={saving}>{t('common.cancel')}</button>
+      </div>
     </div>
   );
 }

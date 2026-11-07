@@ -108,6 +108,20 @@ router.post('/offset', (req, res) => {
   res.json({ success: true, offset_ms: lyricsResolver.setOffset(track, offsetMs) });
 });
 
+/**
+ * POST /api/lyrics/wrong
+ * Mark the lyrics a track gets as wrong (none shown for it from now on), or undo it.
+ * Body: { title, artist, album?, wrong: boolean }
+ */
+router.post('/wrong', (req, res) => {
+  const track = trackFromBody(req.body);
+  const wrong = req.body && req.body.wrong;
+  if (!track || typeof wrong !== 'boolean') {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'title, artist and a boolean wrong are required'));
+  }
+  res.json({ success: true, ...lyricsResolver.markWrong(track, wrong) });
+});
+
 const MAX_LYRICS_CHARS = 200_000;
 
 /**

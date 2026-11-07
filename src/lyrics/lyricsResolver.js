@@ -57,7 +57,9 @@ function _versionMark(...parts) {
  * 1. its length — the same recording first (within DURATION_TOLERANCE_S), then a record with
  *    no length, then the others, closest first;
  * 2. the same kind of recording (live / instrumental / remix… on both sides or on neither);
- * 3. synced lyrics before plain ones.
+ * 3. synced lyrics before plain ones;
+ * 4. the same album (the exact record LRCLIB matched on title, artist and album), then the
+ *    closest length.
  * The length comes first on purpose: synced lyrics of another recording (a live take 30 s
  * longer) drift away from the music, while plain lyrics of the right one are just not synced.
  */
@@ -66,7 +68,14 @@ function _fitKey(hit, track) {
   const delta = want && hit.duration ? Math.abs(hit.duration - want) : null;
   const lengthClass = delta == null ? 1 : delta <= DURATION_TOLERANCE_S ? 0 : 2;
   const otherKind = _versionMark(track.title, track.album) !== _versionMark(hit.trackName, hit.albumName) ? 1 : 0;
-  return [lengthClass, lengthClass === 2 ? delta : 0, otherKind, hit.syncedLyrics ? 0 : 1, delta || 0];
+  const otherAlbum = track.album && _fold(hit.albumName) === _fold(track.album) ? 0 : 1;
+  return [lengthClass, lengthClass === 2 ? delta : 0, otherKind, hit.syncedLyrics ? 0 : 1, otherAlbum, delta || 0];
+}
+
+/** Case, accents and punctuation folded away: "Révolution (Album Version)" ~ "revolution album version". */
+function _fold(text) {
+  return String(text || '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 }
 
 function _compareKeys(a, b) {
@@ -212,6 +221,11 @@ async function resolve(track, { audioPath = null, refresh = false } = {}) {
   }
   const prefs = lyricsPrefs.get(trackId);
   const base = { track_id: trackId, lrclib_id: prefs.lrclib_id ?? null, offset_ms: prefs.offset_ms || 0 };
+  // "Wrong lyrics": the user said what this track gets is wrong (LRCLIB can hold another
+  // song's words) — show none, whatever the source, until they undo it or pick other lyrics.
+  if (prefs.wrong) {
+    return { ...base, found: false, source: null, text: null, synced: false, instrumental: false, marked_wrong: true };
+  }
 
   if (audioPath) {
     try {
@@ -254,7 +268,7 @@ async function choose(track, lrclibId) {
   _memo.delete(trackId);
   if (result.text) lrcCache.setByMeta(track.artist, track.title, track.album, result.text);
   else _remember(trackId, result, Infinity);
-  const prefs = lyricsPrefs.set(trackId, { lrclib_id: rec.id ?? lrclibId });
+  const prefs = lyricsPrefs.set(trackId, { lrclib_id: rec.id ?? lrclibId, wrong: null });
   return {
     ...result,
     source: 'lrclib',
@@ -286,9 +300,22 @@ function setOffset(track, offsetMs) {
 function saveCustom(track, text) {
   const trackId = _trackId(track);
   lrcCache.setByMeta(track.artist, track.title, track.album, text);
-  lyricsPrefs.set(trackId, { lrclib_id: null, offset_ms: null });
+  lyricsPrefs.set(trackId, { lrclib_id: null, offset_ms: null, wrong: null });
   _memo.delete(trackId);
   return { ..._fromText(text), source: 'cache', track_id: trackId, lrclib_id: null, offset_ms: 0 };
+}
+
+/**
+ * Mark the lyrics this track gets as wrong (none shown from now on), or undo it.
+ * The cached copy is kept, so undoing shows it again at once. A picked LRCLIB version is
+ * forgotten when marking: it is the one that was wrong.
+ * @param {{ title, artist, album }} track
+ * @param {boolean} wrong
+ */
+function markWrong(track, wrong) {
+  const trackId = _trackId(track);
+  lyricsPrefs.set(trackId, wrong ? { wrong: true, lrclib_id: null } : { wrong: null });
+  return { track_id: trackId, marked_wrong: !!wrong };
 }
 
 /**
@@ -299,6 +326,7 @@ function saveCustom(track, text) {
  */
 function peek(track) {
   if (!track || !track.title || !track.artist) return 'unknown';
+  if (lyricsPrefs.get(_trackId(track)).wrong) return 'none';
   const cached = lrcCache.getByMeta(track.artist, track.title, track.album);
   if (cached) return isSynced(cached) ? 'synced' : 'plain';
   const memo = _memo.get(_trackId(track));
@@ -322,5 +350,5 @@ function lookupLrclib(track) {
 }
 
 module.exports = {
-  resolve, peek, choose, setOffset, saveCustom, lookupLrclib, isSynced, pickHit, rankHits, simplify, _resetMemo,
+  resolve, peek, choose, setOffset, saveCustom, markWrong, lookupLrclib, isSynced, pickHit, rankHits, simplify, _resetMemo,
 };

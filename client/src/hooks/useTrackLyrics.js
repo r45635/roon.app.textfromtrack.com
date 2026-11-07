@@ -18,7 +18,7 @@ async function postJson(url, body) {
  * @param {object|null} np        now-playing state (zone_id, title, artist, album)
  * @param {{ path?: string|null, refreshKey?: number }} [opts] path = file picked by the user
  * @returns {{ status: 'idle'|'loading'|'ready'|'error', data: object|null, error: string|null,
- *   reload: Function, setOffset: Function, choose: Function, saveCustom: Function }}
+ *   reload: Function, setOffset: Function, choose: Function, saveCustom: Function, markWrong: Function }}
  */
 export function useTrackLyrics(np, { path = null, refreshKey = 0 } = {}) {
   const [state, setState] = useState({ status: 'idle', key: null, data: null, error: null });
@@ -98,5 +98,12 @@ export function useTrackLyrics(np, { path = null, refreshKey = 0 } = {}) {
     patchLyrics(res.lyrics);
   }, [key]);
 
-  return { status: state.status, data: state.data, error: state.error, reload, setOffset, choose, saveCustom };
+  /** Mark this track's lyrics as wrong (none shown), or undo it; then fetch what it gets now. */
+  const markWrong = useCallback(async (wrong) => {
+    if (!track) return;
+    await postJson('/api/lyrics/wrong', { ...track, wrong });
+    reload();
+  }, [key, reload]);
+
+  return { status: state.status, data: state.data, error: state.error, reload, setOffset, choose, saveCustom, markWrong };
 }

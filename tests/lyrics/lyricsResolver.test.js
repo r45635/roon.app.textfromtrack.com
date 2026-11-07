@@ -96,6 +96,18 @@ describe('pickHit', () => {
     assert.deepEqual(resolver.rankHits(hits, 200).map(h => h.id), [2, 3, 1]);
   });
 
+  test('between records of the right length, the same album wins', () => {
+    // Louis Chédid, "Révolution (album version)", CD Story, 257 s: the exact record must win
+    // over another album's copy that is 0.6 s closer.
+    const hits = [
+      { id: 1, albumName: 'Bizarre', plainLyrics: PLAIN, duration: 257.3 },
+      { id: 2, albumName: 'CD Story', plainLyrics: PLAIN, duration: 257.96 },
+    ];
+    assert.equal(resolver.pickHit(hits, { album: 'CD Story', duration_seconds: 257 }).id, 2);
+    assert.equal(resolver.pickHit(hits, { album: 'cd story!', duration_seconds: 257 }).id, 2, 'case and punctuation folded');
+    assert.equal(resolver.pickHit(hits, { duration_seconds: 257 }).id, 1, 'no album: closest length');
+  });
+
   test('rankHits drops duplicates and, unless asked, records without lyrics', () => {
     const hits = [{ id: 1, duration: 100 }, { id: 2, plainLyrics: PLAIN, duration: 100 }, { id: 2, plainLyrics: PLAIN }];
     assert.deepEqual(resolver.rankHits(hits, 100).map(h => h.id), [2]);
@@ -241,6 +253,43 @@ describe('resolve', () => {
     assert.equal(r.source, 'sidecar');
     assert.equal(r.text, SYNCED);
     assert.equal(calls.length, 0);
+  });
+});
+
+describe('markWrong', () => {
+  test('a track marked wrong gets no lyrics, from the cache or LRCLIB, until undone', async () => {
+    lrcCache.setByMeta(TRACK.artist, TRACK.title, TRACK.album, SYNCED);
+    resolver.markWrong(TRACK, true);
+    const r = await resolver.resolve(TRACK);
+    assert.equal(r.found, false);
+    assert.equal(r.marked_wrong, true);
+    assert.equal(r.text, null);
+    assert.deepEqual(calls, [], 'LRCLIB is not asked');
+    assert.equal(resolver.peek(TRACK), 'none');
+
+    resolver.markWrong(TRACK, false);
+    const back = await resolver.resolve(TRACK);
+    assert.equal(back.text, SYNCED, 'the cached copy is shown again');
+    assert.equal(back.marked_wrong, undefined);
+  });
+
+  test('marking forgets the picked version; choosing or saving lyrics clears the mark', async () => {
+    lrclib.byId = { id: 99, syncedLyrics: SYNCED };
+    await resolver.choose(TRACK, 99);
+    resolver.markWrong(TRACK, true);
+    let r = await resolver.resolve(TRACK);
+    assert.equal(r.lrclib_id, null);
+    assert.equal(r.marked_wrong, true);
+
+    await resolver.choose(TRACK, 99);
+    r = await resolver.resolve(TRACK);
+    assert.equal(r.found, true);
+    assert.equal(r.lrclib_id, 99);
+
+    resolver.markWrong(TRACK, true);
+    resolver.saveCustom(TRACK, PLAIN);
+    r = await resolver.resolve(TRACK);
+    assert.equal(r.text, PLAIN);
   });
 });
 

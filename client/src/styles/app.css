@@ -2651,6 +2651,14 @@ button.tft-search-link:hover { color: rgba(255,255,255,0.95); text-decoration: u
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   padding: 28px 12px; text-align: center; color: var(--tft-ink-3); font-size: 14px;
 }
+.tft-lyrics-stage-msg-actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.tft-paste { display: flex; flex-direction: column; gap: 8px; padding: 8px 0; }
+.tft-paste-text {
+  width: 100%; box-sizing: border-box; resize: vertical; min-height: 160px; padding: 8px 10px;
+  font: 13px/1.5 var(--tft-mono); color: var(--tft-ink);
+  border: 1px solid var(--tft-line); border-radius: 6px; background: var(--tft-paper-2);
+}
+.tft-paste-actions { display: flex; gap: 6px; }
 .tft-lyrics-stage-notice { font-size: 12px; margin: 0; }
 .tft-lyrics-stage-notice.ok    { color: var(--tft-signal-ink); }
 .tft-lyrics-stage-notice.error { color: var(--tft-error-ink); }

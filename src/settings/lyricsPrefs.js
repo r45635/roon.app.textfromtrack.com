@@ -2,7 +2,8 @@
 
 /**
  * Per-track lyrics preferences, keyed by lrcCache.metaId (artist + title + album):
- * the LRCLIB version the user picked and their timing offset.
+ * the LRCLIB version the user picked, their timing offset, and whether they marked the
+ * lyrics as wrong.
  * Stored in storage/lyrics-prefs.json.
  */
 
@@ -11,7 +12,7 @@ const { readJson, writeJson } = require('../utils/fileUtils');
 
 /**
  * @param {string} trackId
- * @returns {{ lrclib_id?: number, offset_ms?: number }}
+ * @returns {{ lrclib_id?: number, offset_ms?: number, wrong?: boolean }}
  */
 function get(trackId) {
   const all = readJson(config.lyricsPrefsPath, {});
@@ -21,8 +22,8 @@ function get(trackId) {
 /**
  * Merge `updates` into a track's preferences. A null value removes that key.
  * @param {string} trackId
- * @param {{ lrclib_id?: number|null, offset_ms?: number|null }} updates
- * @returns {{ lrclib_id?: number, offset_ms?: number }}
+ * @param {{ lrclib_id?: number|null, offset_ms?: number|null, wrong?: boolean|null }} updates
+ * @returns {{ lrclib_id?: number, offset_ms?: number, wrong?: boolean }}
  */
 function set(trackId, updates) {
   const all = readJson(config.lyricsPrefsPath, {});
