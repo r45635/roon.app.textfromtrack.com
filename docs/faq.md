@@ -18,7 +18,13 @@ tries again every minute, and **Retry** asks at once. To stop depending on it, r
 copy of LRCLIB's database on your own server or NAS: its [server](https://github.com/tranxuanthang/lrclib)
 is open source and the database is a public download. Then Settings → **Lyrics Sources**: add the
 mirror and move it above lrclib.net. Each lookup tries the servers in that order, and **Test**
-checks one.
+checks one. Step by step, with what it takes (~320 GB of disk):
+[your own LRCLIB mirror](lyrics-database.md#2-your-own-lrclib-mirror).
+
+**Where are the lyrics kept? How do I clear them?**
+Every lyric found is kept in a local cache, so a song you've played once is instant the next time,
+even when LRCLIB is down. Where it lives, what it holds and how to start over:
+[the local cache](lyrics-database.md#1-the-local-cache).
 
 **Does it work with Roon ARC?**
 No. The companion is a web page served on your home network (`http://<computer>:3888`); it doesn't

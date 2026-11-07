@@ -20,7 +20,13 @@ heures ; l'app réessaie chaque minute, et **Réessayer** relance tout de suite.
 dépendre, hébergez un miroir — une copie de la base de LRCLIB sur votre propre serveur ou NAS : son
 [serveur](https://github.com/tranxuanthang/lrclib) est open source et la base se télécharge
 librement. Puis Réglages → **Sources de paroles** : ajoutez le miroir et placez-le avant lrclib.net.
-Chaque recherche essaie les serveurs dans cet ordre, et **Tester** en vérifie un.
+Chaque recherche essaie les serveurs dans cet ordre, et **Tester** en vérifie un. Pas à pas, avec
+ce qu'il faut (~320 Go de disque) : [votre propre miroir LRCLIB](lyrics-database.fr.md#2-votre-propre-miroir-lrclib).
+
+**Où les paroles sont-elles gardées ? Comment les effacer ?**
+Chaque parole trouvée est gardée dans un cache local : un morceau écouté une fois s'affiche tout de
+suite la fois suivante, même quand LRCLIB est en panne. Où il se trouve, ce qu'il contient et comment
+repartir de zéro : [le cache local](lyrics-database.fr.md#1-le-cache-local).
 
 **Est-ce que ça marche avec Roon ARC ?**
 Non. Le compagnon est une page web servie sur votre réseau local (`http://<ordinateur>:3888`) ; il

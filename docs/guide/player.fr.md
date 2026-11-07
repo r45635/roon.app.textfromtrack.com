@@ -113,6 +113,8 @@ préférence — lrclib.net par défaut. Ajoutez un miroir (une copie de la base
 que vous gérez, par ex. `http://192.168.1.20:3300`), déplacez-le avec ↑ ↓ et vérifiez-le avec
 **Tester**. Quand un serveur est en panne, surchargé ou n'a pas la chanson, le suivant est
 interrogé. Chaque serveur interrogé reçoit le titre, l'artiste, l'album et la durée du morceau.
+Monter un miroir, et où le compagnon garde les paroles trouvées : [les paroles à la
+maison](../lyrics-database.fr.md).
 
 Réglages → **À propos**, tout en bas : la version et le build dont elle est issue (un commit, avec
 sa date), la disponibilité d'une version plus récente, et des liens vers le code source sur GitHub,

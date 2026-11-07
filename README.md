@@ -121,6 +121,7 @@ Point the companion at your music folder and it does more:
 |---|---|
 | 🚀 **Quick start** | [Five minutes to synced lyrics](docs/quickstart.md) · [en français](docs/quickstart.fr.md) |
 | 🎤 **The player** | [Lyrics, timing, versions, full screen, phone / tablet / TV, zones](docs/guide/player.md) · [en français](docs/guide/player.fr.md) |
+| 🗄️ **Lyrics at home** | [The local cache and your own LRCLIB mirror](docs/lyrics-database.md) · [en français](docs/lyrics-database.fr.md) |
 | 📚 **Your library** | [Lyrics in your own files](docs/guide/library.md) · [en français](docs/guide/library.fr.md) — music folder, whole-library fill, LRC editor, tags, AI lyrics (soon) |
 | 📦 **Install in depth** | [Installation guide](docs/install.md) — Docker on a NAS, Node.js, every option |
 | ❓ **Questions** | [FAQ](docs/faq.md) · [en français](docs/faq.fr.md) — rare songs, Roon ARC, macOS prompts, what leaves your network |
@@ -133,7 +134,8 @@ Point the companion at your music folder and it does more:
 - **Lyrics coverage:** LRCLIB is community-built — most popular songs are there, rare ones may not be.
 - **lrclib.net overloaded?** Settings → **Lyrics Sources** takes an ordered list of LRCLIB servers:
   put a mirror you run (its server is open source, its database a public download) before
-  lrclib.net, and lookups fall back from one to the next.
+  lrclib.net, and lookups fall back from one to the next —
+  [run your own mirror, step by step](docs/lyrics-database.md#2-your-own-lrclib-mirror).
 - **macOS:** the app isn't notarized yet — the first launch needs *Open Anyway* in System Settings →
   Privacy & Security, then *Allow* for Local Network access.
 - **Languages:** English and French.

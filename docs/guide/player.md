@@ -109,7 +109,8 @@ Settings → **Lyrics Sources**: the LRCLIB servers lyrics come from, in order o
 lrclib.net by default. Add a mirror (a copy of LRCLIB's database on a server you run, e.g.
 `http://192.168.1.20:3300`), move it with ↑ ↓, and check it with **Test**. When a server is down,
 busy or doesn't have the song, the next one is asked. Each server asked receives the track's title,
-artist, album and length.
+artist, album and length. Setting up a mirror, and where the companion keeps the lyrics it found:
+[lyrics at home](../lyrics-database.md).
 
 Settings → **About**, at the bottom: the version and the build it was made from (a commit, with
 its date), whether a newer version is out, and links to the source code on GitHub, this version's

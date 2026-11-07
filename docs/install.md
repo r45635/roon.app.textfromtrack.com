@@ -177,6 +177,9 @@ LRCLIB_URLS: http://192.168.1.20:3300,https://lrclib.net   # ← your mirror fir
 
 The container must reach the mirror's address: **Test** in Lyrics Sources checks it from the container.
 
+Setting up the mirror itself (download, Docker compose with a read-only proxy, updates,
+troubleshooting): [your own LRCLIB mirror](lyrics-database.md#2-your-own-lrclib-mirror).
+
 ### Updating to a new version
 
 ```bash

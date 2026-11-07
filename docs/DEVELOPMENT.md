@@ -143,7 +143,7 @@ Copy `.env.example` to `.env` and fill in the values.
 | `ROON_CORE_PORT` | `9330` | Roon Core extension port used with `ROON_CORE_HOST` (Roon 2.x: `9330`; legacy 1.x: `9100`) |
 | `ALLOWED_HOSTS` | _(empty)_ | Extra host names allowed to reach the UI/API, comma-separated (e.g. a reverse-proxy domain). `localhost`, IP addresses and LAN names (`*.local`, `*.lan`, single-label like `nas`) are always allowed; `*` disables the check |
 | `MUSIC_ROOTS` | _(empty)_ | Comma-separated absolute paths to scan |
-| `LRCLIB_URLS` | _(empty = `https://lrclib.net`)_ | LRCLIB servers in order of preference, comma-separated — e.g. `http://192.168.1.20:3300,https://lrclib.net` for a home mirror first. A request falls through to the next server when one fails or doesn't have the record; a miss is only trusted from the last one. Mirrors get a 5 s deadline, lrclib.net 20 s |
+| `LRCLIB_URLS` | _(empty = `https://lrclib.net`)_ | LRCLIB servers in order of preference, comma-separated — e.g. `http://192.168.1.20:3300,https://lrclib.net` for a home mirror first. A request falls through to the next server when one fails or doesn't have the record; a miss is only trusted from the last one. Mirrors get a 5 s deadline, lrclib.net 20 s. Running one: [lyrics-database.md](lyrics-database.md#2-your-own-lrclib-mirror) |
 | `TFT_BASE_URL` | `https://app.textfromtrack.com/api/v1` | TextFromTrack API base URL |
 | `TFT_TOKEN` | _(empty)_ | Your Personal Access Token |
 | `TFT_DEFAULT_EXPORT_FORMAT` | `lrc` | Export format (`lrc`, `srt`, `txt`, `json`) |
