@@ -74,6 +74,24 @@ lyrics display. Each screen follows its own zone and stays awake.</td>
 </tr>
 </table>
 
+## A lyrics screen of its own: TFT Panel
+
+<img src="docs/media/panel/tft-panel.jpg" width="640" alt="TFT Panel: synced lyrics on a 7-inch touch screen, with the cover, title and progress">
+
+**[TFT Panel](https://r45635.github.io/tft-panel/)** turns the Elecrow CrowPanel 7" touch screen
+into a lyrics display that sits next to your hi-fi: the words scroll in time with the music over
+the blurred cover, a swipe shows the album art, and a tap gives play, skip, volume and the zone to
+follow. It's free, open-source firmware that installs from Chrome or Edge with a USB-C cable, sets
+itself up from your phone with two QR codes, and updates over Wi-Fi.
+
+It talks only to this companion, on your own network — keep the companion running and the panel
+finds it. [Website](https://r45635.github.io/tft-panel/) ·
+[install from your browser](https://r45635.github.io/tft-panel/install.html) ·
+[source](https://github.com/r45635/tft-panel) ·
+[media kit](https://r45635.github.io/tft-panel/media-kit.html)
+
+<sub>Picture from the panel's showcase mode: the song, lyrics and cover are invented.</sub>
+
 ## A remote for every zone
 
 <img align="right" src="docs/media/en/player-zones.png" width="380" alt="Zone menu with covers, states and volumes">
@@ -139,6 +157,8 @@ Point the companion at your music folder and it does more:
 - **macOS:** the app isn't notarized yet — the first launch needs *Open Anyway* in System Settings →
   Privacy & Security, then *Allow* for Local Network access.
 - **Languages:** English and French.
+- **A dedicated screen?** [TFT Panel](https://r45635.github.io/tft-panel/) — open firmware for the
+  Elecrow CrowPanel 7", a client of this companion on your network.
 - **Which version is this?** Settings → **About**: version, build, update status and the links
   to this page — quote the version and build in a bug report.
 - **Settings for Docker and servers:** [every environment variable](docs/DEVELOPMENT.md#environment-variables).

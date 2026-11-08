@@ -58,6 +58,12 @@ Companion → *Network Volumes*.
 Yes. Every phone, tablet or TV browser can open the lyrics display, and each one follows its own
 zone (**Zone** button).
 
+**Is there a dedicated lyrics screen?**
+Yes: [TFT Panel](https://r45635.github.io/tft-panel/), free open-source firmware for the Elecrow
+CrowPanel 7" touch screen (DIS08070H). It shows the lyrics and the cover and gives play, skip,
+volume and zone — and it needs this companion running on the same network, since that's where it
+gets everything. [Install it from Chrome or Edge](https://r45635.github.io/tft-panel/install.html).
+
 **What leaves my network?**
 To find lyrics, a track's title, artist, album and length go to LRCLIB (lrclib.net, or the servers
 listed in Settings → Lyrics Sources) — for the playing track and the next three in the zone's queue. Once every few hours the

@@ -64,6 +64,13 @@ réseau*.
 Oui. Chaque téléphone, tablette ou navigateur de TV peut ouvrir l'affichage des paroles, et chacun
 suit sa propre zone (bouton **Zone**).
 
+**Existe-t-il un écran dédié aux paroles ?**
+Oui : [TFT Panel](https://r45635.github.io/tft-panel/), un firmware libre et gratuit pour l'écran
+tactile Elecrow CrowPanel 7" (DIS08070H). Il affiche les paroles et la pochette, et donne lecture,
+morceau suivant, volume et zone — à condition que le compagnon tourne sur le même réseau, car c'est
+lui qui fournit tout. [L'installer depuis Chrome ou Edge](https://r45635.github.io/tft-panel/install.html)
+(site en anglais).
+
 **Qu'est-ce qui sort de mon réseau ?**
 Pour trouver les paroles, le titre, l'artiste, l'album et la durée d'un morceau partent vers
 LRCLIB (lrclib.net, ou les serveurs listés dans Réglages → Sources de paroles), pour le morceau en cours et les trois suivants de la file. Toutes les quelques heures, l'app demande à GitHub si une nouvelle version existe

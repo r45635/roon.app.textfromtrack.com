@@ -81,6 +81,16 @@ Ready-made posts for the Roon forum, Reddit, X, Mastodon and Facebook:
 by Josh Woodward, licensed CC BY 4.0 — [joshwoodward.com](https://www.joshwoodward.com/).
 Every picture was taken in the app's screenshot mode: the names on screen are neutral.
 
+## Related project: TFT Panel
+
+[TFT Panel](https://r45635.github.io/tft-panel/) is open firmware that turns the Elecrow CrowPanel
+7" touch screen into a lyrics display for Roon: synced lyrics over the blurred cover, a cover view,
+and touch controls for playback, volume and zone. It is a client of the companion and talks only to
+it, on the user's own network. Name it "TFT Panel" (not "Roon Panel": it is independent of Roon
+Labs). Its own media kit — logos, pictures, video, texts — is at
+[r45635.github.io/tft-panel/media-kit.html](https://r45635.github.io/tft-panel/media-kit.html);
+its pictures come from a showcase mode with an invented song.
+
 ## Contact
 
 Questions, interviews, corrections: open an [issue](https://github.com/r45635/roon.app.textfromtrack.com/issues).

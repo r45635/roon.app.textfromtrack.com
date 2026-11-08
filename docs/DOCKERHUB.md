@@ -48,12 +48,18 @@ Mount your music folder and the companion can also write `.lrc` files or embed l
 tags (other tags and artwork kept), fill your whole library from LRCLIB in one batch, and let you
 sync lyrics yourself.
 
+## A screen of its own
+
+[TFT Panel](https://r45635.github.io/tft-panel/) — open firmware for the Elecrow CrowPanel 7" touch
+screen — shows the lyrics and controls next to your hi-fi, using this companion on your network.
+
 ## Links
 
 [GitHub](https://github.com/r45635/roon.app.textfromtrack.com) ·
 [Quick start](https://github.com/r45635/roon.app.textfromtrack.com/blob/main/docs/quickstart.md) ·
 [Player guide](https://github.com/r45635/roon.app.textfromtrack.com/blob/main/docs/guide/player.md) ·
 [Desktop apps](https://github.com/r45635/roon.app.textfromtrack.com/releases/latest) ·
+[TFT Panel](https://r45635.github.io/tft-panel/) ·
 [Issues](https://github.com/r45635/roon.app.textfromtrack.com/issues)
 
 MIT licensed. Not affiliated with Roon Labs.

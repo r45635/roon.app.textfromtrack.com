@@ -8,6 +8,7 @@ Synced lyrics for everything Roon plays. *Français : voir la colonne de droite.
 | Lyrics, timing, full screen, phone / tablet / TV, zones, up next, Roon library, settings, about | [The player](guide/player.md) | [Le lecteur](guide/player.fr.md) |
 | Lyrics in your own files: whole-library fill, LRC editor, tags, AI | [Your library](guide/library.md) | [Votre bibliothèque](guide/library.fr.md) |
 | The local lyrics cache, and running your own LRCLIB mirror (Docker, step by step) | [Lyrics at home](lyrics-database.md) | [Les paroles à la maison](lyrics-database.fr.md) |
+| A 7-inch touch screen for lyrics and controls, a client of the companion (separate project) | [TFT Panel](https://r45635.github.io/tft-panel/) | [TFT Panel](https://r45635.github.io/tft-panel/) (en anglais) |
 | Common questions: rare songs, Roon ARC, macOS prompts, privacy | [FAQ](faq.md) | [FAQ](faq.fr.md) |
 | Docker on a NAS, Node.js, every option | [Install in depth](install.md) | — |
 | Architecture, running from source, API, roadmap | [Development guide](DEVELOPMENT.md) | — |
