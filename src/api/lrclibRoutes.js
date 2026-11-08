@@ -180,6 +180,7 @@ router.get('/search', async (req, res) => {
       id: h.id,
       instrumental: !!h.instrumental,
       hasSynced: !!h.syncedLyrics,
+      damaged: lyricsResolver.isDamaged(h.syncedLyrics || h.plainLyrics),
       trackName: h.trackName || null,
       artistName: h.artistName || null,
       albumName: h.albumName || null,

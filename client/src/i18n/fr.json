@@ -570,6 +570,8 @@
     "search": "Rechercher",
     "no_versions": "LRCLIB n’a aucune version de ce titre.",
     "other_length": "Pas la durée du morceau joué — un autre enregistrement",
+    "damaged": "Texte abîmé",
+    "damaged_title": "Les lettres accentuées ont été perdues dans cette copie (remplacées par « ? »)",
     "wrong": "Paroles fausses",
     "wrong_title": "Ce ne sont pas les paroles de cette chanson : n'en afficher aucune pour ce morceau (annulable)",
     "wrong_done": "Marquées comme fausses — plus de paroles pour ce morceau.",

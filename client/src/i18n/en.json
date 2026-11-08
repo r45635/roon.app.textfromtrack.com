@@ -570,6 +570,8 @@
     "search": "Search",
     "no_versions": "LRCLIB has no version of this title.",
     "other_length": "Not the length of the playing track — another recording",
+    "damaged": "Damaged text",
+    "damaged_title": "Accented letters were lost in this copy (shown as \"?\")",
     "wrong": "Wrong lyrics",
     "wrong_title": "These are not this song's words: show none for this track (you can undo it)",
     "wrong_done": "Marked as wrong — no lyrics shown for this track.",

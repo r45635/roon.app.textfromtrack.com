@@ -48,6 +48,19 @@ function _fromRecord(rec) {
 // instrumental has no words. Looked for in the title and the album, on both sides.
 const VERSION_WORDS = /\b(live|en public|en concert|in concert|en direct|unplugged|acoustic|acoustique|remix|instrumental|karaoke)\b/i;
 
+// Accented letters lost to "?" by a bad upload: "j'? prouve", "doit? tre", "St?r?o" — a "?" glued
+// to a letter and followed by a lower-case letter. Also U+FFFD, the replacement character.
+// Copies of one such upload spread over many albums (every synced record of a song can carry it).
+const DAMAGED_CHARS = /\p{L}\?(?: \p{Ll}|\p{L})|['’]\? ?\p{Ll}|\uFFFD/gu;
+const DAMAGED_MIN = 3; // a stray "nothin'? we" is not damage
+
+/** True when lyrics lost their accented letters (see DAMAGED_CHARS). */
+function isDamaged(text) {
+  if (!text) return false;
+  const hits = text.match(DAMAGED_CHARS);
+  return !!hits && hits.length >= DAMAGED_MIN;
+}
+
 function _versionMark(...parts) {
   return VERSION_WORDS.test(parts.filter(Boolean).join(' '));
 }
@@ -57,8 +70,10 @@ function _versionMark(...parts) {
  * 1. its length — the same recording first (within DURATION_TOLERANCE_S), then a record with
  *    no length, then the others, closest first;
  * 2. the same kind of recording (live / instrumental / remix… on both sides or on neither);
- * 3. synced lyrics before plain ones;
- * 4. the same album (the exact record LRCLIB matched on title, artist and album), then the
+ * 3. clean text before text whose accented letters were lost ("j'? prouve") — readable plain
+ *    lyrics beat synced ones that aren't;
+ * 4. synced lyrics before plain ones;
+ * 5. the same album (the exact record LRCLIB matched on title, artist and album), then the
  *    closest length.
  * The length comes first on purpose: synced lyrics of another recording (a live take 30 s
  * longer) drift away from the music, while plain lyrics of the right one are just not synced.
@@ -69,7 +84,8 @@ function _fitKey(hit, track) {
   const lengthClass = delta == null ? 1 : delta <= DURATION_TOLERANCE_S ? 0 : 2;
   const otherKind = _versionMark(track.title, track.album) !== _versionMark(hit.trackName, hit.albumName) ? 1 : 0;
   const otherAlbum = track.album && _fold(hit.albumName) === _fold(track.album) ? 0 : 1;
-  return [lengthClass, lengthClass === 2 ? delta : 0, otherKind, hit.syncedLyrics ? 0 : 1, otherAlbum, delta || 0];
+  const damaged = isDamaged(hit.syncedLyrics || hit.plainLyrics) ? 1 : 0;
+  return [lengthClass, lengthClass === 2 ? delta : 0, otherKind, damaged, hit.syncedLyrics ? 0 : 1, otherAlbum, delta || 0];
 }
 
 /** Case, accents and punctuation folded away: "Révolution (Album Version)" ~ "revolution album version". */
@@ -109,11 +125,11 @@ function pickHit(hits, track) {
   return rankHits(hits, track)[0] || null;
 }
 
-/** Synced, the right length (or no length to compare) and the same kind of recording. */
+/** Synced, clean, the right length (or no length to compare) and the same kind of recording. */
 function _isIdeal(hit, track) {
   if (!hit || !hit.syncedLyrics) return false;
-  const [lengthClass, , otherKind] = _fitKey(hit, track);
-  return lengthClass < 2 && otherKind === 0;
+  const [lengthClass, , otherKind, damaged] = _fitKey(hit, track);
+  return lengthClass < 2 && otherKind === 0 && damaged === 0;
 }
 
 /**
@@ -133,7 +149,7 @@ function simplify({ title, artist }) {
 async function _fetchFromLrclib(track) {
   const { title, artist, album, duration_seconds: duration } = track;
   const exact = await lrclibClient.getTrack({ title, artist, album, duration });
-  if (exact && (exact.syncedLyrics || exact.instrumental)) return _fromRecord(exact);
+  if (exact && (exact.instrumental || (exact.syncedLyrics && !isDamaged(exact.syncedLyrics)))) return _fromRecord(exact);
 
   // No exact record, or one with plain lyrics only: a search may find a synced copy of the
   // same recording. The exact record stays a candidate — first, so it wins a tie.
@@ -350,5 +366,6 @@ function lookupLrclib(track) {
 }
 
 module.exports = {
-  resolve, peek, choose, setOffset, saveCustom, markWrong, lookupLrclib, isSynced, pickHit, rankHits, simplify, _resetMemo,
+  resolve, peek, choose, setOffset, saveCustom, markWrong, lookupLrclib, isSynced, isDamaged, pickHit, rankHits, simplify,
+  _resetMemo,
 };

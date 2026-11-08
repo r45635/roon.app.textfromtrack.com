@@ -555,6 +555,7 @@ function VersionPicker({ np, currentId, onChoose }) {
                 <span className={`tft-pill${h.hasSynced ? ' signal' : ''}`}>
                   {h.instrumental ? t('stage.instrumental_short') : h.hasSynced ? t('stage.synced') : t('stage.not_synced')}
                 </span>
+                {h.damaged && <span className="tft-pill amber" title={t('stage.damaged_title')}>{t('stage.damaged')}</span>}
               </button>
             </li>
           ))}

@@ -95,7 +95,7 @@ the companion's version and its GitHub address.
 | *macOS is blocking the connection* | System Settings → Privacy & Security → Local Network → allow the app. |
 | *Server unreachable* | The companion itself isn't running (app quit, container stopped). |
 | *No lyrics found* | LRCLIB has nothing for this title — try **Other versions** with a simpler title. |
-| *Plain text, not synced* | LRCLIB has synced lyrics only for another recording (a live take, another length). The plain text of the right one is shown rather than lyrics that drift; **Other versions** still lets you pick the synced one. |
+| *Plain text, not synced* | LRCLIB has synced lyrics only for another recording (a live take, another length), or only copies whose accented letters were lost ("j'? prouve"). The clean plain text of the right one is shown rather than lyrics that drift or can't be read; **Other versions** still lets you pick a synced one (damaged copies are marked *Damaged text*). |
 | *Instrumental* | LRCLIB marks the track as instrumental. |
 | *LRCLIB is unreachable / overloaded* | No LRCLIB server answered; the app tries again every minute. A mirror helps — see *Lyrics Sources* below. |
 

@@ -472,6 +472,10 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 - **Paste lyrics** for a track with no lyrics or marked wrong: plain text or LRC, kept in the local cache like the LRC editor's result
 - Fix: between records of the right length, the same album wins (the exact record), not another album's copy a fraction of a second closer
 
+### v0.6.3 — Readable lyrics first
+- Records whose accented letters were lost ("j'? prouve", "doit? tre", U+FFFD — at least 3 per text, `lyricsResolver.isDamaged`) rank after clean ones of the right length and kind: clean plain lyrics beat damaged synced ones (every synced copy of Michel Jonasz's "Groove Baby Groove" is damaged). A damaged exact synced record no longer stops the search. Replayed on 268 tracks: no false positive, 4 tracks left with only damaged copies
+- **Other versions** marks damaged copies (*Damaged text*)
+
 ### Upcoming
 
 #### Local tag editor (mp3tag-style, lyrics-aware)

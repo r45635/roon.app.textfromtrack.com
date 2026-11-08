@@ -108,10 +108,31 @@ describe('pickHit', () => {
     assert.equal(resolver.pickHit(hits, { duration_seconds: 257 }).id, 1, 'no album: closest length');
   });
 
+  test('clean plain lyrics beat synced ones whose accents were lost', () => {
+    // Michel Jonasz, "Groove Baby Groove": every synced copy reads "j'? prouve", "doit? tre".
+    const broken = "[00:01.00]Ce que j'? prouve\n[00:02.00]Ce doit? tre\n[00:03.00]si? a se trouve";
+    const hits = [
+      { id: 1, syncedLyrics: broken, duration: 333 },
+      { id: 2, plainLyrics: "Ce que j'éprouve\nCe doit être", duration: 334.6 },
+    ];
+    assert.equal(resolver.pickHit(hits, 333).id, 2);
+    assert.equal(resolver.pickHit(hits.slice(0, 1), 333).id, 1, 'damaged lyrics are still better than none');
+  });
+
   test('rankHits drops duplicates and, unless asked, records without lyrics', () => {
     const hits = [{ id: 1, duration: 100 }, { id: 2, plainLyrics: PLAIN, duration: 100 }, { id: 2, plainLyrics: PLAIN }];
     assert.deepEqual(resolver.rankHits(hits, 100).map(h => h.id), [2]);
     assert.deepEqual(resolver.rankHits(hits, 100, { keepEmpty: true }).map(h => h.id), [1, 2]);
+  });
+});
+
+describe('isDamaged', () => {
+  test('spots accented letters turned into "?", not real question marks', () => {
+    assert.equal(resolver.isDamaged("Ce que j'? prouve\nCe doit? tre\nSt?r?o"), true);
+    assert.equal(resolver.isDamaged('Mot \uFFFD mot \uFFFD mot \uFFFD'), true);
+    assert.equal(resolver.isDamaged('Is this love? Is this love?\nWhy? Tell me why?\nWhere are you?'), false);
+    assert.equal(resolver.isDamaged("Nothin'? we\nQue fais-tu ?\nOù es-tu ? Ici"), false);
+    assert.equal(resolver.isDamaged(null), false);
   });
 });
 
@@ -169,6 +190,13 @@ describe('resolve', () => {
     assert.equal(r.lrclib_id, 1);
     assert.equal(r.synced, false);
     assert.equal(r.text, PLAIN);
+  });
+
+  test('a damaged exact synced record does not stop the search for a clean one', async () => {
+    lrclib.get = { id: 1, syncedLyrics: "[00:01.00]j'? prouve\n[00:02.00]doit? tre\n[00:03.00]si? a", duration: 332 };
+    lrclib.search = [{ id: 4, plainLyrics: "j'éprouve\ndoit être", duration: 332 }];
+    const r = await resolver.resolve(TRACK);
+    assert.equal(r.lrclib_id, 4);
   });
 
   test('keeps the plain exact hit over synced lyrics of another recording', async () => {

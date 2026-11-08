@@ -98,7 +98,7 @@ redémarrage du compagnon. La page se termine par la version du compagnon et son
 | *macOS bloque la connexion* | Réglages Système → Confidentialité et sécurité → Réseau local → autorisez l'app. |
 | *Serveur injoignable* | Le compagnon lui-même ne tourne pas (app quittée, conteneur arrêté). |
 | *Aucune parole trouvée* | LRCLIB n'a rien pour ce titre — essayez **Versions** avec un titre simplifié. |
-| *Texte seul, non synchronisé* | LRCLIB n'a des paroles synchronisées que pour un autre enregistrement (un live, une autre durée). Le texte du bon est affiché plutôt que des paroles qui décalent ; **Versions** permet toujours de choisir la version synchronisée. |
+| *Texte seul, non synchronisé* | LRCLIB n'a des paroles synchronisées que pour un autre enregistrement (un live, une autre durée), ou seulement des copies dont les lettres accentuées ont été perdues (« j'? prouve »). Le texte propre du bon enregistrement est affiché plutôt que des paroles qui décalent ou se lisent mal ; **Versions** permet toujours de choisir une version synchronisée (les copies abîmées y sont marquées *Texte abîmé*). |
 | *Instrumental* | LRCLIB indique un titre instrumental. |
 | *LRCLIB est injoignable / surchargée* | Aucun serveur LRCLIB n'a répondu ; l'app réessaie chaque minute. Un miroir aide — voir *Sources de paroles* ci-dessous. |
 
