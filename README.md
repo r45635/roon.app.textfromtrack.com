@@ -78,14 +78,17 @@ lyrics display. Each screen follows its own zone and stays awake.</td>
 
 <img src="docs/media/panel/tft-panel.jpg" width="640" alt="TFT Panel: synced lyrics on a 7-inch touch screen, with the cover, title and progress">
 
-**[TFT Panel](https://r45635.github.io/tft-panel/)** turns the Elecrow CrowPanel 7" touch screen
-into a lyrics display that sits next to your hi-fi: the words scroll in time with the music over
-the blurred cover, a swipe shows the album art, and a tap gives play, skip, volume and the zone to
-follow. It's free, open-source firmware that installs from Chrome or Edge with a USB-C cable, sets
-itself up from your phone with two QR codes, and updates over Wi-Fi.
+**[TFT Panel](https://r45635.github.io/tft-panel/)** turns a 7" touch screen into a remote that
+sits next to your hi-fi: the words scroll in time with the music over the blurred cover, a swipe
+shows the album art, and a tap gives play, skip, volume, the zone to follow and your whole library.
+It's free, open-source firmware that installs from Chrome or Edge with a USB-C cable, sets itself
+up from your phone with two QR codes, and updates over Wi-Fi.
 
-It talks only to this companion, on your own network — keep the companion running and the panel
-finds it. [Website](https://r45635.github.io/tft-panel/) ·
+A panel can take what is playing from this companion, which also finds and ranks the lyrics — keep
+it running and the panel finds it by itself. A panel can also reach Roon on its own; then it still
+wants a lyrics server, and this companion is one. **Run it with `ROON_ENABLED=false`** and it never
+pairs with Roon at all: no extension to enable, just the words, from your own `.lrc` files, your
+mirror or LRCLIB. [Website](https://r45635.github.io/tft-panel/) ·
 [install from your browser](https://r45635.github.io/tft-panel/install.html) ·
 [source](https://github.com/r45635/tft-panel) ·
 [media kit](https://r45635.github.io/tft-panel/media-kit.html)

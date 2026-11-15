@@ -6,6 +6,9 @@ export default function RoonStatus({ data }) {
   const { t } = useTranslation();
   const [collapsed, toggleCollapsed] = useCollapsed('roon-status');
 
+  // ROON_ENABLED=false: there is no Core to report on, so reporting one as missing would
+  // only send the reader hunting for a problem that is a setting.
+  const roonOff = data?.enabled === false;
   const connected = data?.connected ?? false;
   const authorized = data?.authorized ?? false;
   const coreName = data?.core_name;
@@ -21,6 +24,13 @@ export default function RoonStatus({ data }) {
       </div>
 
       <div className="card-body">
+        {roonOff ? (
+          <div className="alert alert-info">
+            <strong>{t('roon.lyrics_only')}</strong>
+            <div>{t('roon.lyrics_only_body')}</div>
+          </div>
+        ) : (
+        <>
         <div className="status-grid">
           <div className="status-row">
             <span className="label">{t('roon.core_status')}</span>
@@ -56,6 +66,8 @@ export default function RoonStatus({ data }) {
             {t('roon.authorize_prompt')}{' '}
             <strong>{t('roon.authorize_extension')}</strong>
           </div>
+        )}
+        </>
         )}
       </div>
     </section>

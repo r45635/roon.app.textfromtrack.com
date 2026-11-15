@@ -419,10 +419,12 @@ function startRoon() {
 
 /**
  * Return the current Roon connection/authorization status.
- * @returns {{ connected: boolean, authorized: boolean, core_name: string|null, core_version: string|null, zone_count: number }}
+ * @returns {{ enabled: boolean, connected: boolean, authorized: boolean, core_name: string|null, core_version: string|null, zone_count: number }}
  */
 function getRoonStatus() {
   return {
+    // false when ROON_ENABLED=false: a lyrics server, not a Core that could not be reached.
+    enabled: config.roonEnabled,
     connected: _connected,
     authorized: _authorized,
     // Core reached, extension waiting to be enabled in Roon → Settings → Extensions.

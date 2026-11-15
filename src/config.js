@@ -15,6 +15,14 @@ const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
 
   // ── Roon ────────────────────────────────────────────────────────────────────
+  // ROON_ENABLED=false turns this into a lyrics server and nothing else: the HTTP API,
+  // the LRCLIB chain, the .lrc cache and the mDNS announcement all stay, and the app never
+  // pairs with Roon nor asks to be enabled in Roon → Settings → Extensions. That is what a
+  // TFT Panel talking to Roon directly needs — it brings the artist and title itself and
+  // only wants the words back.
+  roonEnabled: !['false', '0', 'no', 'off'].includes(
+    (process.env.ROON_ENABLED || '').trim().toLowerCase()
+  ),
   roonExtensionId:
     process.env.ROON_EXTENSION_ID || 'com.textfromtrack.roon.companion',
   roonDisplayName:

@@ -388,9 +388,9 @@ export default function App() {
           )}
           {roonStatus && (
             <button className="tft-roon-strip tft-roon-strip-btn" onClick={() => setRoonModalOpen(true)} title={t('section.roon_connection')}>
-              <span className={`roon-dot${roonStatus.connected ? '' : ' offline'}`} />
+              <span className={`roon-dot${roonStatus.connected || roonStatus.enabled === false ? '' : ' offline'}`} />
               <span className="tft-mono" style={{ fontSize: 12, color: 'var(--tft-ink-3)' }}>
-                {roonStatus.core_name || 'Roon'}
+                {roonStatus.enabled === false ? t('roon.lyrics_only') : (roonStatus.core_name || 'Roon')}
                 {zones.length > 0 ? ` · ${t('app.zones', { count: zones.length })}` : ''}
               </span>
             </button>

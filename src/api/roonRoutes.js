@@ -16,10 +16,22 @@ const {
 const nowPlayingStore = require('../roon/nowPlayingStore');
 const queuePrefetch = require('../lyrics/queuePrefetch');
 const { E, buildError } = require('../utils/normalize');
+const config = require('../config');
 
 const LOCAL_NETWORK_SETTINGS_URL = 'x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork';
 
 const router = Router();
+
+// Lyrics-server mode (ROON_ENABLED=false): nothing here can work, and saying "Roon Core is
+// not connected" would send the reader looking for a Core that was never meant to be found.
+// /status still answers, because that is how a client learns which mode it is talking to.
+router.use((req, res, next) => {
+  if (config.roonEnabled || req.path === '/status') return next();
+  res.status(503).json(buildError(
+    E.ROON_DISABLED,
+    'This companion runs as a lyrics server (ROON_ENABLED=false) and is not connected to Roon.'
+  ));
+});
 
 /**
  * GET /api/roon/status

@@ -88,7 +88,8 @@ app.listen(config.port, () => {
       // announces os.hostname(), which macOS's mDNSResponder already owns —
       // it sees a conflict and renames the Mac (Name-2, Name-3…) at every start.
       host: `tft-${os.hostname().replace(/\.local$/i, '')}.local`,
-      txt: { hostname: os.hostname() },
+      // `roon` tells a client whether this host also knows what is playing, or only words.
+      txt: { hostname: os.hostname(), roon: config.roonEnabled ? 'yes' : 'no' },
     });
     // e.g. a second instance on the same host — not fatal, the backend still serves
     service.on('error', (err) => logger.warn({ err: err.message }, 'mDNS advertisement failed'));
@@ -106,13 +107,20 @@ app.listen(config.port, () => {
   }
 });
 
-// Initialise Roon discovery (non-blocking)
-try {
-  roonClient.startRoon();
-  watchRoon(roonClient);
-  watchQueue(roonClient);
-} catch (err) {
-  logger.error({ err: err.message }, 'Failed to start Roon discovery');
+// Initialise Roon discovery (non-blocking), unless this runs as a lyrics server only.
+if (config.roonEnabled) {
+  try {
+    roonClient.startRoon();
+    watchRoon(roonClient);
+    watchQueue(roonClient);
+  } catch (err) {
+    logger.error({ err: err.message }, 'Failed to start Roon discovery');
+  }
+} else {
+  logger.info(
+    'ROON_ENABLED=false — lyrics server only: no pairing, nothing to enable in Roon. ' +
+    'Players that find this host over mDNS can still ask it for lyrics.'
+  );
 }
 
 // Startup: register TFT webhook if WEBHOOK_BASE_URL is configured (non-blocking)

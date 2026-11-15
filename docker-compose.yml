@@ -4,9 +4,14 @@
 # Quick start (Linux / NAS / Raspberry Pi):
 #   1. docker compose up -d
 #   2. Open http://localhost:3888 and enable the extension in Roon → Settings → Extensions
-#   That's enough for live synced lyrics of whatever Roon plays (lyrics-only mode).
+#   That's enough for live synced lyrics of whatever Roon plays.
 #   To save lyrics into your files, also mount your music folder (below).
 #   AI lyrics with TextFromTrack (TFT_TOKEN) are coming soon — the service is still in development.
+#
+# Only here to give lyrics to a screen that talks to Roon itself (a TFT Panel in direct
+# mode)? Set ROON_ENABLED=false below: this becomes a lyrics server and nothing else —
+# no pairing, nothing to enable in Roon. Your panels find it on the network by themselves,
+# or you give them this machine's address.
 #
 # Image: ghcr.io/r45635/roon-companion  (also on Docker Hub: r45635/roon-companion)
 # GitHub: https://github.com/r45635/roon.app.textfromtrack.com
@@ -53,6 +58,10 @@ services:
       # MUSIC_ROOTS: /music
 
       PORT: 3888
+
+      # Lyrics server only: never pair with Roon, never ask to be enabled in it.
+      # The HTTP API, the lyrics lookups, the .lrc cache and the network announcement all stay.
+      # ROON_ENABLED: "false"
 
       # Direct Roon Core IP address.
       # Required on macOS / Windows where network_mode: host is not supported.

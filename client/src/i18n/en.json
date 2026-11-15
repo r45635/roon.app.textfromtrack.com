@@ -43,7 +43,9 @@
     "core_name": "Core",
     "lan_blocked_title": "macOS is blocking local network access",
     "lan_blocked_body": "The Roon Core was found at {{host}}, but macOS does not let TextFromTrack Companion connect to it. Enable the app in System Settings → Privacy & Security → Local Network — it reconnects within 10 seconds.",
-    "lan_blocked_open": "Open Local Network settings"
+    "lan_blocked_open": "Open Local Network settings",
+    "lyrics_only": "Lyrics server only",
+    "lyrics_only_body": "This companion is not paired with Roon (ROON_ENABLED=false). It answers lyrics requests from players that talk to Roon themselves, such as a TFT Panel in direct mode. Nothing to enable in Roon."
   },
   "now_playing": {
     "no_track": "No track currently playing",

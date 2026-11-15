@@ -50,8 +50,10 @@ sync lyrics yourself.
 
 ## A screen of its own
 
-[TFT Panel](https://r45635.github.io/tft-panel/) — open firmware for the Elecrow CrowPanel 7" touch
-screen — shows the lyrics and controls next to your hi-fi, using this companion on your network.
+[TFT Panel](https://r45635.github.io/tft-panel/) — open firmware for 7" touch screens — shows the
+lyrics and controls next to your hi-fi, using this companion on your network. A panel that reaches
+Roon on its own only needs the words: run this image with `ROON_ENABLED=false` and it is a lyrics
+server, with nothing to enable in Roon.
 
 ## Links
 

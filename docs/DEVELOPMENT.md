@@ -140,6 +140,7 @@ Copy `.env.example` to `.env` and fill in the values.
 | `ROON_DISPLAY_VERSION` | _(app version)_ | Version shown in Roon Settings |
 | `ROON_PUBLISHER` | `TextFromTrack` | Publisher shown in Roon Settings |
 | `ROON_CORE_HOST` | _(empty)_ | Direct Roon Core IP — skips auto-discovery (required in Docker on macOS/Windows) |
+| `ROON_ENABLED` | `true` | `false` turns the app into a **lyrics server only**: it never pairs with Roon, asks nothing to be enabled in Roon → Settings → Extensions, and keeps the HTTP API, the LRCLIB chain, the `.lrc` cache and the mDNS announcement. For players that reach Roon themselves and only want the words back — a [TFT Panel](https://github.com/r45635/tft-panel) in direct mode. `/api/roon/*` then answers `503 ROON_DISABLED` |
 | `ROON_CORE_PORT` | `9330` | Roon Core extension port used with `ROON_CORE_HOST` (Roon 2.x: `9330`; legacy 1.x: `9100`) |
 | `ALLOWED_HOSTS` | _(empty)_ | Extra host names allowed to reach the UI/API, comma-separated (e.g. a reverse-proxy domain). `localhost`, IP addresses and LAN names (`*.local`, `*.lan`, single-label like `nas`) are always allowed; `*` disables the check |
 | `MUSIC_ROOTS` | _(empty)_ | Comma-separated absolute paths to scan |
@@ -173,6 +174,12 @@ Copy `.env.example` to `.env` and fill in the values.
 ---
 
 ## API reference
+
+### LRCLIB-compatible endpoint
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/get` | LRCLIB's own endpoint and shape: `track_name`, `artist_name`, optional `album_name` and `duration` in; `syncedLyrics`, `plainLyrics`, `instrumental` out; `404 TrackNotFound` for a miss and **`502` for a failure**, which a 404 must never stand for. Answers from the same chain as `/api/lrclib/lookup` (local `.lrc` cache → mirrors → lrclib.net), so anything written against lrclib.net can point here instead and gain the cache and the local files |
 
 ### Roon endpoints
 
