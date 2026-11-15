@@ -73,9 +73,9 @@ Only for the lyrics, because Roon serves none. Run this companion with `ROON_ENA
 becomes a lyrics server and nothing else: it never pairs with Roon, there is no second extension to
 enable, and your panels find it on the network. You still get what only a machine of yours can give
 — the `.lrc` files beside your music, the local cache and your own LRCLIB mirror before the public
-service. If the panel cannot find it by itself (Docker Desktop has no host networking, so the
-announcement does not leave the container), give the panel this machine's address: the companion
-answers LRCLIB's own `GET /api/get`.
+service. If the panel cannot find it by itself (on Docker Desktop the container is behind a VM, so its
+announcement never reaches your LAN), give the panel this machine's address: the companion answers
+LRCLIB's own `GET /api/get`.
 
 **What leaves my network?**
 To find lyrics, a track's title, artist, album and length go to LRCLIB (lrclib.net, or the servers
@@ -84,7 +84,7 @@ app asks GitHub whether a new version exists (`UPDATE_CHECK=false` turns that of
 Other devices on your network can be asked for a token (`ACCESS_TOKEN`).
 
 **Docker on a Mac or Windows PC?**
-Docker Desktop can't use host networking, so Roon can't discover the container: use the `ports`
+Docker Desktop runs containers inside a VM, so Roon's discovery cannot reach one: use the `ports`
 block of the [docker-compose.yml](../docker-compose.yml) and set `ROON_CORE_HOST` to your Core's IP.
 
 **Something else?** Open an [issue](https://github.com/r45635/roon.app.textfromtrack.com/issues) —

@@ -154,7 +154,7 @@ Open the UI, then on your Roon Core go to *Settings → Extensions* and enable *
 
 ### macOS / Windows Docker Desktop — direct Core connection
 
-Docker Desktop does not support `network_mode: host`, so Roon's automatic extension discovery (Sood UDP) cannot reach the container. Use `ROON_CORE_HOST` to connect directly instead:
+Docker Desktop runs containers inside a VM, so multicast and broadcast do not cross to your LAN and Roon's automatic extension discovery (Sood UDP) cannot reach the container (`network_mode: host` is an opt-in beta there, and still only layer 4). Use `ROON_CORE_HOST` to connect directly instead:
 
 ```yaml
 # In docker-compose.yml:
@@ -180,8 +180,9 @@ It then never pairs with Roon and never asks to be enabled in **Settings → Ext
 else stays: the lyrics lookups, the `.lrc` cache, your mirror, the web page and the network
 announcement, so your panels find it by themselves. `/api/roon/*` answers `503 ROON_DISABLED`.
 
-On Docker Desktop (macOS/Windows) the announcement does not leave the container, so give the panel
-this machine's address instead: the companion answers LRCLIB's own `GET /api/get`.
+On Docker Desktop (macOS/Windows) the container sits behind a VM and its announcement never reaches
+your LAN, so give the panel this machine's address instead: the companion answers LRCLIB's own
+`GET /api/get`.
 
 ### LRCLIB mirror
 

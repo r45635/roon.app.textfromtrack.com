@@ -80,8 +80,8 @@ Pour les paroles seulement, puisque Roon n'en fournit aucune. Lancez ce compagno
 `ROON_ENABLED=false` : il devient un serveur de paroles et rien d'autre — aucun appairage, aucune
 seconde extension à activer dans Roon, et vos écrans le trouvent sur le réseau. Vous gardez ce que
 seule une machine à vous peut donner : les `.lrc` posés à côté de votre musique, le cache local et
-votre propre miroir LRCLIB avant le service public. Si l'écran ne le trouve pas seul (Docker Desktop
-n'a pas de réseau « host », l'annonce ne sort pas du conteneur), donnez-lui l'adresse de cette
+votre propre miroir LRCLIB avant le service public. Si l'écran ne le trouve pas seul (sous Docker Desktop le conteneur est derrière une machine
+virtuelle : son annonce n'atteint jamais votre réseau local), donnez-lui l'adresse de cette
 machine : le compagnon répond au `GET /api/get` de LRCLIB.
 
 **Qu'est-ce qui sort de mon réseau ?**
