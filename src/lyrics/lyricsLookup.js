@@ -9,8 +9,9 @@ const lyricsResolver = require('./lyricsResolver');
 /**
  * Resolve lyrics for one track: the local .lrc cache first, then the LRCLIB servers
  * (a mirror before lrclib.net when one is configured), then a search fallback.
- * Shared by GET /api/lrclib/lookup and by the LRCLIB-compatible GET /api/get, so both
- * answer from the same cache and the same ranking.
+ * Used by GET /api/lrclib/lookup (the library's lookup and version picker, which needs the
+ * list of hits). Other screens asking through the LRCLIB-compatible GET /api/get go through
+ * lyricsForNowPlaying → lyricsResolver instead, the player's own chain.
  * @returns {Promise<object>} the /lookup answer: { found, synced, plain, instrumental, ... },
  *   or { found: false, error } when a server failed - a failure is not a miss.
  */

@@ -10,6 +10,7 @@ const { getRoonStatus, getNowPlaying } = require('../roon/roonClient');
 const musicRoots = require('../music/musicRoots');
 const lyricsResolver = require('../lyrics/lyricsResolver');
 const { lyricsForNowPlaying } = require('../lyrics/nowPlayingLyrics');
+const screenRequests = require('../lyrics/screenRequests');
 
 const router = Router();
 
@@ -120,6 +121,16 @@ router.post('/wrong', (req, res) => {
     return res.status(400).json(buildError(E.INVALID_REQUEST, 'title, artist and a boolean wrong are required'));
   }
   res.json({ success: true, ...lyricsResolver.markWrong(track, wrong) });
+});
+
+/**
+ * GET /api/lyrics/recent
+ * The tracks other screens (a TFT Panel, any LRCLIB client) asked lyrics for through
+ * GET /api/get, newest first — so the corrections above can be made for a song that only
+ * played there. Memory only, emptied on restart.
+ */
+router.get('/recent', (req, res) => {
+  res.json({ success: true, tracks: screenRequests.list() });
 });
 
 const MAX_LYRICS_CHARS = 200_000;

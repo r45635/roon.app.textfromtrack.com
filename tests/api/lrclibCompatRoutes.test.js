@@ -17,10 +17,10 @@ const assert = require('node:assert/strict');
 const express = require('express');
 
 let answer;
-const lookupPath = require.resolve('../../src/lyrics/lyricsLookup');
-require.cache[lookupPath] = {
-  id: lookupPath, filename: lookupPath, loaded: true,
-  exports: { lookupLyrics: async (q) => answer(q) },
+const npPath = require.resolve('../../src/lyrics/nowPlayingLyrics');
+require.cache[npPath] = {
+  id: npPath, filename: npPath, loaded: true,
+  exports: { lyricsForNowPlaying: async (q) => ({ lyrics: answer(q), audioPath: null }) },
 };
 
 let byId;
@@ -63,19 +63,36 @@ describe('GET /api/get', () => {
   test('answers LRCLIB\'s field names, from LRCLIB\'s query names', async () => {
     answer = (q) => {
       asked = q;
-      return { found: true, synced: '[00:01.00] a line', plain: 'a line', instrumental: false,
-               trackName: 'Take Me Home', artistName: 'Phil Collins', albumName: 'No Jacket Required' };
+      return { found: true, text: '[00:01.00] a line', synced: true, instrumental: false,
+               source: 'lrclib', lrclib_id: 42, offset_ms: 0 };
     };
     const { status, body } = await get('track_name=Take+Me+Home&artist_name=Phil+Collins&album_name=No+Jacket+Required&duration=353');
     assert.equal(status, 200);
     assert.deepEqual(asked, { title: 'Take Me Home', artist: 'Phil Collins',
-                              album: 'No Jacket Required', duration: '353' });
+                              album: 'No Jacket Required', duration_seconds: 353 });
+    assert.equal(body.id, 42);
+    assert.equal(body.source, 'lrclib');
+    assert.equal(body.offsetMs, 0);
     assert.equal(body.syncedLyrics, '[00:01.00] a line');
     assert.equal(body.plainLyrics, 'a line');
     assert.equal(body.trackName, 'Take Me Home');
     assert.equal(body.albumName, 'No Jacket Required');
     assert.equal(body.duration, 353);
     assert.equal(body.instrumental, false);
+  });
+
+  test('a plain text is plain, with no synced copy', async () => {
+    answer = () => ({ found: true, text: 'just words', synced: false, instrumental: false, source: 'cache' });
+    const { status, body } = await get('track_name=Plain&artist_name=Someone');
+    assert.equal(status, 200);
+    assert.equal(body.plainLyrics, 'just words');
+    assert.equal(body.syncedLyrics, null);
+    assert.equal(body.duration, null);
+  });
+
+  test('a track marked wrong is a 404 like any miss', async () => {
+    answer = () => ({ found: false, marked_wrong: true });
+    assert.equal((await get('track_name=Bad&artist_name=Words')).status, 404);
   });
 
   test('an unknown track is a 404 in LRCLIB\'s own words', async () => {
@@ -85,14 +102,14 @@ describe('GET /api/get', () => {
   });
 
   test('a server that failed is 502, not a miss', async () => {
-    answer = () => ({ found: false, success: false, error: { code: 'LRCLIB_ERROR', message: 'lrclib.net is busy' } });
+    answer = () => ({ found: false, error: 'lrclib.net is busy' });
     const { status, body } = await get('track_name=Nope&artist_name=Nobody');
     assert.equal(status, 502);
     assert.equal(body.error.code, 'LRCLIB_ERROR');
   });
 
   test('an instrumental track is found, with no words', async () => {
-    answer = () => ({ found: true, instrumental: true, synced: null, plain: null });
+    answer = () => ({ found: true, instrumental: true, text: null, synced: false });
     const { status, body } = await get('track_name=YYZ&artist_name=Rush');
     assert.equal(status, 200);
     assert.equal(body.instrumental, true);
