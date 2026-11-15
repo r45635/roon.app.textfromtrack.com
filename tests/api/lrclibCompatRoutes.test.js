@@ -23,6 +23,13 @@ require.cache[lookupPath] = {
   exports: { lookupLyrics: async (q) => answer(q) },
 };
 
+let byId;
+const clientPath = require.resolve('../../src/lyrics/lrclibClient');
+require.cache[clientPath] = {
+  id: clientPath, filename: clientPath, loaded: true,
+  exports: { lrclibGet: async (path) => byId(path) },
+};
+
 const compatRoutes = require('../../src/api/lrclibCompatRoutes');
 
 let server;
@@ -41,7 +48,11 @@ after(() => {
   fs.rmSync(tmpDir, { recursive: true, force: true });
 });
 
-beforeEach(() => { asked = null; answer = (q) => { asked = q; return { found: false }; }; });
+beforeEach(() => {
+  asked = null;
+  answer = (q) => { asked = q; return { found: false }; };
+  byId = async () => ({ status: 200, body: null });
+});
 
 async function get(query) {
   const res = await fetch(`${base}/get?${query}`);
@@ -86,6 +97,29 @@ describe('GET /api/get', () => {
     assert.equal(status, 200);
     assert.equal(body.instrumental, true);
     assert.equal(body.syncedLyrics, null);
+  });
+
+  test('by id: the record in LRCLIB\'s shape, so a server probe recognises us', async () => {
+    byId = async (path) => {
+      assert.equal(path, '/api/get/1');
+      return { status: 200, body: { id: 1, trackName: 'T', artistName: 'A', duration: 210,
+                                    plainLyrics: 'words', syncedLyrics: null, instrumental: false } };
+    };
+    const res = await fetch(`${base}/get/1`);
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.id, 1);
+    assert.equal(body.plainLyrics, 'words');
+    assert.equal(body.syncedLyrics, null);
+    assert.equal(body.duration, 210);
+  });
+
+  test('by id: unknown is 404, a broken server is 502, a non-numeric id is 400', async () => {
+    byId = async () => ({ status: 404, body: null });
+    assert.equal((await fetch(`${base}/get/999`)).status, 404);
+    byId = async () => { throw new Error('lrclib.net is busy'); };
+    assert.equal((await fetch(`${base}/get/999`)).status, 502);
+    assert.equal((await fetch(`${base}/get/abc`)).status, 400);
   });
 
   test('without a track or an artist it is a 400, and nothing is looked up', async () => {

@@ -15,8 +15,26 @@ const { Router } = require('express');
 const logger = require('../utils/logger');
 const { buildError, E } = require('../utils/normalize');
 const { lookupLyrics } = require('../lyrics/lyricsLookup');
+const { lrclibGet } = require('../lyrics/lrclibClient');
 
 const router = Router();
+
+// LRCLIB's shape for one record: null for what we cannot know, never an absent field.
+function asLrclib(d, fallback = {}) {
+  return {
+    id: d.id ?? fallback.id ?? null,
+    name: d.trackName || fallback.trackName || null,
+    trackName: d.trackName || fallback.trackName || null,
+    artistName: d.artistName || fallback.artistName || null,
+    albumName: d.albumName || fallback.albumName || null,
+    duration: Number(fallback.duration) > 0 ? Number(fallback.duration) : (d.duration ?? null),
+    instrumental: !!d.instrumental,
+    plainLyrics: d.plainLyrics || d.plain || null,
+    syncedLyrics: d.syncedLyrics || d.synced || null,
+  };
+}
+
+const NOT_FOUND = { code: 404, name: 'TrackNotFound', message: 'Failed to find specified track' };
 
 router.get('/get', async (req, res) => {
   const { track_name: title, artist_name: artist, album_name: album, duration } = req.query;
@@ -32,24 +50,28 @@ router.get('/get', async (req, res) => {
     logger.warn({ title, artist, err: found.error.message }, 'GET /api/get: lyrics lookup failed');
     return res.status(502).json(found);
   }
-  if (!found.found) {
-    // LRCLIB's own body for a miss, so a client written against it reads what it expects.
-    return res.status(404).json({
-      code: 404, name: 'TrackNotFound', message: 'Failed to find specified track',
-    });
-  }
+  // LRCLIB's own body for a miss, so a client written against it reads what it expects.
+  if (!found.found) return res.status(404).json(NOT_FOUND);
 
-  res.json({
-    id: null,
-    name: found.trackName || title,
-    trackName: found.trackName || title,
-    artistName: found.artistName || artist,
-    albumName: found.albumName || album || null,
-    duration: Number(duration) > 0 ? Number(duration) : null,
-    instrumental: !!found.instrumental,
-    plainLyrics: found.plain || null,
-    syncedLyrics: found.synced || null,
-  });
+  res.json(asLrclib(found, { trackName: title, artistName: artist, albumName: album, duration }));
+});
+
+// GET /api/get/:id — the same record by its LRCLIB id. A client that checks whether a server
+// "answers like LRCLIB" probes this one (our own lrclibClient does), so without it the companion
+// is refused as a lyrics source by anything written against LRCLIB, this app included.
+router.get('/get/:id', async (req, res) => {
+  const { id } = req.params;
+  if (!/^\d+$/.test(id)) {
+    return res.status(400).json(buildError(E.INVALID_REQUEST, 'id must be a numeric LRCLIB track id'));
+  }
+  try {
+    const result = await lrclibGet(`/api/get/${id}`);
+    if (!result || !result.body) return res.status(404).json(NOT_FOUND);
+    res.json(asLrclib(result.body));
+  } catch (err) {
+    logger.warn({ id, err: err.message }, 'GET /api/get/:id failed');
+    res.status(502).json(buildError(E.LRCLIB_ERROR, err.message));
+  }
 });
 
 module.exports = router;
