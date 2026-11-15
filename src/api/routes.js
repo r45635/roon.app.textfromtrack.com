@@ -5,6 +5,7 @@ const roonRoutes = require('./roonRoutes');
 const musicRoutes = require('./musicRoutes');
 const tftRoutes = require('./textfromtrackRoutes');
 const lrclibRoutes = require('./lrclibRoutes');
+const lrclibCompatRoutes = require('./lrclibCompatRoutes');
 const lyricsRoutes = require('./lyricsRoutes');
 const lyricsSourcesRoutes = require('./lyricsSourcesRoutes');
 const libraryRoutes = require('./libraryRoutes');
@@ -18,6 +19,8 @@ router.use('/roon', roonRoutes);
 router.use('/music', musicRoutes);
 router.use('/tft', tftRoutes);
 router.use('/lrclib', lrclibRoutes);
+// LRCLIB-compatible: http://this-host:3888/api/get is a drop-in for lrclib.net.
+router.use('/', lrclibCompatRoutes);
 router.use('/lyrics', lyricsRoutes);
 router.use('/lyrics-sources', lyricsSourcesRoutes);
 router.use('/library', libraryRoutes);
