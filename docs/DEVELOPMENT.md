@@ -179,7 +179,7 @@ Copy `.env.example` to `.env` and fill in the values.
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/get` | LRCLIB's own endpoint and shape: `track_name`, `artist_name`, optional `album_name` and `duration` in; `syncedLyrics`, `plainLyrics`, `instrumental` out; `404 TrackNotFound` for a miss and **`502` for a failure**, which a 404 must never stand for. Answers from the same chain as `/api/lrclib/lookup` (local `.lrc` cache → mirrors → lrclib.net), so anything written against lrclib.net can point here instead and gain the cache and the local files |
+| `GET` | `/api/get` | LRCLIB's own endpoint and shape: `track_name`, `artist_name`, optional `album_name` and `duration` in; `syncedLyrics`, `plainLyrics`, `instrumental` out; `404 TrackNotFound` for a miss and **`502` for a failure**, which a 404 must never stand for. Answers from **the player's own chain** (`lyricsForNowPlaying` → `lyricsResolver.resolve`): the library file matched like a playing track (`.lrc` sidecar, then tags), the cache (pasted lyrics and picked versions included), then the mirrors and lrclib.net with the same ranking (damaged copies last). A track marked **Wrong lyrics** is a 404. Two extra fields LRCLIB clients ignore: `source` (`sidecar`, `embedded`, `cache`, `lrclib`) and `offsetMs` (the per-track timing offset). Every request is remembered for `/api/lyrics/recent` |
 | `GET` | `/api/get/:id` | The same record by its LRCLIB id. A client checking whether a server "answers like LRCLIB" probes exactly this, so it is what lets another companion, or any LRCLIB client, accept this one as a lyrics source |
 
 ### Roon endpoints
@@ -240,6 +240,7 @@ Copy `.env.example` to `.env` and fill in the values.
 | `POST` | `/api/lyrics/custom` | Save edited or pasted lyrics (LRC editor, Paste lyrics) as the track's lyrics in the local cache. Body: `{ title, artist, album?, lrc }` |
 | `POST` | `/api/lyrics/wrong` | Mark the lyrics a track gets as wrong (none shown for it), or undo it. Body: `{ title, artist, album?, wrong: boolean }` |
 | `POST` | `/api/lyrics/offset` | Save a track's timing offset (positive = later). Body: `{ title, artist, album?, offset_ms }` |
+| `GET` | `/api/lyrics/recent` | The last 50 tracks other screens asked lyrics for through `GET /api/get`, newest first, one entry per track: `{ tracks: [{ track_id, title, artist, album, duration_seconds, asked_at, times, found, synced, instrumental, source, error, marked_wrong, offset_ms }] }`. `marked_wrong` and `offset_ms` are read live from the track's preferences. Memory only, no address of the asking device. Feeds the **Asked by your screens** card |
 
 ### Library endpoints (music folder required)
 
@@ -483,6 +484,11 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 ### v0.6.3 ✓ — Readable lyrics first
 - Records whose accented letters were lost ("j'? prouve", "doit? tre", U+FFFD — at least 3 per text, `lyricsResolver.isDamaged`) rank after clean ones of the right length and kind: clean plain lyrics beat damaged synced ones (every synced copy of Michel Jonasz's "Groove Baby Groove" is damaged). A damaged exact synced record no longer stops the search. Replayed on 268 tracks: no false positive, 4 tracks left with only damaged copies
 - **Other versions** marks damaged copies (*Damaged text*)
+
+### v0.7.0 ✓ — The lyrics server of your screens
+- **`ROON_ENABLED=false`**: the companion as a lyrics server alone, for screens that reach Roon themselves (a TFT Panel in direct mode). No pairing, nothing to enable in Roon; `/api/roon/*` answers `503 ROON_DISABLED`, the page says *Lyrics server* instead of looking for a Core, and the Roon library card is hidden
+- **LRCLIB's own `GET /api/get` and `/api/get/:id`**, answered from the player's chain: a panel gets the `.lrc` beside your files, the words in your tags, your pasted lyrics and picked versions, nothing for a track marked *Wrong lyrics*, and its timing offset (`offsetMs`)
+- **Asked by your screens**: the songs other screens asked lyrics for, with *Wrong lyrics*, *Other versions*, *Paste lyrics* and the timing offset — the corrections the player has, for songs this app never saw play
 
 ### Upcoming
 

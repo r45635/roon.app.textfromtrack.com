@@ -75,7 +75,9 @@ enable, and your panels find it on the network. You still get what only a machin
 — the `.lrc` files beside your music, the local cache and your own LRCLIB mirror before the public
 service. If the panel cannot find it by itself (on Docker Desktop the container is behind a VM, so its
 announcement never reaches your LAN), give the panel this machine's address: the companion answers
-LRCLIB's own `GET /api/get`.
+LRCLIB's own `GET /api/get`. The songs your panels asked for are listed on the companion's page,
+under **Asked by your screens**: mark wrong lyrics, pick another version, paste the right words or
+shift the timing there, and the panel gets the fix the next time it asks for that song.
 
 **What leaves my network?**
 To find lyrics, a track's title, artist, album and length go to LRCLIB (lrclib.net, or the servers

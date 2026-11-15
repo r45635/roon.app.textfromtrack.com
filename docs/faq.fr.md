@@ -82,7 +82,10 @@ seconde extension à activer dans Roon, et vos écrans le trouvent sur le résea
 seule une machine à vous peut donner : les `.lrc` posés à côté de votre musique, le cache local et
 votre propre miroir LRCLIB avant le service public. Si l'écran ne le trouve pas seul (sous Docker Desktop le conteneur est derrière une machine
 virtuelle : son annonce n'atteint jamais votre réseau local), donnez-lui l'adresse de cette
-machine : le compagnon répond au `GET /api/get` de LRCLIB.
+machine : le compagnon répond au `GET /api/get` de LRCLIB. Les morceaux demandés par vos écrans
+sont listés sur la page du compagnon, sous **Demandé par vos écrans** : marquez des paroles fausses,
+choisissez une autre version, collez les bonnes paroles ou décalez-les, et l'écran reçoit la
+correction la prochaine fois qu'il demande ce morceau.
 
 **Qu'est-ce qui sort de mon réseau ?**
 Pour trouver les paroles, le titre, l'artiste, l'album et la durée d'un morceau partent vers

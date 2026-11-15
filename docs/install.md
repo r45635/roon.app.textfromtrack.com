@@ -180,6 +180,12 @@ It then never pairs with Roon and never asks to be enabled in **Settings → Ext
 else stays: the lyrics lookups, the `.lrc` cache, your mirror, the web page and the network
 announcement, so your panels find it by themselves. `/api/roon/*` answers `503 ROON_DISABLED`.
 
+Mount your music folder too and a panel gets *your* lyrics: the `.lrc` beside a file and the words
+in its tags come first, exactly as in the player. The songs your screens asked for are listed on the
+companion's page under **Asked by your screens**, where you can mark wrong lyrics, pick another
+version, paste the right words or shift the timing; the screen gets the fix the next time it asks
+for that song.
+
 On Docker Desktop (macOS/Windows) the container sits behind a VM and its announcement never reaches
 your LAN, so give the panel this machine's address instead: the companion answers LRCLIB's own
 `GET /api/get`.

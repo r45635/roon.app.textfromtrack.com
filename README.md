@@ -87,8 +87,9 @@ up from your phone with two QR codes, and updates over Wi-Fi.
 A panel can take what is playing from this companion, which also finds and ranks the lyrics — keep
 it running and the panel finds it by itself. A panel can also reach Roon on its own; then it still
 wants a lyrics server, and this companion is one. **Run it with `ROON_ENABLED=false`** and it never
-pairs with Roon at all: no extension to enable, just the words, from your own `.lrc` files, your
-mirror or LRCLIB. [Website](https://r45635.github.io/tft-panel/) ·
+pairs with Roon at all: no extension to enable, just the words, from your own `.lrc` files and
+tags, your mirror or LRCLIB — and the songs your panels asked for show up on its page, where a wrong
+lyric is fixed in two clicks. [Website](https://r45635.github.io/tft-panel/) ·
 [install from your browser](https://r45635.github.io/tft-panel/install.html) ·
 [source](https://github.com/r45635/tft-panel) ·
 [media kit](https://r45635.github.io/tft-panel/media-kit.html)

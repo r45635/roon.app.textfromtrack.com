@@ -53,7 +53,8 @@ sync lyrics yourself.
 [TFT Panel](https://r45635.github.io/tft-panel/) — open firmware for 7" touch screens — shows the
 lyrics and controls next to your hi-fi, using this companion on your network. A panel that reaches
 Roon on its own only needs the words: run this image with `ROON_ENABLED=false` and it is a lyrics
-server, with nothing to enable in Roon.
+server, with nothing to enable in Roon. Mount your music and the panel gets your own `.lrc` files
+and tags; the songs it asked for are listed on the companion's page, to be corrected there.
 
 ## Links
 
