@@ -11,6 +11,13 @@ Deux choses le font fonctionner quand lrclib.net est lent ou en panne :
    un serveur chez vous. Les morceaux jamais écoutés sont trouvés aussi, sans lrclib.net, et les
    recherches restent sur votre réseau.
 
+Et une fois lancé, le compagnon est lui-même un serveur de paroles pour le reste de votre réseau :
+il répond au `GET /api/get` de LRCLIB, donc tout ce qui parle LRCLIB — un
+[TFT Panel](https://r45635.github.io/tft-panel/), un autre lecteur, un script — peut viser
+`http://<cette-machine>:3888` au lieu de lrclib.net et hériter de tout ce qui suit : le cache, votre
+miroir, et les `.lrc` posés à côté de votre musique. Un compagnon installé uniquement pour ça peut
+tourner avec `ROON_ENABLED=false` et ne jamais s'appairer à Roon.
+
 - [Le cache local](#1-le-cache-local)
 - [Votre propre miroir LRCLIB](#2-votre-propre-miroir-lrclib) : [ce qu'il faut](#ce-quil-faut) ·
   [installation](#installation-pas-à-pas) · [brancher le compagnon](#étape-6--brancher-le-compagnon) ·

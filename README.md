@@ -160,8 +160,9 @@ Point the companion at your music folder and it does more:
 - **macOS:** the app isn't notarized yet — the first launch needs *Open Anyway* in System Settings →
   Privacy & Security, then *Allow* for Local Network access.
 - **Languages:** English and French.
-- **A dedicated screen?** [TFT Panel](https://r45635.github.io/tft-panel/) — open firmware for the
-  Elecrow CrowPanel 7", a client of this companion on your network.
+- **A dedicated screen?** [TFT Panel](https://r45635.github.io/tft-panel/) — open firmware for three
+  7" touch screens. It can run on this companion, or reach Roon itself and use this companion for
+  the lyrics alone (`ROON_ENABLED=false`: a lyrics server, nothing to enable in Roon).
 - **Which version is this?** Settings → **About**: version, build, update status and the links
   to this page — quote the version and build in a bug report.
 - **Settings for Docker and servers:** [every environment variable](docs/DEVELOPMENT.md#environment-variables).

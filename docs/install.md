@@ -167,6 +167,22 @@ ROON_CORE_HOST: 192.168.1.10   # ← replace with your Roon Core IP
 
 If the extension does not appear in Roon, check the container logs: `Roon direct connect failed` means the Core is not reachable at that IP/port.
 
+### Lyrics server only (no Roon pairing)
+
+If the only thing this companion has to do is give lyrics to a screen that reaches Roon by itself —
+a [TFT Panel](https://r45635.github.io/tft-panel/) in direct mode — set:
+
+```yaml
+ROON_ENABLED: "false"
+```
+
+It then never pairs with Roon and never asks to be enabled in **Settings → Extensions**. Everything
+else stays: the lyrics lookups, the `.lrc` cache, your mirror, the web page and the network
+announcement, so your panels find it by themselves. `/api/roon/*` answers `503 ROON_DISABLED`.
+
+On Docker Desktop (macOS/Windows) the announcement does not leave the container, so give the panel
+this machine's address instead: the companion answers LRCLIB's own `GET /api/get`.
+
 ### LRCLIB mirror
 
 To fetch lyrics from your own LRCLIB mirror before lrclib.net, set `LRCLIB_URLS` (or use Settings → **Lyrics Sources**, which overrides it):

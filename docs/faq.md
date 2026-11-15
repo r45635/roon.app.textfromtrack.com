@@ -58,11 +58,24 @@ Companion → *Network Volumes*.
 Yes. Every phone, tablet or TV browser can open the lyrics display, and each one follows its own
 zone (**Zone** button).
 
-**Is there a dedicated lyrics screen?**
-Yes: [TFT Panel](https://r45635.github.io/tft-panel/), free open-source firmware for the Elecrow
-CrowPanel 7" touch screen (DIS08070H). It shows the lyrics and the cover and gives play, skip,
-volume and zone — and it needs this companion running on the same network, since that's where it
-gets everything. [Install it from Chrome or Edge](https://r45635.github.io/tft-panel/install.html).
+**Is there a dedicated screen?**
+Yes: [TFT Panel](https://r45635.github.io/tft-panel/), free open-source firmware for three 7" touch
+screens. It is a remote you never have to unlock — the cover, the lyrics in time with the song,
+play, skip, volume, zones and your whole library — and it becomes a clock when the music stops.
+[Install it from Chrome or Edge](https://r45635.github.io/tft-panel/install.html).
+
+It can take what is playing from this companion, which also finds and ranks the lyrics; keep the
+companion running and the panel finds it by itself. It can also reach Roon on its own, and then it
+only needs the words — see the next question.
+
+**My panel talks to Roon itself. Do I still need this?**
+Only for the lyrics, because Roon serves none. Run this companion with `ROON_ENABLED=false` and it
+becomes a lyrics server and nothing else: it never pairs with Roon, there is no second extension to
+enable, and your panels find it on the network. You still get what only a machine of yours can give
+— the `.lrc` files beside your music, the local cache and your own LRCLIB mirror before the public
+service. If the panel cannot find it by itself (Docker Desktop has no host networking, so the
+announcement does not leave the container), give the panel this machine's address: the companion
+answers LRCLIB's own `GET /api/get`.
 
 **What leaves my network?**
 To find lyrics, a track's title, artist, album and length go to LRCLIB (lrclib.net, or the servers

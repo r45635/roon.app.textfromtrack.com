@@ -11,6 +11,12 @@ things keep it working when lrclib.net is slow or down:
    home. Songs you've never played are found too, without lrclib.net, and the lookups stay on your
    network.
 
+And once it runs, the companion is itself a lyrics server for the rest of your network: it answers
+LRCLIB's own `GET /api/get`, so anything that speaks LRCLIB — a [TFT Panel](https://r45635.github.io/tft-panel/),
+another player, a script — can point at `http://<this-machine>:3888` instead of lrclib.net and
+inherit everything below: the cache, your mirror, and the `.lrc` files beside your music. A
+companion installed only for that can run with `ROON_ENABLED=false` and never pair with Roon at all.
+
 - [The local cache](#1-the-local-cache)
 - [Your own LRCLIB mirror](#2-your-own-lrclib-mirror): [what you need](#what-you-need) ·
   [install](#install-step-by-step) · [connect the companion](#step-6--point-the-companion-at-it) ·

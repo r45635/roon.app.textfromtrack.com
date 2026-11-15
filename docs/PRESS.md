@@ -83,11 +83,13 @@ Every picture was taken in the app's screenshot mode: the names on screen are ne
 
 ## Related project: TFT Panel
 
-[TFT Panel](https://r45635.github.io/tft-panel/) is open firmware that turns the Elecrow CrowPanel
-7" touch screen into a lyrics display for Roon: synced lyrics over the blurred cover, a cover view,
-and touch controls for playback, volume and zone. It is a client of the companion and talks only to
-it, on the user's own network. Name it "TFT Panel" (not "Roon Panel": it is independent of Roon
-Labs). Its own media kit — logos, pictures, video, texts — is at
+[TFT Panel](https://r45635.github.io/tft-panel/) is open firmware that turns a 7" touch screen into
+a remote for Roon that no one has to unlock: the cover and the synced lyrics of what is playing,
+playback, volume, zones and the whole library under a finger, and a clock with the weather when the
+music stops. It runs on three boards and talks only to machines on the user's own network. It can
+take what is playing from this companion, or reach Roon itself and ask the companion for the lyrics
+alone — Roon serves none, so a lyrics server is the one thing a panel still needs.
+Name it "TFT Panel" (not "Roon Panel": it is independent of Roon Labs). Its own media kit — logos, pictures, video, texts — is at
 [r45635.github.io/tft-panel/media-kit.html](https://r45635.github.io/tft-panel/media-kit.html);
 its pictures come from a showcase mode with an invented song.
 

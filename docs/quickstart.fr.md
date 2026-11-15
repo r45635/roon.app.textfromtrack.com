@@ -45,6 +45,11 @@ n'en a pas, essayez **Versions**.
 - **Paroles IA — bientôt** : [TextFromTrack](https://app.textfromtrack.com) écrira des paroles synchronisées pour
   les titres que personne n'a transcrits. Le service est encore en développement.
 - **Jeton d'accès** (`ACCESS_TOKEN`) : l'exiger des autres appareils du réseau.
+- **Vous ne l'installez que pour un écran qui joint Roon lui-même ?** Lancez-le avec
+  `ROON_ENABLED=false` : il devient un serveur de paroles et rien d'autre — aucun appairage, rien à
+  activer dans Roon, et les étapes 2 et 3 ci-dessus ne s'appliquent pas. Vos
+  [TFT Panel](https://r45635.github.io/tft-panel/) le trouvent sur le réseau, ou vous leur donnez
+  l'adresse de cette machine.
 
 ## Ça ne marche pas ?
 

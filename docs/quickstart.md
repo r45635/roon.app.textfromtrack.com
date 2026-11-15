@@ -45,6 +45,10 @@ try **Other versions**.
 - **AI lyrics — coming soon**: [TextFromTrack](https://app.textfromtrack.com) will write synced lyrics for songs no
   one has transcribed. The service is still in development.
 - **Access token** (`ACCESS_TOKEN`): require it from other devices on your network.
+- **Only feeding a screen that reaches Roon itself?** Start it with `ROON_ENABLED=false` and it is a
+  lyrics server and nothing else: no pairing, nothing to enable in Roon, and steps 2 and 3 above do
+  not apply. Your [TFT Panels](https://r45635.github.io/tft-panel/) find it on the network, or you
+  give them this machine's address.
 
 ## Doesn't work?
 

@@ -64,12 +64,25 @@ réseau*.
 Oui. Chaque téléphone, tablette ou navigateur de TV peut ouvrir l'affichage des paroles, et chacun
 suit sa propre zone (bouton **Zone**).
 
-**Existe-t-il un écran dédié aux paroles ?**
-Oui : [TFT Panel](https://r45635.github.io/tft-panel/), un firmware libre et gratuit pour l'écran
-tactile Elecrow CrowPanel 7" (DIS08070H). Il affiche les paroles et la pochette, et donne lecture,
-morceau suivant, volume et zone — à condition que le compagnon tourne sur le même réseau, car c'est
-lui qui fournit tout. [L'installer depuis Chrome ou Edge](https://r45635.github.io/tft-panel/install.html)
-(site en anglais).
+**Existe-t-il un écran dédié ?**
+Oui : [TFT Panel](https://r45635.github.io/tft-panel/), un firmware libre et gratuit pour trois
+écrans tactiles de 7 pouces. C'est une télécommande qu'on n'a jamais à déverrouiller — la pochette,
+les paroles au rythme du morceau, lecture, suivant, volume, zones et toute votre bibliothèque — et
+elle devient une horloge quand la musique s'arrête.
+[L'installer depuis Chrome ou Edge](https://r45635.github.io/tft-panel/install.html) (site en anglais).
+
+Elle peut prendre ce qui joue depuis ce compagnon, qui trouve et classe aussi les paroles ; laissez
+le compagnon tourner et l'écran le trouve seul. Elle peut aussi joindre Roon par elle-même, et il ne
+lui manque alors que les mots — voir la question suivante.
+
+**Mon écran parle à Roon tout seul. Ai-je encore besoin de ceci ?**
+Pour les paroles seulement, puisque Roon n'en fournit aucune. Lancez ce compagnon avec
+`ROON_ENABLED=false` : il devient un serveur de paroles et rien d'autre — aucun appairage, aucune
+seconde extension à activer dans Roon, et vos écrans le trouvent sur le réseau. Vous gardez ce que
+seule une machine à vous peut donner : les `.lrc` posés à côté de votre musique, le cache local et
+votre propre miroir LRCLIB avant le service public. Si l'écran ne le trouve pas seul (Docker Desktop
+n'a pas de réseau « host », l'annonce ne sort pas du conteneur), donnez-lui l'adresse de cette
+machine : le compagnon répond au `GET /api/get` de LRCLIB.
 
 **Qu'est-ce qui sort de mon réseau ?**
 Pour trouver les paroles, le titre, l'artiste, l'album et la durée d'un morceau partent vers
