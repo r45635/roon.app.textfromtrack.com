@@ -89,6 +89,8 @@
     "empty_backend_offline_hint": "Le serveur du compagnon ne répond pas. Vérifiez que l’app (ou son conteneur Docker) tourne.",
     "empty_lan_blocked_title": "macOS bloque la connexion",
     "empty_lan_blocked_hint": "Autorisez l’app dans Réglages Système → Confidentialité et sécurité → Réseau local.",
+    "empty_lyrics_server_title": "Serveur de paroles",
+    "empty_lyrics_server_hint": "Roon est désactivé ici (ROON_ENABLED=false). Les écrans qui parlent eux-mêmes à Roon, comme un TFT Panel, demandent les paroles à ce companion ; les morceaux demandés s'affichent ci-dessous.",
     "empty_roon_not_found_title": "Recherche de votre Roon Core…",
     "empty_roon_not_found_hint": "Vérifiez que Roon tourne sur ce réseau. Si le Core est sur un autre sous-réseau ou dans Docker, renseignez ROON_CORE_HOST.",
     "empty_waiting_auth_title": "Activez l’extension dans Roon",
@@ -594,6 +596,14 @@
     "pick_zone": "Afficher les paroles de",
     "follow_active": "La zone active",
     "back_to_app": "Retour à l’app"
+  },
+  "screens": {
+    "title": "Demandé par vos écrans",
+    "hint": "Les morceaux dont un TFT Panel ou un autre écran a demandé les paroles. Corrigez-les ici : l'écran reçoit la correction la prochaine fois qu'il demande ce morceau.",
+    "status_none": "Pas de paroles",
+    "status_error": "Recherche échouée",
+    "offset": "Décalage {{s}} s",
+    "applies_next": "S'applique la prochaine fois qu'un écran demande ce morceau."
   },
   "library": {
     "title": "Paroles de la bibliothèque",

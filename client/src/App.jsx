@@ -12,6 +12,7 @@ import TftApiKey from './components/TftApiKey.jsx';
 import FilesManagement from './components/FilesManagement.jsx';
 import LyricsSources from './components/LyricsSources.jsx';
 import LibraryCard from './components/LibraryCard.jsx';
+import ScreenRequestsCard from './components/ScreenRequestsCard.jsx';
 import { useAppPrefs } from './hooks/useAppPrefs.js';
 import { maskZones, maskNowPlaying, maskRoonStatus, maskAccount, setKnownRoots } from './lib/privacy.js';
 import { qrPageUrl } from './lib/qrPage.js';
@@ -537,8 +538,11 @@ export default function App() {
             backendOnline={backendOnline}
             onOpenSettings={() => setSettingsOpen(true)}
           />
+          <ScreenRequestsCard />
           {libraryConfigured && <LibraryCard refreshKey={libraryRefresh} />}
-          <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} externalQuery={searchTrigger} />
+          {roonStatus?.enabled !== false && (
+            <SearchPanel zones={zones} activeZoneId={nowPlaying?.zone_id} externalQuery={searchTrigger} />
+          )}
           <JobHistory jobs={jobs} total={jobsTotal} onLoadMore={handleMoreJobs} onJobRetried={handleJobRetried} />
         </div>
       </main>

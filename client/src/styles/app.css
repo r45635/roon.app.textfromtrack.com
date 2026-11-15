@@ -2830,6 +2830,23 @@ button.synced-line:hover { opacity: 0.9; background: var(--tft-hover); }
 .lib-row-title, .lib-row-sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lib-row-title { font-size: 13px; color: var(--tft-ink); }
 .lib-row-sub { font-size: 11px; color: var(--tft-mute); }
+/* Songs other screens asked lyrics for (ScreenRequestsCard) */
+.screen-row { flex-direction: column; align-items: stretch; gap: 8px; }
+.screen-row-head {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 0; border: 0;
+  background: none; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.screen-row-actions { display: flex; flex-direction: column; gap: 8px; padding: 4px 0 6px; }
+.screen-row-actions p { margin: 0; }
+.screen-row-buttons { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.screen-row-offset { display: inline-flex; align-items: center; gap: 4px; }
+.screen-row-paste { display: flex; flex-direction: column; gap: 6px; }
+.screen-row-paste textarea {
+  width: 100%; padding: 8px; font-size: 13px; color: var(--tft-ink); border: 1px solid var(--tft-line);
+  border-radius: 8px; background: var(--tft-paper-2); resize: vertical;
+}
+.screen-row-versions { list-style: none; display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; }
+.screen-row-versions .btn { text-align: left; white-space: normal; }
 .lib-batch {
   display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; margin-bottom: 12px;
   border: 1px solid var(--tft-line); border-radius: var(--tft-r-md); background: var(--tft-paper-2);

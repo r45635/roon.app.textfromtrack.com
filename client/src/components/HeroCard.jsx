@@ -263,6 +263,8 @@ export default function HeroCard({
 
   // Why nothing is playing: each cause needs a different action from the user.
   const emptyState = !backendOnline ? 'backend_offline'
+    // ROON_ENABLED=false: no Core will ever play here — say what this companion is for instead.
+    : roonStatus?.enabled === false ? 'lyrics_server'
     : roonStatus?.local_network_blocked ? 'lan_blocked'
     : roonStatus?.awaiting_authorization ? 'waiting_auth'
     : roonStatus && !roonStatus.connected ? 'roon_not_found'

@@ -89,6 +89,8 @@
     "empty_backend_offline_hint": "The companion server is not answering. Check that the app (or its Docker container) is running.",
     "empty_lan_blocked_title": "macOS is blocking the connection",
     "empty_lan_blocked_hint": "Allow the app in System Settings → Privacy & Security → Local Network.",
+    "empty_lyrics_server_title": "Lyrics server",
+    "empty_lyrics_server_hint": "Roon is turned off here (ROON_ENABLED=false). Screens that talk to Roon themselves, like a TFT Panel, ask this companion for the words; the songs they ask for show up below.",
     "empty_roon_not_found_title": "Looking for your Roon Core…",
     "empty_roon_not_found_hint": "Make sure Roon is running on this network. If the Core is on another subnet or in Docker, set ROON_CORE_HOST.",
     "empty_waiting_auth_title": "Enable the extension in Roon",
@@ -594,6 +596,14 @@
     "pick_zone": "Show lyrics for",
     "follow_active": "The active zone",
     "back_to_app": "Back to the app"
+  },
+  "screens": {
+    "title": "Asked by your screens",
+    "hint": "Songs a TFT Panel or another screen asked lyrics for. Fix them here: the screen gets the fix the next time it asks for that song.",
+    "status_none": "No lyrics",
+    "status_error": "Lookup failed",
+    "offset": "Timing {{s}} s",
+    "applies_next": "Applies the next time a screen asks for this song."
   },
   "library": {
     "title": "Library lyrics",
