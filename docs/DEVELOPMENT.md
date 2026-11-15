@@ -180,6 +180,7 @@ Copy `.env.example` to `.env` and fill in the values.
 | Method | Path | Description |
 |---|---|---|
 | `GET` | `/api/get` | LRCLIB's own endpoint and shape: `track_name`, `artist_name`, optional `album_name` and `duration` in; `syncedLyrics`, `plainLyrics`, `instrumental` out; `404 TrackNotFound` for a miss and **`502` for a failure**, which a 404 must never stand for. Answers from the same chain as `/api/lrclib/lookup` (local `.lrc` cache → mirrors → lrclib.net), so anything written against lrclib.net can point here instead and gain the cache and the local files |
+| `GET` | `/api/get/:id` | The same record by its LRCLIB id. A client checking whether a server "answers like LRCLIB" probes exactly this, so it is what lets another companion, or any LRCLIB client, accept this one as a lyrics source |
 
 ### Roon endpoints
 
