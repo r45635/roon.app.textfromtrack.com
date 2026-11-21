@@ -72,8 +72,10 @@ elle devient une horloge quand la musique s'arrête.
 [L'installer depuis Chrome ou Edge](https://r45635.github.io/tft-panel/install.html) (site en anglais).
 
 Elle peut prendre ce qui joue depuis ce compagnon, qui trouve et classe aussi les paroles ; laissez
-le compagnon tourner et l'écran le trouve seul. Elle peut aussi joindre Roon par elle-même, et il ne
-lui manque alors que les mots — voir la question suivante.
+le compagnon tourner et l'écran le trouve seul. L'application de bureau ne sert que tant qu'elle est
+ouverte : quittez-la et les écrans se taisent (une installation neuve la lance à l'ouverture de
+session ; le conteneur est la façon « toujours allumé »). Elle peut aussi joindre Roon par
+elle-même, et il ne lui manque alors que les mots — voir la question suivante.
 
 **Mon écran parle à Roon tout seul. Ai-je encore besoin de ceci ?**
 Pour les paroles seulement, puisque Roon n'en fournit aucune. Lancez ce compagnon avec

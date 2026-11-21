@@ -18,6 +18,7 @@ const os = require('os');
 const { spawn } = require('child_process');
 const http = require('http');
 const backendPrefs = require('./backendPrefs');
+const restartPolicy = require('./restartPolicy');
 
 // ── Keep the app alive in the tray when all windows are closed ──────────────
 app.on('window-all-closed', (e) => {
@@ -47,6 +48,8 @@ const POLL_ACTIVITY_MS = 15_000;     // TFT jobs and LRCLIB batch, for desktop n
 let tray = null;
 let serverProcess = null;
 let serverReady = false;
+let restartHistory = [];   // when the backend was brought back after a crash (restartPolicy)
+let quitting = false;      // a backend killed on purpose is not a crash
 
 let roonLabel = 'Roon: connecting…';
 let creditsLabel = null; // null = TFT token not configured yet
@@ -109,7 +112,26 @@ function startServer() {
 
   serverProcess.on('exit', (code) => {
     if (typeof logFd === 'number') { try { fs.closeSync(logFd); } catch {} }
-    if (code !== 0 && code !== null) {
+    const crashed = code !== 0 && code !== null && !quitting;
+    if (crashed) {
+      // Bring it back before anyone notices: the screens that take their lyrics from this
+      // app go silent while it is down, and nobody watches a tray icon. Bounded by the
+      // policy; past it, the dialog below.
+      const { delayMs, history } = restartPolicy.nextRestartDelay(restartHistory, Date.now());
+      restartHistory = history;
+      if (delayMs !== null) {
+        try {
+          fs.appendFileSync(logPath, `[electron] backend exited with code ${code}; restarting in ${delayMs} ms `
+            + `(${history.length}/${restartPolicy.DEFAULTS.delaysMs.length} within ${restartPolicy.DEFAULTS.windowMs / 1000} s)\n`);
+        } catch {}
+        serverProcess = null;
+        serverReady = false;
+        rebuildMenu();
+        setTimeout(() => { if (!quitting && !serverProcess) startServer(); }, delayMs);
+        return;
+      }
+    }
+    if (crashed) {
       // Read last 2 KB of log to show in the error dialog
       let tail = '';
       try {
@@ -779,6 +801,7 @@ function rebuildMenu() {
     items.push({
       label: 'Quit TextFromTrack',
       click: () => {
+        quitting = true;
         if (serverProcess) serverProcess.kill();
         app.exit(0);
       },
@@ -819,10 +842,26 @@ app.whenReady().then(async () => {
   if (app.dock) app.dock.hide();
 
   createTray();
+  defaultLoginItem();
   await initBackend();
 });
 
+// A lyrics server that only runs while someone remembers to open it is no server: a fresh
+// install starts at login. Once, on the first packaged launch with no preferences yet — an
+// upgrade keeps whatever the person had — and the tray checkbox still turns it off for good.
+function defaultLoginItem() {
+  if (!app.isPackaged) return;
+  const prefs = backendPrefs.read();
+  if (prefs.loginItemDefaulted) return;
+  const fresh = Object.keys(prefs).length === 0;
+  if (fresh) {
+    try { app.setLoginItemSettings({ openAtLogin: true }); } catch {}
+  }
+  backendPrefs.write({ loginItemDefaulted: true });
+}
+
 app.on('before-quit', () => {
+  quitting = true;
   if (serverProcess) {
     serverProcess.kill();
     serverProcess = null;

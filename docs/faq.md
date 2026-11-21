@@ -65,8 +65,10 @@ play, skip, volume, zones and your whole library — and it becomes a clock when
 [Install it from Chrome or Edge](https://r45635.github.io/tft-panel/install.html).
 
 It can take what is playing from this companion, which also finds and ranks the lyrics; keep the
-companion running and the panel finds it by itself. It can also reach Roon on its own, and then it
-only needs the words — see the next question.
+companion running and the panel finds it by itself. The desktop app serves only while it is open:
+quit it and the screens fall silent (a fresh install starts it at login; the container is the
+always-on way). It can also reach Roon on its own, and then it only needs the words — see the next
+question.
 
 **My panel talks to Roon itself. Do I still need this?**
 Only for the lyrics, because Roon serves none. Run this companion with `ROON_ENABLED=false` and it

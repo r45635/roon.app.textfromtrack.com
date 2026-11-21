@@ -173,6 +173,15 @@ Copy `.env.example` to `.env` and fill in the values.
 
 ---
 
+## LAN announcement (mDNS)
+
+The backend publishes `_textfromtrack._tcp` on its port (`src/server.js`, record built in
+`src/utils/mdnsAdvert.js`) under its own host name `tft-<hostname>.local` — announcing
+`os.hostname()` itself makes macOS rename the Mac. TXT keys: `hostname`, `roon` (`yes`/`no`),
+`version`, and `api=get` (since v0.7.1), the promise that `GET /api/get` answers from the player's
+chain. A TFT Panel reads `api=get` and asks `/api/get`; on an older companion it keeps calling
+`/api/lrclib/lookup`. Docker Desktop's VM keeps the announcement off the LAN (`docs/install.md`).
+
 ## API reference
 
 ### LRCLIB-compatible endpoint
@@ -225,7 +234,7 @@ Copy `.env.example` to `.env` and fill in the values.
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/lrclib/lookup` | Look up lyrics from LRCLIB (the servers of `/api/lyrics-sources`). Query: `?title=...&artist=...&album=...&duration=...&path=...` |
+| `GET` | `/api/lrclib/lookup` | Look up lyrics from LRCLIB (the servers of `/api/lyrics-sources`). Query: `?title=...&artist=...&album=...&duration=...&path=...`. For screens this is the legacy path — no local files, no *Wrong lyrics*, no offset: a panel that reads `api=get` in the announcement uses `/api/get` instead |
 | `GET` | `/api/lyrics-sources` | The LRCLIB servers in use: `{ urls, source: 'user_settings' \| 'env' \| 'default' }` |
 | `POST` | `/api/lyrics-sources` | Store the ordered list. Body: `{ urls: string[] }` (`[]` = back to the default); an invalid URL is refused with 400 |
 | `POST` | `/api/lyrics-sources/test` | Ask one server for record 1. Body: `{ url }`. Returns `{ ok, status, ms, error }` |
@@ -489,6 +498,12 @@ Defined in [src/utils/normalize.js](../src/utils/normalize.js).
 - **`ROON_ENABLED=false`**: the companion as a lyrics server alone, for screens that reach Roon themselves (a TFT Panel in direct mode). No pairing, nothing to enable in Roon; `/api/roon/*` answers `503 ROON_DISABLED`, the page says *Lyrics server* instead of looking for a Core, and the Roon library card is hidden
 - **LRCLIB's own `GET /api/get` and `/api/get/:id`**, answered from the player's chain: a panel gets the `.lrc` beside your files, the words in your tags, your pasted lyrics and picked versions, nothing for a track marked *Wrong lyrics*, and its timing offset (`offsetMs`)
 - **Asked by your screens**: the songs other screens asked lyrics for, with *Wrong lyrics*, *Other versions*, *Paste lyrics* and the timing offset — the corrections the player has, for songs this app never saw play
+
+### v0.7.1 ✓ — A server that stays up and says who it is
+- The mDNS record carries `version` and `api=get`: a TFT Panel reads it and asks `/api/get` (files, corrections, offset) instead of the bare `/api/lrclib/lookup`; older companions keep working. Pure helper `src/utils/mdnsAdvert.js`, tested
+- The desktop app brings its backend back after a crash (three times within two minutes, 2 / 5 / 15 s, logged in `server.log`) before showing the crash dialog — screens taking their lyrics from it went silent until someone looked at the tray (`electron/restartPolicy.js`, tested)
+- **Start at Login** is on for a fresh install (first packaged launch, once; upgrades keep the person's choice; the tray checkbox still turns it off). The docs now say what nothing said: quitting the desktop app silences your screens, the container is the always-on way
+- Docker image: `HEALTHCHECK` on `/api/debug/info` so a backend that stopped answering shows as unhealthy; Docker Hub page lists `ROON_ENABLED` and `LRCLIB_URLS`
 
 ### Upcoming
 

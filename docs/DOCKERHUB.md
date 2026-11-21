@@ -33,6 +33,8 @@ With Compose, use the [docker-compose.yml](https://github.com/r45635/roon.app.te
 
 | Variable | What it does |
 |---|---|
+| `ROON_ENABLED=false` | A lyrics server and nothing else, for screens that reach Roon themselves (a [TFT Panel](https://r45635.github.io/tft-panel/) in direct mode): no pairing, nothing to enable in Roon |
+| `LRCLIB_URLS` | Your own LRCLIB mirror(s) before the public service, comma-separated: `http://192.168.1.30:3300,https://lrclib.net` |
 | `ROON_CORE_HOST` | Connect to this Core directly instead of discovering it (needed without host networking) |
 | `ACCESS_TOKEN` | Require a token from other devices: open `http://<host>:3888/?access_token=…` once on each |
 | `UPDATE_CHECK=false` | Never ask GitHub whether a newer release exists |

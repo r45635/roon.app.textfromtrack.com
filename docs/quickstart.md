@@ -17,7 +17,8 @@ Pick **one**. Downloads: [latest release](https://github.com/r45635/roon.app.tex
 | **NAS / server** (Docker) | `docker compose up -d` with the [docker-compose.yml](../docker-compose.yml) | Linux host: keep `network_mode: host`. Docker Desktop (Mac/Windows): use the `ports` block and set `ROON_CORE_HOST` to your Core's IP. |
 
 The desktop app lives in the menu bar (Mac) or system tray (Windows/Linux): it starts the companion
-and opens the UI in your browser.
+and opens the UI in your browser. Leave it running: a screen that takes its lyrics from it goes
+silent when it quits (a fresh install starts it at login — **Start at Login** in the tray menu).
 
 ## 2. Enable it in Roon
 

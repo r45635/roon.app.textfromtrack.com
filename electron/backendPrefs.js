@@ -6,7 +6,10 @@
  * which belongs to the server process).
  *
  * Schema:
- *   { backendMode: 'local'|'remote', remoteUrl: string|null, remoteDisplayName: string|null }
+ *   { backendMode: 'local'|'remote', remoteUrl: string|null, remoteDisplayName: string|null,
+ *     notifications: boolean, loginItemDefaulted: boolean }
+ *   loginItemDefaulted: the first packaged launch turned Start at Login on (fresh install only)
+ *   and must never do it again, whatever the person chose since.
  */
 
 const path = require('path');

@@ -29,6 +29,8 @@ La page du compagnon affiche *« Activez l'extension dans Roon »* tant que ce n
 
 Ouvrez l'interface (icône de la barre des menus → **Open UI**, ou `http://localhost:3888`) et lancez
 n'importe quel titre dans Roon — streaming compris. Les paroles apparaissent sous le lecteur, ligne par ligne.
+Laissez l'application ouverte : un écran qui lui demande ses paroles se tait quand elle quitte (une
+installation neuve la lance à l'ouverture de session — **Start at Login** dans le menu de la barre).
 
 - **Cliquez sur une ligne** pour y aller ; **Décalage − / +** si elles arrivent trop tôt ou trop tard.
 - **Plein écran** : touche **F**.

@@ -51,4 +51,9 @@ VOLUME ["/app/src/storage"]
 
 EXPOSE 3888
 
+# "Up" is not "serving": the check asks the API itself (no LRCLIB call, loopback passes the
+# access guard), so `docker ps` and a NAS UI show a backend that stopped answering.
+HEALTHCHECK --interval=60s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- "http://127.0.0.1:${PORT:-3888}/api/debug/info" >/dev/null || exit 1
+
 CMD ["node", "src/server.js"]

@@ -108,7 +108,9 @@ The app starts silently in the tray. Here's how to complete the setup:
 3. **Add your music library** — In *Settings → Music Library*, add the root path(s) where your music files live on this machine. Click **Scan Library**.
 4. **(Optional) Add a TextFromTrack API key** — In *Settings → TextFromTrack API*, paste your API token to enable AI transcription for tracks that have no existing lyrics.
 
-> ✅ Enable **Start at Login** in the tray menu so the companion is always running when your computer starts.
+> ✅ **Start at Login** is on for a fresh install (since v0.7.1) and lives in the tray menu. Leave it
+> on if a screen takes its lyrics from this app: quitting the app, or a laptop that sleeps, silences
+> your screens. For always-on, run the container below.
 
 ---
 
@@ -179,6 +181,8 @@ ROON_ENABLED: "false"
 It then never pairs with Roon and never asks to be enabled in **Settings → Extensions**. Everything
 else stays: the lyrics lookups, the `.lrc` cache, your mirror, the web page and the network
 announcement, so your panels find it by themselves. `/api/roon/*` answers `503 ROON_DISABLED`.
+Since v0.7.1 the announcement also carries the version and `api=get`: a panel that reads it asks
+`/api/get` — your files, your corrections, your timing offset — instead of the bare LRCLIB lookup.
 
 Mount your music folder too and a panel gets *your* lyrics: the `.lrc` beside a file and the words
 in its tags come first, exactly as in the player. The songs your screens asked for are listed on the

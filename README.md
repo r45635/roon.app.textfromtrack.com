@@ -85,7 +85,9 @@ It's free, open-source firmware that installs from Chrome or Edge with a USB-C c
 up from your phone with two QR codes, and updates over Wi-Fi.
 
 A panel can take what is playing from this companion, which also finds and ranks the lyrics — keep
-it running and the panel finds it by itself. A panel can also reach Roon on its own; then it still
+it running and the panel finds it by itself. The desktop app is that server only while it runs:
+quit it, or let the laptop sleep, and your screens lose their words (new installs start it at
+login; for always-on, run the container). A panel can also reach Roon on its own; then it still
 wants a lyrics server, and this companion is one. **Run it with `ROON_ENABLED=false`** and it never
 pairs with Roon at all: no extension to enable, just the words, from your own `.lrc` files and
 tags, your mirror or LRCLIB — and the songs your panels asked for show up on its page, where a wrong

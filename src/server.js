@@ -13,6 +13,8 @@ const { watchQueue } = require('./lyrics/queuePrefetch');
 const { buildError, E } = require('./utils/normalize');
 const { hostGuard, originGuard } = require('./utils/requestGuards');
 const { accessGuard } = require('./utils/accessGuard');
+const { txtRecord, serviceHost } = require('./utils/mdnsAdvert');
+const pkg = require('../package.json');
 
 const app = express();
 
@@ -84,12 +86,11 @@ app.listen(config.port, () => {
       name: `TextFromTrack @ ${os.hostname()}`,
       type: 'textfromtrack',
       port: config.port,
-      // Own host name for our A/AAAA records: by default bonjour-service
-      // announces os.hostname(), which macOS's mDNSResponder already owns —
-      // it sees a conflict and renames the Mac (Name-2, Name-3…) at every start.
-      host: `tft-${os.hostname().replace(/\.local$/i, '')}.local`,
-      // `roon` tells a client whether this host also knows what is playing, or only words.
-      txt: { hostname: os.hostname(), roon: config.roonEnabled ? 'yes' : 'no' },
+      // Own host name (see mdnsAdvert.js: announcing os.hostname() renames the Mac).
+      host: serviceHost(os.hostname()),
+      // What a screen learns before it asks: Roon state, version, and `api=get` — the promise
+      // that /api/get answers from the player's chain (src/utils/mdnsAdvert.js).
+      txt: txtRecord({ hostname: os.hostname(), roonEnabled: config.roonEnabled, version: pkg.version }),
     });
     // e.g. a second instance on the same host — not fatal, the backend still serves
     service.on('error', (err) => logger.warn({ err: err.message }, 'mDNS advertisement failed'));
